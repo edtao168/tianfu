@@ -1,0 +1,100 @@
+{{-- resources/views/livewire/auth/login.blade.php --}}
+<div class="w-full max-w-md px-4">
+    <div class="login-card rounded-3xl shadow-2xl p-8 md:p-10">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 mb-2">
+                <span class="w-4 h-4 rounded-full bg-teal-600 shadow-sm"></span>
+                <span class="font-black text-2xl tracking-widest text-stone-700 font-mono uppercase">添富</span>
+                <span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
+            </div>
+            <p class="text-stone-500 text-sm">登入您的帳戶</p>
+        </div>
+
+        <!-- 錯誤訊息 -->
+        @if ($errors->any())
+            <div class="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        <!-- 登入表單 -->
+        <form wire:submit.prevent="login" class="space-y-5">
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-bold text-stone-700 mb-1.5">
+                    電子郵件
+                </label>
+                <input type="email" 
+                       id="email" 
+                       wire:model="email"
+                       class="w-full px-4 py-3 rounded-xl border border-stone-200/60 bg-stone-50/40 
+                              focus:border-teal-400 focus:ring-2 focus:ring-teal-200/50 
+                              transition-all outline-none text-stone-800 placeholder:text-stone-400/60
+                              @error('email') border-rose-400 focus:border-rose-400 focus:ring-rose-200/50 @enderror"
+                       placeholder="example@email.com"
+                       autofocus>
+                @error('email') 
+                    <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-sm font-bold text-stone-700 mb-1.5">
+                    密碼
+                </label>
+                <input type="password" 
+                       id="password" 
+                       wire:model="password"
+                       class="w-full px-4 py-3 rounded-xl border border-stone-200/60 bg-stone-50/40 
+                              focus:border-teal-400 focus:ring-2 focus:ring-teal-200/50 
+                              transition-all outline-none text-stone-800 placeholder:text-stone-400/60
+                              @error('password') border-rose-400 focus:border-rose-400 focus:ring-rose-200/50 @enderror"
+                       placeholder="••••••••">
+                @error('password') 
+                    <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <!-- Remember Me -->
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 text-sm text-stone-600 cursor-pointer">
+                    <input type="checkbox" 
+                           wire:model="remember"
+                           class="rounded border-stone-300 text-teal-600 focus:ring-teal-400">
+                    記住我
+                </label>
+                <a href="{{ route('password.request') }}" wire:navigate class="text-sm text-teal-600 hover:text-teal-700 transition-colors">
+                    忘記密碼？
+                </a>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" 
+                    wire:loading.attr="disabled"
+                    class="w-full py-3.5 bg-gradient-to-tr from-teal-600 to-emerald-500 
+                           text-white font-bold rounded-xl shadow-lg shadow-emerald-700/30 
+                           hover:shadow-xl hover:shadow-emerald-700/40 hover:scale-[1.02] 
+                           active:scale-[0.98] transition-all duration-200
+                           disabled:opacity-70 disabled:cursor-not-allowed">
+                <span wire:loading.remove>登入</span>
+                <span wire:loading>
+                    <svg class="inline animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    登入中...
+                </span>
+            </button>
+        </form>
+
+        <!-- 註冊連結 -->
+        <p class="text-center text-sm text-stone-500 mt-6">
+            還沒有帳號？
+            <a href="{{ route('register') }}" wire:navigate class="text-teal-600 hover:text-teal-700 font-bold transition-colors">
+				立即註冊
+            </a>
+        </p>
+    </div>
+</div>
