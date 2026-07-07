@@ -1,14 +1,18 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
+        "./resources/**/*.vue",
         "./vendor/robsontenorio/mary/src/View/Components/**/*.php",
-        "./resources/views/vendor/flux/**/*.blade.php",
     ],
     theme: {
         extend: {},
     },
-    plugins: [],
+    plugins: [
+        require('daisyui'),
+    ],
+    daisyui: {
+        themes: ["light", "dark"],
+    },
 }

@@ -1,29 +1,87 @@
 @import 'tailwindcss';
 @plugin "daisyui";
 
+/* Mary UI 樣式導入 */
+@import 'mary-ui/css/theme.css' layer(mary);
+@import 'mary-ui/css/mary.css' layer(mary);
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* 讓數字文字與右邊保持距離，但把原生箭頭強制鎖在最右側 */
+/* ========================================
+   宋代美學風格覆蓋層
+   ======================================== */
+
+/* 汝窯天青 - 主色調 */
+:root {
+    --color-song-sky: #38bdf8;
+    --color-song-sky-light: #f0f9ff;
+    --color-song-sky-dark: #0284c7;
+}
+
+/* 定窯牙白 - 背景色 */
+body {
+    background-color: #FAF9F6;
+    color: #292524;
+}
+
+/* 覆蓋 DaisyUI/Mary UI 的按鈕 */
+.btn-primary {
+    background-color: var(--color-song-sky);
+    border-color: var(--color-song-sky);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--color-song-sky-dark);
+    border-color: var(--color-song-sky-dark);
+}
+
+/* 覆蓋 Modal - 宋代屏風風格 */
+.modal-box {
+    background-color: rgba(250, 249, 246, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(231, 229, 228, 0.6);
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* 覆蓋輸入框 - 簡約風格 */
+.input {
+    background-color: rgba(250, 249, 246, 0.8);
+    border-color: rgba(231, 229, 228, 0.6);
+}
+.input:focus {
+    border-color: var(--color-song-sky);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+/* 覆蓋卡片 - 宋代書畫卷軸風格 */
+.card {
+    border-radius: 1rem;
+    border: 1px solid rgba(231, 229, 228, 0.4);
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+/* 您的原始自定義樣式 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     position: absolute;
-    right: 4px; /* 讓箭頭緊貼最右邊 */
+    right: 4px;
     height: 80%;
     cursor: pointer;
 }
 
-/* 確保輸入框本身有相對定位，以便箭頭絕對定位 */
 input[type="number"] {
     position: relative;
 }
 
-/* 在 resources/css/app.css 中添加 */
 .slide-in-right {
     animation: slideInRight 0.3s ease-out;
 }
@@ -33,19 +91,11 @@ input[type="number"] {
 }
 
 @keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
 }
 
 @keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(100%);
-    }
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
 }
