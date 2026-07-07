@@ -1,58 +1,54 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+﻿# 天富記賬 - 多幣別財務管理系統
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 📖 專案簡介
 
-## About Laravel
+天富記賬是一個基於 Laravel 11 + Livewire 4 開發的多幣別個人財務管理系統，以宋代美學為視覺風格，提供直覺的資產追蹤與記帳體驗。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🎨 設計理念
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+以「宋代美學」為核心視覺語言，融合：
+- **汝窯天青** - 主色調 (Sky Blue)
+- **定窯牙白** - 背景基底 (Warm White)
+- **古宮絳紅** - 人民幣意象 (Rose Red)
+- **千山青綠** - 港幣意象 (Emerald Green)
+- **遠山黛紫** - 美元意象 (Violet)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠️ 技術棧
 
-## Learning Laravel
+| 技術 | 版本 |
+|------|------|
+| **PHP** | 8.3.16 |
+| **Laravel** | 13.18.1 |
+| **Livewire** | 4.3.3 |
+| **Mary UI** | 2.8.3 |
+| **Tailwind CSS** | 4.3.2 |
+| **DaisyUI** | 5.6.14 |
+| **Vite** | 8.1.3 |
+| **MySQL** | 8.4.3 |
+| **Node.js** | 22.12.0 |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 🚀 快速安裝
 
 ```bash
-composer require laravel/boost --dev
+# 1. 複製專案
+git clone https://github.com/edtaoisgod/tianfu.git
+cd tianfu
 
-php artisan boost:install
-```
+# 2. 安裝 PHP 依賴
+composer install
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+# 3. 安裝前端依賴
+npm install
 
-## Contributing
+# 4. 編譯前端資源
+npm run build
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 5. 設定環境
+cp .env.example .env
+php artisan key:generate
 
-## Code of Conduct
+# 6. 執行資料庫遷移
+php artisan migrate
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 7. 啟動開發伺服器
+php artisan serve
