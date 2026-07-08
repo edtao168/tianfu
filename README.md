@@ -20,6 +20,7 @@
 | **PHP** | 8.3.16 |
 | **Laravel** | 13.18.1 |
 | **Livewire** | 4.3.3 |
+| **Flux** | 2.15 |
 | **Mary UI** | 2.8.3 |
 | **Tailwind CSS** | 4.3.2 |
 | **DaisyUI** | 5.6.14 |

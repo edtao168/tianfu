@@ -1,10 +1,6 @@
 @import 'tailwindcss';
 @plugin "daisyui";
 
-/* Mary UI 樣式導入 */
-@import 'mary-ui/css/theme.css' layer(mary);
-@import 'mary-ui/css/mary.css' layer(mary);
-
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
