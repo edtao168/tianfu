@@ -40,9 +40,9 @@
 
         <x-form wire:submit="saveTransaction">
             {{-- 類別 + 金額（正方形類別 + 金額） --}}
-            <div class="grid grid-cols-5 gap-3 mb-4">
+            <div class="grid grid-cols-6 gap-3 mb-4">
                 {{-- 左側：類別（正方形，佔1格）- 定窯牙白風格 --}}
-				<div class="col-span-1">
+				<div class="col-span-2">
 					@if($type !== 'transfer')
 						<div class="aspect-square bg-stone-50/80 rounded-2xl border-2 border-stone-200/60 
 									hover:border-stone-300/80 transition-all cursor-pointer 
@@ -50,15 +50,15 @@
 									dark:bg-stone-800/30 dark:border-stone-700/40"
 							 @click="$wire.openCategoryPicker()">
 							@if($categoryId && $selectedCategory && $selectedCategory->type === $type)
-								<div class="text-2xl mb-1 flex justify-center">
+								<div class="text-3xl mb-1 flex justify-center">
 									<x-dynamic-component :component="'heroicon-o-' . ($selectedCategory->icon ?? 'folder')" 
-											class="w-8 h-8 text-stone-600 dark:text-stone-400" />
+											class="w-10 h-10 text-stone-600 dark:text-stone-400" />
 								</div>
-								<div class="text-[10px] font-bold text-stone-700 dark:text-stone-300 text-center leading-tight">
+								<div class="text-xs font-bold text-stone-700 dark:text-stone-300 text-center leading-tight">
 									{{ $selectedCategory->name }}
 								</div>
 								@if($selectedCategory->parent)
-									<div class="text-[8px] text-stone-400 dark:text-stone-500 mt-0.5">
+									<div class="text-[10px] text-stone-400 dark:text-stone-500 mt-0.5">
 										{{ $selectedCategory->parent->name }}
 									</div>
 								@endif
@@ -75,7 +75,7 @@
 									flex flex-col items-center justify-center
 									dark:bg-teal-950/20 dark:border-teal-800/30">
 							<div class="text-3xl mb-1 flex justify-center">
-								<x-icon name="o-arrows-right-left" class="w-8 h-8 text-teal-500" />
+								<x-icon name="o-arrows-right-left" class="w-10 h-10 text-teal-500" />
 							</div>
 							<div class="text-xs font-bold text-teal-600 dark:text-teal-400">轉帳</div>
 						</div>
