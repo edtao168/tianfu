@@ -32,7 +32,7 @@
 							<span class="text-lg font-bold text-error">-{{ $baseSymbol }} {{ $stats['expense'] }}</span>
 						</div>
 					</div>
-				</div>
+				</div>				
 			</div>
 		@endforeach
 	</div>
@@ -126,7 +126,7 @@
     </x-modal>
 
 	{{-- 分幣別詳情 Modal (加寬) --}}
-	<x-modal wire:model="showPeriodDetailModal" :title="$periodDetailTitle" separator size="fullscreen" max-width="7xl">
+	<x-modal wire:model="showPeriodDetailModal" :title="$periodDetailTitle" separator width="90%">
 		<div class="space-y-4 p-2">
 			
 			@if(empty($periodDetailData))
@@ -199,8 +199,8 @@
 		</x-slot:actions>
 	</x-modal>
 
-	{{-- 帳戶交易流水 Modal (加寬) --}}
-	<x-modal wire:model="showAccountTransactionsModal" :title="$selectedAccountName . ' - 交易流水'" separator size="fullscreen" max-width="3xl">
+	{{-- 交易流水 Modal (加寬) --}}
+	<x-modal wire:model="showAccountTransactionsModal" :title="$selectedAccountName . ' - 交易流水'" separator max-width="7xl">
 		<div class="space-y-4 p-2">
 			{{-- 操作按鈕列 --}}
 			<div class="flex flex-wrap justify-between items-center gap-3 pb-3 border-b border-base-200">

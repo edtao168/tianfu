@@ -21,10 +21,12 @@
 
     <header class="sticky top-0 z-40 backdrop-blur-md bg-stone-50/80 border-b border-stone-200/40 px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
-            <span class="w-3.5 h-3.5 rounded-full bg-teal-600 shadow-sm animate-pulse"></span>
-            <span class="font-black text-lg tracking-widest text-stone-700 font-mono uppercase">添富</span>
-            <span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
-        </div>
+			<span class="w-3.5 h-3.5 rounded-full bg-teal-600 shadow-sm animate-pulse"></span>
+			<span class="font-black text-lg tracking-widest text-stone-700 font-mono uppercase">添富</span>
+			<!-- 新增：微小聚財金點，比左側綠點更小，象徵納財 -->
+			<span class="w-2 h-2 rounded-full bg-amber-400/70 shadow-sm shadow-amber-400/20 animate-pulse" style="animation-delay: 0.5s;"></span>
+			<span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
+		</div>
         <div class="flex items-center gap-3">
             <!-- 用戶頭像 + 下拉選單 -->
             <div class="relative" x-data="{ open: false }">

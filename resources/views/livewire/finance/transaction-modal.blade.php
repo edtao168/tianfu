@@ -46,19 +46,19 @@
 					@if($type !== 'transfer')
 						<div class="aspect-square bg-stone-50/80 rounded-2xl border-2 border-stone-200/60 
 									hover:border-stone-300/80 transition-all cursor-pointer 
-									flex flex-col items-center justify-center p-2 relative overflow-hidden
+									flex flex-col items-center justify-center p-1 relative overflow-hidden
 									dark:bg-stone-800/30 dark:border-stone-700/40"
 							 @click="$wire.openCategoryPicker()">
 							@if($categoryId && $selectedCategory && $selectedCategory->type === $type)
-								<div class="text-3xl mb-1 flex justify-center">
+								<div class="text-2xl mb-1 flex justify-center">
 									<x-dynamic-component :component="'heroicon-o-' . ($selectedCategory->icon ?? 'folder')" 
 											class="w-8 h-8 text-stone-600 dark:text-stone-400" />
 								</div>
-								<div class="text-xs font-bold text-stone-700 dark:text-stone-300 text-center leading-tight">
+								<div class="text-[10px] font-bold text-stone-700 dark:text-stone-300 text-center leading-tight">
 									{{ $selectedCategory->name }}
 								</div>
 								@if($selectedCategory->parent)
-									<div class="text-[10px] text-stone-400 dark:text-stone-500 mt-0.5">
+									<div class="text-[8px] text-stone-400 dark:text-stone-500 mt-0.5">
 										{{ $selectedCategory->parent->name }}
 									</div>
 								@endif
