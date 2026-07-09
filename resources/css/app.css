@@ -25,7 +25,7 @@
 /* --------------------------------------------------------------------------
 | 字體與設計系統擴充
 | -------------------------------------------------------------------------- */
-@theme {
+@theme default {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }

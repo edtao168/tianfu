@@ -51,7 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', AccountIndex::class)->name('finance.accounts');
     Route::get('/finance/transactions', TransactionIndex::class)->name('finance.transactions');
     Route::get('/finance/reports', ReportStats::class)->name('finance.reports');
-	Route::get('/finance/backups', BackupIndex::class)->name('finance.backups');
+	Route::get('/finance/backup', BackupIndex::class)->name('finance.backup');
 	Route::get('/finance/about', AboutIndex::class)->name('finance.about');
     Route::get('/finance/contact', ContactIndex::class)->name('finance.contact');
 });

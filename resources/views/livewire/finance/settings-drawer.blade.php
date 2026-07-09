@@ -14,23 +14,23 @@
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-5 border-b border-stone-200/60 bg-white/50">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-md">
-                        <x-heroicon-o-cog-6-tooth class="w-5 h-5 text-white" />
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
                     </div>
                     <div>
                         <h2 class="text-lg font-bold text-stone-800">系統設置</h2>
                         <p class="text-xs text-stone-400">帳戶與偏好設定</p>
                     </div>
                 </div>
-                <button wire:click="close" class="p-2 rounded-full hover:bg-stone-100 transition-colors">
-                    <x-heroicon-o-x-mark class="w-5 h-5 text-stone-500" />
+                <button wire:click="close" class="text-stone-400 hover:text-stone-600 transition-colors">
+                    <x-heroicon-o-x-mark class="w-6 h-6" />
                 </button>
             </div>
 
-            {{-- Content --}}
-            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+            {{-- Menu List --}}
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
                 
-                {{-- 分類管理 --}}
+				{{-- 分類管理 --}}
                 <button wire:click="openCategoryManager" 
                         class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">
                     <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -42,28 +42,27 @@
                     </div>
                     <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
                 </button>
-
-{{-- 💡 數據備份：改為標準 a 標籤跳轉，點擊時先觸發 Livewire 關閉抽屜，再執行路由網址跳轉 --}}
-                <a href="{{ route('finance.backups') }}" 
+				
+                {{-- 數據備份 --}}
+                {{-- 💡 修正：在 class 最開頭加上 flex，確保區塊撐開，背景色與排版完美還原 --}}
+                <a href="{{ route('finance.backup') }}" 
                    wire:click="close"
-                   class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60 block">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                        <x-heroicon-o-cloud-arrow-up class=\"w-5 h-5 text-white\" />
+                   class="flex w-full group items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                        <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-white" />
                     </div>
                     <div class="flex-1 text-left">
                         <div class="font-semibold text-stone-700 group-hover:text-stone-900">數據備份</div>
-                        <div class="text-xs text-stone-400">金櫃快照與歷史還原</div>
+                        <div class="text-xs text-stone-400">匯出 / 匯入資料</div>
                     </div>
                     <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
                 </a>
 
-                <div class="h-px bg-stone-200/60 my-3 mx-2"></div>
-
                 {{-- 關於 --}}
-                {{-- 💡 修正：改用 href 跳轉路由，點擊時觸發 wire:click="close" 先關閉抽屜防止殘影 --}}
+                {{-- 💡 修正：同樣在 class 最開頭加上 flex --}}
                 <a href="{{ route('finance.about') }}" 
                    wire:click="close"
-                   class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60 block">
+                   class="flex w-full group items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">
                     <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                         <x-heroicon-o-information-circle class="w-5 h-5 text-white" />
                     </div>
@@ -75,10 +74,10 @@
                 </a>
 
                 {{-- 聯絡我 --}}
-                {{-- 💡 修正：同樣改為標準 a 標籤路由導航 --}}
+                {{-- 💡 修正：同樣在 class 最開頭加上 flex --}}
                 <a href="{{ route('finance.contact') }}" 
                    wire:click="close"
-                   class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60 block">
+                   class="flex w-full group items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">
                     <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-400 to-rose-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                         <x-heroicon-o-envelope class="w-5 h-5 text-white" />
                     </div>
@@ -89,12 +88,19 @@
                     <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
                 </a>
 
-                <div class="h-px bg-stone-200/60 my-3 mx-2"></div>
-                
-                <div class="px-4 py-3 text-center">
-                    <span class="text-xs text-stone-400">添富記賬 v1.0.0</span>
-                </div>
             </div>
+
+            {{-- Footer --}}
+            <div class="p-4 border-t border-stone-200/60 bg-white/30">
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-200/50 hover:bg-red-50 hover:text-red-600 text-stone-600 font-medium transition-all duration-200 active:scale-[0.99]">
+                        <x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5" />
+                        <span>安全登出</span>
+                    </button>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>
