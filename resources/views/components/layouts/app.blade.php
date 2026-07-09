@@ -27,57 +27,18 @@
 			<span class="w-2 h-2 rounded-full bg-amber-400/70 shadow-sm shadow-amber-400/20 animate-pulse" style="animation-delay: 0.5s;"></span>
 			<span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
 		</div>
-        <div class="flex items-center gap-3">
-            <!-- 用戶頭像 + 下拉選單 -->
-            <div class="relative" x-data="{ open: false }">
-                <div class="avatar placeholder cursor-pointer" @click="open = !open">
-                    <div class="bg-stone-200 text-stone-600 rounded-full w-8 h-8 font-bold text-xs ring-2 ring-stone-200 ring-offset-2 hover:ring-teal-400 transition-all">
-                        {{ Auth::user() ? strtoupper(substr(Auth::user()->name ?? Auth::user()->email ?? 'U', 0, 1)) : 'U' }}
-                    </div>
-                </div>
-                
-                <!-- 下拉選單 -->
-                <div x-show="open" 
-                     @click.away="open = false"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-stone-200/60 py-1 z-50">
-                    
-                    <!-- 用戶資訊 -->
-                    <div class="px-4 py-3 border-b border-stone-100">
-                        <div class="text-sm font-bold text-stone-800">
-                            {{ Auth::user()?->name ?? '訪客' }}
-                        </div>
-                        <div class="text-xs text-stone-400 truncate">
-                            {{ Auth::user()?->email ?? '' }}
-                        </div>
-                    </div>
-                    
-                    <!-- 選單項目 -->
-                    <!-- <a href="{{-- route('profile.edit') --}}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"> --!>
-                        <x-icon name="o-user" class="w-4 h-4 text-stone-400" />
-                        個人資料
-                    </a>
-                    
-                    <!-- <a href="{{-- route('settings') --}}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"> --!>
-                        <x-icon name="o-cog-6-tooth" class="w-4 h-4 text-stone-400" />
-                        系統設置
-                    </a>
-                    
-                    <hr class="my-1 border-stone-100">
-                    
-                    <!-- 登出按鈕 -->
-                    <form method="POST" action="{{ route('logout') }}" class="block">
-                        @csrf
-                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
-                            <x-icon name="o-arrow-right-on-rectangle" class="w-4 h-4 text-rose-400" />
-                            登出
-                        </button>
-                    </form>
-                </div>
-            </div>
+        
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-black tracking-wider text-stone-800">添富記賬</span>
         </div>
+
+        <button x-data 
+                @click="$dispatch('toggle-settings-drawer')" 
+                class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+            <img src="{{ asset('me.jpg') }}"
+                 alt="User Avatar" 
+                 class="w-full h-full object-cover">
+        </button>
     </header>
 
     <main class="max-w-lg md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 pt-6 animate-fadeIn">

@@ -1,71 +1,88 @@
-@import 'tailwindcss';
-@plugin "daisyui";
+/* resources/css/app.css */
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@import "tailwindcss";
+
+/* --------------------------------------------------------------------------
+| DaisyUI v5 外掛配置 (自動感應系統 Light/Dark 主題)
+| -------------------------------------------------------------------------- */
+@plugin "daisyui" {
+    /* 載入內建的 light 與 dark 主題，DaisyUI 會自動依據瀏覽器的 prefers-color-scheme 切換 */
+    themes: light, dark; 
+}
+
+/* --------------------------------------------------------------------------
+| Tailwind v4 動態類別掃描路徑 (Sources)
+| -------------------------------------------------------------------------- */
+@source '../../resources/**/*.blade.php';
+@source '../../resources/**/*.js';
+@source '../../app/Livewire/**/*.php';
 @source '../../storage/framework/views/*.php';
 @source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
 
+/* 💡 關鍵：務必讓 Tailwind 掃描你的業務邏輯字典，否則 config 內的顏色樣式無法被編譯出來 */
+@source '../../config/business.php'; 
+
+/* --------------------------------------------------------------------------
+| 字體與設計系統擴充
+| -------------------------------------------------------------------------- */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* ========================================
-   宋代美學風格覆蓋層
-   ======================================== */
+/* ==========================================================================
+   大宋名窯山水與點茶文墨意象 - 全域核心底色覆蓋
+   ========================================================================== */
 
-/* 汝窯天青 - 主色調 */
 :root {
-    --color-song-sky: #38bdf8;
-    --color-song-sky-light: #f0f9ff;
-    --color-song-sky-dark: #0284c7;
+    /* 【明亮模式】基準底色：定窯牙白與墨色 */
+    --song-bg: #FAF9F6;       /* 定窯牙白 */
+    --song-text: #292524;     /* 松煙黛墨 / 煙墨色 */
+    --song-border: rgba(231, 229, 228, 0.7);
+    --song-card-bg: rgba(255, 255, 255, 0.75);
+    --song-modal-bg: rgba(250, 249, 246, 0.98);
 }
 
-/* 定窯牙白 - 背景色 */
+/* 當瀏覽器切換至深色模式，DaisyUI 自動將 <html> 加上 [data-theme="dark"] 標籤時 */
+[data-theme="dark"] {
+    /* 【暗色模式】基準底色：建窯天目與玄武黛紫 */
+    --song-bg: #141212;       /* 天目鷓鴣斑漆黑底 */
+    --song-text: #E7E5E4;     /* 絲絹白 / 淺砂色 */
+    --song-border: rgba(68, 64, 60, 0.5);
+    --song-card-bg: rgba(28, 25, 23, 0.7);
+    --song-modal-bg: rgba(20, 18, 18, 0.98);
+}
+
+/* 應用全域基礎樣式 */
 body {
-    background-color: #FAF9F6;
-    color: #292524;
+    background-color: var(--song-bg);
+    color: var(--song-text);
+    transition: background-color 0.3s ease, color 0.3s ease; /* 確保切換明暗時有絲滑的淡入淡出感 */
 }
 
-/* 覆蓋 DaisyUI/Mary UI 的按鈕 */
-.btn-primary {
-    background-color: var(--color-song-sky);
-    border-color: var(--color-song-sky);
-    color: white;
-}
-.btn-primary:hover {
-    background-color: var(--color-song-sky-dark);
-    border-color: var(--color-song-sky-dark);
-}
-
-/* 覆蓋 Modal - 宋代屏風風格 */
-.modal-box {
-    background-color: rgba(250, 249, 246, 0.95);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(231, 229, 228, 0.6);
-    border-radius: 1rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* 覆蓋輸入框 - 簡約風格 */
-.input {
-    background-color: rgba(250, 249, 246, 0.8);
-    border-color: rgba(231, 229, 228, 0.6);
-}
-.input:focus {
-    border-color: var(--color-song-sky);
-    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
-}
-
-/* 覆蓋卡片 - 宋代書畫卷軸風格 */
+/* 覆蓋 Flux / Mary UI / DaisyUI 的卡片與對話框，使其完美融入書畫卷軸與屏風意象 */
 .card {
-    border-radius: 1rem;
-    border: 1px solid rgba(231, 229, 228, 0.4);
-    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 0.75rem;
+    border: 1px solid var(--song-border);
+    background-color: var(--song-card-bg);
     backdrop-filter: blur(4px);
 }
 
-/* 您的原始自定義樣式 */
+.modal-box {
+    background-color: var(--song-modal-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--song-border);
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+}
+
+/* 表單輸入框簡約風 */
+.input, .select, .textarea {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--song-border);
+}
+
+/* 微調數字欄位微調按鈕樣式 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     position: absolute;
@@ -73,25 +90,6 @@ input[type="number"]::-webkit-outer-spin-button {
     height: 80%;
     cursor: pointer;
 }
-
 input[type="number"] {
     position: relative;
-}
-
-.slide-in-right {
-    animation: slideInRight 0.3s ease-out;
-}
-
-.slide-out-right {
-    animation: slideOutRight 0.3s ease-in;
-}
-
-@keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-}
-
-@keyframes slideOutRight {
-    from { transform: translateX(0); }
-    to { transform: translateX(100%); }
 }

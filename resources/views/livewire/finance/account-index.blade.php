@@ -76,14 +76,17 @@
                 {{ $group['currency_name'] }}資產明細
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="block md:hidden">
+                @include('includes._account-card')
+            </div>
+
+            <div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($group['accounts'] as $account)
                     @php $typeStyle = config("business.account_types.{$account->type}") ?? config("business.account_types.cash"); @endphp
                     <div wire:click="viewAccountTransactions({{ $account->id }})" class="{{ $typeStyle['bg'] }} {{ $typeStyle['border'] }} p-4 rounded-xl border shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col justify-between h-28 active:scale-[0.99] relative overflow-hidden pl-5">
                         <span class="absolute left-0 top-0 bottom-0 w-1.5 {{ $typeStyle['left_bar'] }} opacity-80"></span>
                         <div class="flex justify-between items-start">
                             <div class="flex items-center gap-2">
-                                {{-- 改用 heroicon --}}
                                 <x-dynamic-component 
                     :component="$typeStyle['icon']" 
                     class="w-4 h-4 opacity-40 text-base-content" />
