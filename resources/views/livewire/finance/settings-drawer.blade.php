@@ -30,6 +30,20 @@
             {{-- Menu List --}}
             <div class="flex-1 overflow-y-auto p-4 space-y-3">
                 
+				{{-- 💡 新增：家庭成員管理超連結入口，使用與數據備份一致的 flex 架構撐開 --}}
+				<a href="{{ route('finance.partners') }}" 
+				   wire:click="close"
+				   class="flex w-full group items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">
+					<div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+						<x-heroicon-o-users class="w-5 h-5 text-white" />
+					</div>
+					<div class="flex-1 text-left">
+						<div class="font-semibold text-stone-700 group-hover:text-stone-900">成員管理</div>
+						<div class="text-xs text-stone-400">設定家庭使用者與個人載具</div>
+					</div>
+					<x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
+				</a>
+	
 				{{-- 分類管理 --}}
                 <button wire:click="openCategoryManager" 
                         class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/70 transition-all duration-200 border border-transparent hover:border-stone-200/60">

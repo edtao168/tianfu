@@ -1,6 +1,6 @@
 <!-- filepath: resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light" class="bg-stone-50/60 text-stone-800 antialiased selection:bg-teal-100 selection:text-teal-900">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="bg-stone-50/60 text-stone-800 antialiased selection:bg-teal-100 selection:text-teal-900">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -15,6 +15,14 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
             background-color: #FAF9F6;
         }
+		/* 🔥 強制 Drawer 在所有元素之上 */
+		[x-drawer] {
+			z-index: 9999 !important;
+		}		
+		
+		.drawer {
+			z-index: 9999 !important;
+		}
     </style>
 </head>
 <body class="min-h-screen pb-28 md:pb-32">
@@ -33,12 +41,13 @@
         </div>
 
         <button x-data 
-                @click="$dispatch('toggle-settings-drawer')" 
-                class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50">
-            <img src="{{ asset('me.jpg') }}"
-                 alt="User Avatar" 
-                 class="w-full h-full object-cover">
-        </button>
+				@click="$dispatch('toggle-settings-drawer')" 
+				class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-stone-100">
+			{{-- 💡 動態綁定：若目前登入者有綁定 Partner 且上傳過照片，則吃 photo_path；否則自動降級回 me.jpg --}}
+			<img src="{{ auth()->user()->partner?->photo_path ? asset('storage/' . auth()->user()->partner->photo_path) : asset('me.jpg') }}"
+				 alt="User Avatar" 
+				 class="w-full h-full object-cover">
+		</button>
     </header>
 
     <main class="max-w-lg md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 pt-6 animate-fadeIn">
