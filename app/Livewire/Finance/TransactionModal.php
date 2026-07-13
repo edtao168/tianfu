@@ -88,7 +88,32 @@ class TransactionModal extends Component
         $this->showTransactionModal = true;
     }
 
-    /**
+    // 1. 在變更帳戶時，強制讓 Livewire 刷新計算屬性快取
+public function updatedFromAccountId($value)
+{
+    // 清除計算屬性快取
+    unset($this->accounts);
+    
+    // 確保帳戶選擇後，餘額即時更新
+    $this->dispatch('refresh-accounts');
+}
+
+// 2. 同理，如果是轉帳模式，轉入帳戶變更時也刷新
+public function updatedToAccountId($value)
+{
+    unset($this->accounts);
+    $this->dispatch('refresh-accounts');
+}
+
+// 新增：當帳戶資料需要刷新時呼叫
+#[On('refresh-accounts')]
+public function refreshAccounts()
+{
+    // 強制重新載入帳戶資料
+    unset($this->accounts);
+}
+
+	/**
      * 當類型變更時自動更新類別
      */
     public function updatedType($value)

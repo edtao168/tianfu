@@ -131,38 +131,40 @@
                 </button>
             </div>
 
-            {{-- 帳戶 + 餘額 - 汝窯天青風格（修正手機端下拉選單看不清的問題） --}}
-			<div class="grid grid-cols-5 gap-3 mb-4">
-				<div class="col-span-3">
-					<select wire:model="fromAccountId" 
-						class="select select-bordered w-full h-11 text-sm rounded-xl 
-							   bg-sky-50 border-sky-300 text-stone-900 font-medium
-							   dark:bg-slate-900 dark:border-sky-800 dark:text-white
-							   focus:border-sky-500 dark:focus:border-sky-600 focus:text-stone-900 dark:focus:text-white">
-					<option value="" class="bg-white text-stone-400 dark:bg-slate-900 dark:text-stone-500">選擇帳戶</option>
-					@foreach($this->accounts as $account)
-						<option value="{{ $account['id'] }}" class="bg-white text-stone-900 dark:bg-slate-900 dark:text-white">
-							{{ $account['name'] }}
-						</option>
-					@endforeach
-				</select>
-					@error('fromAccountId') <span class="text-rose-600 text-xs">{{ $message }}</span> @enderror
-				</div>
-				
-				<div class="col-span-2 flex items-center justify-end gap-2">
-					<span class="text-sm text-stone-500 dark:text-stone-400">餘額</span>
-					<span class="text-sm font-bold text-stone-800 dark:text-stone-200">
-						@php
-							$selectedAccount = collect($this->accounts)->firstWhere('id', $fromAccountId);
-						@endphp
-						@if($selectedAccount)
-							{{ number_format($selectedAccount['balance'] ?? 0, 0) }}
-						@else
-							0
-						@endif
-					</span>
-				</div>
-			</div>
+            {{-- 帳戶 + 餘額 - 汝窯天青風格 --}}
+<div class="grid grid-cols-5 gap-3 mb-4">
+    <div class="col-span-3">
+        <select wire:model.live="fromAccountId" 
+                class="select select-bordered border border-opacity-100 w-full h-11 text-sm rounded-xl 
+                       bg-sky-50 border-sky-800 text-stone-900 font-medium
+                       dark:bg-slate-900 dark:border-sky-900 dark:text-sky-800
+                       focus:border-sky-500 dark:focus:border-sky-600 focus:text-stone-900 dark:focus:text-sky-800 focus:outline-none">
+            <option value="" class="bg-white text-stone-400 dark:bg-slate-900 dark:text-stone-500">選擇帳戶</option>
+            @foreach($this->accounts as $account)
+                <option value="{{ $account['id'] }}" class="bg-white text-stone-900 dark:bg-slate-900 dark:text-stone-400">
+                    {{ $account['name'] }}
+                </option>
+            @endforeach
+        </select>
+        @error('fromAccountId') <span class="text-rose-600 text-xs">{{ $message }}</span> @enderror
+    </div>
+    
+    <div class="col-span-2 flex items-center justify-end gap-2">
+        <span class="text-sm text-stone-500 dark:text-stone-400">餘額</span>
+        {{-- 使用 wire:key 強制重新渲染 --}}
+        <span class="text-sm font-bold text-rose-800 dark:text-rose-400" wire:key="balance-{{ $fromAccountId }}">
+            @php
+                $selectedAccount = collect($this->accounts)->firstWhere('id', $fromAccountId);
+            @endphp
+            @if($selectedAccount)
+                {{ $selectedAccount['currency'] }} 
+				{{ number_format($selectedAccount['balance'] ?? 0, 0) }}
+            @else
+                0
+            @endif
+        </span>
+    </div>
+</div>
 
             {{-- 轉帳目標帳戶 - 千山青綠風格 --}}
 			@if($type === 'transfer')
@@ -176,7 +178,7 @@
 							<option value="" class="bg-white dark:bg-slate-900 text-stone-400">選擇目標帳戶</option>
 							@foreach($this->accounts as $account)
 								@if($account['id'] !== $fromAccountId)
-									<option value="{{ $account['id'] }}" class="bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100">
+									<option value="{{ $account['id'] }}" class="bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-400">
 										{{ $account['name'] }}
 									</option>
 								@endif
@@ -211,7 +213,7 @@
 							 bg-stone-50 border border-stone-300 text-stone-900 placeholder:text-stone-400 font-medium
 							 dark:bg-slate-900 dark:border-stone-700 dark:text-white dark:placeholder:text-stone-500
 							 focus:border-stone-400 dark:focus:border-stone-500 
-							 focus:text-stone-900 dark:focus:text-white focus:bg-white dark:focus:bg-slate-950
+							 focus:text-stone-900 dark:focus:text-stone-400 focus:bg-white dark:focus:bg-slate-950
 							 resize-none"
 						style="height: 100%;"></textarea>
                 </div>
@@ -223,24 +225,24 @@
 					<x-button label="返回" 
 						type="button"
 						:link="route('finance.transactions')"
-						class="btn-sm rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none" />
+						class="rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none" />
 					
                     @if(!$transactionId)
 						<x-button label="再記一筆" 
 							type="button"
 							wire:click="saveAndKeepOpen"
-							class="btn-sm rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none"
+							class="rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none"
 							spinner="saveAndKeepOpen" />
 					@endif
 					
 					<x-button label="存為範本" 
 							  type="button"
 							  @click="$wire.showTemplateModal = true"
-							  class="btn-sm rounded-xl font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950 dark:text-sky-300 dark:hover:bg-sky-900 border-none {{ $transactionId ? 'col-span-1' : 'col-span-2' }}" />
+							  class="rounded-xl font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950 dark:text-sky-300 dark:hover:bg-sky-900 border-none" />
 
 					<x-button label="儲存" 
 							  type="submit" 
-							  class="btn-sm rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 border-none {{ $transactionId ? 'col-span-1' : 'col-span-2' }}" 
+							  class="rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 border-none" 
 							  spinner="saveTransaction" />
 				</div>
 			</x-slot:actions>
