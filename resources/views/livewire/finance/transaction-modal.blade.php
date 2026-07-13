@@ -15,7 +15,7 @@
                     @click="$wire.openTemplateList()"
                     class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 
                            bg-stone-100 text-stone-700 hover:bg-stone-200 
-                           dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700">
+                           dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700">
                 <span class="mr-1">📋</span> 範本
             </button>
             
@@ -135,17 +135,17 @@
 			<div class="grid grid-cols-5 gap-3 mb-4">
 				<div class="col-span-3">
 					<select wire:model="fromAccountId" 
-							class="select select-bordered w-full h-11 text-sm rounded-xl 
-								   bg-sky-50 border-sky-300 text-stone-800
-								   dark:bg-slate-900 dark:border-sky-800 dark:text-stone-100
-								   focus:border-sky-500 dark:focus:border-sky-600">
-						<option value="" class="bg-white dark:bg-slate-900 text-stone-400">選擇帳戶</option>
-						@foreach($this->accounts as $account)
-							<option value="{{ $account['id'] }}" class="bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100">
-								{{ $account['name'] }}
-							</option>
-						@endforeach
-					</select>
+						class="select select-bordered w-full h-11 text-sm rounded-xl 
+							   bg-sky-50 border-sky-300 text-stone-900 font-medium
+							   dark:bg-slate-900 dark:border-sky-800 dark:text-white
+							   focus:border-sky-500 dark:focus:border-sky-600 focus:text-stone-900 dark:focus:text-white">
+					<option value="" class="bg-white text-stone-400 dark:bg-slate-900 dark:text-stone-500">選擇帳戶</option>
+					@foreach($this->accounts as $account)
+						<option value="{{ $account['id'] }}" class="bg-white text-stone-900 dark:bg-slate-900 dark:text-white">
+							{{ $account['name'] }}
+						</option>
+					@endforeach
+				</select>
 					@error('fromAccountId') <span class="text-rose-600 text-xs">{{ $message }}</span> @enderror
 				</div>
 				
@@ -206,12 +206,14 @@
                 {{-- 備註 --}}
                 <div class="col-span-3">
                     <textarea wire:model="memo"
-                              placeholder="請輸入備註"
-                              class="textarea w-full h-full min-h-[80px] rounded-2xl text-sm p-3 
-                                     bg-stone-50 border border-stone-300 text-stone-800 placeholder:text-stone-400
-                                     dark:bg-slate-900 dark:border-stone-700 dark:text-stone-100 dark:placeholder:text-stone-500
-                                     focus:border-stone-400 dark:focus:border-stone-500 resize-none"
-                              style="height: 100%;"></textarea>
+						placeholder="請輸入備註"
+						class="textarea w-full h-full min-h-[80px] rounded-2xl text-sm p-3 
+							 bg-stone-50 border border-stone-300 text-stone-900 placeholder:text-stone-400 font-medium
+							 dark:bg-slate-900 dark:border-stone-700 dark:text-white dark:placeholder:text-stone-500
+							 focus:border-stone-400 dark:focus:border-stone-500 
+							 focus:text-stone-900 dark:focus:text-white focus:bg-white dark:focus:bg-slate-950
+							 resize-none"
+						style="height: 100%;"></textarea>
                 </div>
             </div>
 
