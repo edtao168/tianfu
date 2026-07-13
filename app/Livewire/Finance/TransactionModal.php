@@ -19,6 +19,7 @@ class TransactionModal extends Component
     public bool $showTemplateModal = false;
     public bool $showTemplateListModal = false;
     public bool $showCategoryPicker = false;
+    public bool $isTemplateCategoryPicker = false;
 
     public ?int $transactionId = null;
     public string $type = 'expense';
@@ -36,7 +37,6 @@ class TransactionModal extends Component
     public ?int $editingTemplateId = null;
     public string $templateType = 'expense';
     public string $templateName = '';
-    public string $templateAmount = '';
     public ?int $templateFromAccountId = null;
     public ?int $templateToAccountId = null;
     public ?int $templateCategoryId = null;
@@ -45,7 +45,8 @@ class TransactionModal extends Component
     public function mount()
     {
         $this->recordedAt = now()->format('Y-m-d\TH:i');
-        $this->categoryId = 2;  // 預設支出類別
+        $this->categoryId = 2;
+        $this->fromAccountId = 1;
     }
 
     #[On('open-transaction-modal')]
@@ -55,7 +56,6 @@ class TransactionModal extends Component
         $this->recordedAt = now()->format('Y-m-d\TH:i');
 
         if ($transaction_id) {
-            // 修改模式...
             $transaction = Transaction::where('shop_id', $this->shop_id)
                 ->findOrFail($transaction_id);
 
@@ -78,60 +78,58 @@ class TransactionModal extends Component
             $this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
             $this->memo = $transaction->memo ?? '';
         } else {
-            // 新增模式
             $this->type = 'expense';
             $this->fromAccountId = 1;
-            $this->toAccountId = 1;
-            $this->categoryId = 2;  // 支出類別預設
+            $this->toAccountId = null;
+            $this->categoryId = 2;
+            $this->amount = '';
         }
 
         $this->showTransactionModal = true;
     }
 
-    // 1. 在變更帳戶時，強制讓 Livewire 刷新計算屬性快取
-public function updatedFromAccountId($value)
-{
-    // 清除計算屬性快取
-    unset($this->accounts);
-    
-    // 確保帳戶選擇後，餘額即時更新
-    $this->dispatch('refresh-accounts');
-}
+    // ... 其他方法 ...
 
-// 2. 同理，如果是轉帳模式，轉入帳戶變更時也刷新
-public function updatedToAccountId($value)
-{
-    unset($this->accounts);
-    $this->dispatch('refresh-accounts');
-}
+    public function updatedFromAccountId($value)
+    {
+        unset($this->accounts);
+    }
 
-// 新增：當帳戶資料需要刷新時呼叫
-#[On('refresh-accounts')]
-public function refreshAccounts()
-{
-    // 強制重新載入帳戶資料
-    unset($this->accounts);
-}
+    public function updatedToAccountId($value)
+    {
+        unset($this->accounts);
+    }
 
-	/**
-     * 當類型變更時自動更新類別
-     */
     public function updatedType($value)
     {
-        // 檢查當前類別是否還有效
         if ($this->categoryId !== null) {
             $category = Category::find($this->categoryId);
             if ($category && $category->type === $value) {
-                return;  // 保留使用者選擇的類別
+                return;
             }
         }
         
-        // 否則設定新的預設值
         $this->categoryId = match ($value) {
             'expense' => 2,
             'income'  => 70,
             default   => null,
         };
+        
+        unset($this->filteredCategories);
+    }
+
+    public function updatedTemplateType($value)
+    {
+        $this->templateCategoryId = null;
+        unset($this->filteredCategories);
+    }
+
+    public function updatedTemplateFromAccountId($value)
+    {
+        if ($this->templateType === 'transfer' && $this->templateToAccountId === $value) {
+            $this->templateToAccountId = null;
+        }
+        unset($this->accounts);
     }
 
     // ============ 金額增減方法 ============
@@ -162,16 +160,22 @@ public function refreshAccounts()
         $this->recordedAt = $currentDate->format('Y-m-d\TH:i');
     }
 
-    // ============ 類別選擇方法 ============
-    public function openCategoryPicker()
+    // ============ 共用類別選擇器 ============
+    public function openCategoryPicker($forTemplate = false)
     {
+        $this->isTemplateCategoryPicker = $forTemplate;
         $this->showCategoryPicker = true;
     }
 
     public function selectCategory($categoryId)
     {
-        $this->categoryId = $categoryId;
+        if ($this->isTemplateCategoryPicker) {
+            $this->templateCategoryId = $categoryId;
+        } else {
+            $this->categoryId = $categoryId;
+        }
         $this->showCategoryPicker = false;
+        $this->isTemplateCategoryPicker = false;
     }
 
     public function getSelectedCategoryProperty()
@@ -182,23 +186,42 @@ public function refreshAccounts()
         return null;
     }
 
-    /**
-     * 重置表單（只清除交易 ID 和金額）
-     */
+    public function getSelectedTemplateCategoryProperty()
+    {
+        if ($this->templateCategoryId) {
+            return Category::with('parent')->find($this->templateCategoryId);
+        }
+        return null;
+    }
+
+    public function getCurrentAccountBalance()
+    {
+        if (!$this->fromAccountId) {
+            return 0;
+        }
+        
+        $account = FinancialAccount::where('id', $this->fromAccountId)
+            ->where('shop_id', $this->shop_id)
+            ->first();
+        
+        return $account ? $account->balance : 0;
+    }
+
     private function resetForm()
     {
         $this->transactionId = null;
         $this->amount = '';
-        // 保留 type, fromAccountId, toAccountId, categoryId, recordedAt, memo
     }
 
-    private function resetTemplateForm()
+    // ✅ 改為 public 方法
+    public function resetTemplateForm()
     {
         $this->reset([
             'editingTemplateId', 'templateType', 'templateName',
-            'templateAmount', 'templateFromAccountId', 'templateToAccountId',
+            'templateFromAccountId', 'templateToAccountId',
             'templateCategoryId', 'templateMemo'
         ]);
+        $this->templateType = 'expense';
     }
 
     // ============ 計算屬性：帳戶與分類 ============
@@ -218,11 +241,15 @@ public function refreshAccounts()
 
     public function getFilteredCategoriesProperty()
     {
+        $type = $this->isTemplateCategoryPicker 
+            ? ($this->templateType ?? 'expense') 
+            : $this->type;
+            
         return Category::where('shop_id', $this->shop_id)
-            ->where('type', $this->type)
+            ->where('type', $type)
             ->whereNull('parent_id')
-            ->with(['children' => function($query) {
-                $query->where('type', $this->type)
+            ->with(['children' => function($query) use ($type) {
+                $query->where('type', $type)
                       ->orderBy('sort_order');
             }])
             ->orderBy('sort_order')
@@ -233,9 +260,14 @@ public function refreshAccounts()
     public function getTemplatesProperty()
     {
         $query = TransactionTemplate::where('shop_id', $this->shop_id);
+        
         if (Auth::check()) {
-            $query->where('user_id', Auth::id());
+            $query->where(function($q) {
+                $q->where('user_id', Auth::id())
+                  ->orWhereNull('user_id');
+            });
         }
+        
         return $query->orderBy('name')->get()->toArray();
     }
 
@@ -269,9 +301,8 @@ public function refreshAccounts()
     {
         $template = TransactionTemplate::findOrFail($templateId);
         $this->editingTemplateId = $template->id;
-        $this->templateName = $template->name;
         $this->templateType = $template->type;
-        $this->templateAmount = number_format((float)$template->amount, 2, '.', '');
+        $this->templateName = $template->name;
         $this->templateFromAccountId = $template->from_account_id;
         $this->templateToAccountId = $template->to_account_id;
         $this->templateCategoryId = $template->category_id;
@@ -283,20 +314,42 @@ public function refreshAccounts()
 
     public function saveAsTemplate()
     {
-        $this->validate(['templateName' => 'required|string|max:50']);
+        $this->validate([
+            'templateName' => 'required|string|max:50',
+            'amount' => 'required|numeric|gt:0',
+            'templateFromAccountId' => 'required|exists:financial_accounts,id',
+        ]);
+
+        if ($this->templateType === 'transfer') {
+            $this->validate([
+                'templateToAccountId' => 'required|exists:financial_accounts,id|different:templateFromAccountId',
+            ]);
+        } else {
+            $this->validate([
+                'templateCategoryId' => 'required|exists:categories,id',
+            ]);
+        }
+
         $userId = Auth::id();
-        if (!$userId) throw new \Exception('請先登入才能儲存範本');
+        if (!$userId) {
+            throw new \Exception('請先登入才能儲存範本');
+        }
+
+        $amount = (float) $this->amount;
+        if ($amount <= 0) {
+            throw new \Exception('金額必須大於 0');
+        }
 
         $templateData = [
             'user_id' => $userId,
             'shop_id' => $this->shop_id,
-            'type' => $this->type,
+            'type' => $this->templateType,
             'name' => $this->templateName,
-            'amount' => $this->amount,
-            'from_account_id' => $this->fromAccountId,
-            'to_account_id' => $this->toAccountId,
-            'category_id' => $this->categoryId,
-            'memo' => $this->memo,
+            'amount' => $amount,
+            'from_account_id' => $this->templateFromAccountId,
+            'to_account_id' => $this->templateType === 'transfer' ? $this->templateToAccountId : null,
+            'category_id' => $this->templateType !== 'transfer' ? $this->templateCategoryId : null,
+            'memo' => $this->templateMemo ?? '',
         ];
 
         if ($this->editingTemplateId) {
@@ -308,7 +361,7 @@ public function refreshAccounts()
         }
 
         $this->showTemplateModal = false;
-        $this->resetTemplateForm();
+        $this->showTransactionModal = true;
     }
 
     // ============ 主要儲存與修改程序 ============
@@ -332,7 +385,6 @@ public function refreshAccounts()
         $this->validate($rules);
 
         DB::transaction(function () use ($userId) {
-            // 編輯模式：回滾舊交易
             if ($this->transactionId) {
                 $oldTx = Transaction::where('shop_id', $this->shop_id)
                     ->lockForUpdate()
@@ -354,7 +406,6 @@ public function refreshAccounts()
                 }
             }
 
-            // 執行新交易
             if ($this->type === 'transfer') {
                 $fromAccount = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
                 $toAccount = FinancialAccount::where('id', $this->toAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
@@ -433,14 +484,10 @@ public function refreshAccounts()
         $this->dispatch('page-reload');
     }
 
-    /**
-     * ✅ 「再記一筆」：保留所有欄位，只清空金額和交易 ID
-     */
     public function saveAndKeepOpen()
     {
         $this->executeSaveProcedure();
         
-        // ✅ 保存所有需要保留的狀態（除了 transactionId 和 amount）
         $keep = [
             'type', 'fromAccountId', 'toAccountId', 
             'categoryId', 'recordedAt', 'memo'
@@ -451,11 +498,9 @@ public function refreshAccounts()
             $saved[$key] = $this->$key;
         }
         
-        // 重置（只清除 transactionId 和 amount）
         $this->transactionId = null;
         $this->amount = '';
         
-        // ✅ 恢復所有保存的狀態
         foreach ($saved as $key => $value) {
             $this->$key = $value;
         }
@@ -464,11 +509,60 @@ public function refreshAccounts()
         $this->dispatch('toast', type: 'success', text: '儲存成功，請繼續操作！');
     }
 
+// app/Livewire/Finance/TransactionModal.php
+
+    /**
+     * 從主要記帳 Modal 開啟範本 Modal
+     * 先關閉交易 Modal，避免兩個 Modal 同時存在造成 Alpine 狀態衝突
+     */
+    public function openTemplateModalFromTransaction()
+    {
+        // 1. 先將主表記帳的資料同步到範本表單中（優化體驗：免去重複輸入）
+        $this->templateType = $this->type;
+        $this->templateFromAccountId = $this->fromAccountId;
+        $this->templateToAccountId = $this->toAccountId;
+        $this->templateCategoryId = $this->categoryId;
+        $this->templateMemo = $this->memo;
+        
+        // 2. 關閉主 Modal，開啟範本 Modal
+        $this->showTransactionModal = false;
+        $this->showTemplateListModal = false; // 確保列表也是關閉的
+        $this->showTemplateModal = true;
+    }
+
+    /**
+     * 從範本列表開啟新增/編輯範本 Modal
+     */
+    public function openTemplateModalFromList()
+    {
+        // 核心修正：除了關閉列表，也必須強制關閉主交易 Modal，避免層級衝突
+        $this->showTransactionModal = false;
+        $this->showTemplateListModal = false;
+        
+        // 初始化並開啟
+        $this->openTemplateModal();
+    }
+
+    /**
+     * 初始化範本表單並開啟 Modal
+     */
+    public function openTemplateModal()
+    {
+        $this->resetTemplateForm();
+        
+        // 雙重保險：開啟範本 Modal 時，關閉其他所有 Modal 狀態
+        $this->showTransactionModal = false;
+        $this->showTemplateListModal = false;
+        
+        $this->showTemplateModal = true;
+    }
+
     public function render()
     {
         return view('livewire.finance.transaction-modal', [
             'templates' => $this->templates,
             'selectedCategory' => $this->selectedCategory,
+            'selectedTemplateCategory' => $this->selectedTemplateCategory,
         ]);
     }
 }

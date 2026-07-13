@@ -82,6 +82,118 @@ body {
     border-color: var(--song-border);
 }
 
+/* ==========================================================================
+   範本 Modal - 宋式汝窯天青主題
+   ========================================================================== */
+
+.template-modal-blue .modal-box {
+    background: linear-gradient(145deg, #e8f0fe, #d4e2f7) !important;
+    /* 或者純色 */
+    /* background-color: #e8f0fe !important; */
+    border-color: rgba(162, 189, 219, 0.4) !important;
+    box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.2) !important;
+    backdrop-filter: blur(8px);
+}
+
+/* 文字顏色 - 使用宋式墨色 */
+.template-modal-blue .modal-box,
+.template-modal-blue .modal-box *:not(.btn):not(.input):not(.select):not(.textarea) {
+    color: #4a4a4a !important;
+}
+
+/* 表單元件 - 紙張質感 */
+.template-modal-blue .input,
+.template-modal-blue .select,
+.template-modal-blue .textarea {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    color: #4a4a4a !important;
+    border-color: rgba(162, 189, 219, 0.3) !important;
+}
+
+.template-modal-blue .input:focus,
+.template-modal-blue .select:focus,
+.template-modal-blue .textarea:focus {
+    border-color: #a2bddb !important;
+    box-shadow: 0 0 0 3px rgba(162, 189, 219, 0.15) !important;
+}
+
+.template-modal-blue .input::placeholder {
+    color: #b0b8c5 !important;
+}
+
+/* 類型按鈕 - 宋式淡雅 */
+.template-modal-blue .btn-ghost {
+    color: #6a7a8a !important;
+}
+
+.template-modal-blue .btn-ghost:hover {
+    background-color: rgba(162, 189, 219, 0.15) !important;
+    color: #4a5a6a !important;
+}
+
+.template-modal-blue .btn-ghost.active {
+    background-color: rgba(162, 189, 219, 0.2) !important;
+    color: #4a6a8a !important;
+}
+
+/* 分隔線 - 水墨淡痕 */
+.template-modal-blue .border-t {
+    border-color: rgba(162, 189, 219, 0.2) !important;
+}
+
+/* 文字顏色調整 */
+.template-modal-blue .text-stone-500,
+.template-modal-blue .text-stone-400 {
+    color: #8a9aaa !important;
+}
+
+.template-modal-blue .text-stone-700,
+.template-modal-blue .text-stone-800 {
+    color: #4a5a6a !important;
+}
+
+/* 按鈕樣式 - 保留宋式內斂 */
+.template-modal-blue .btn.bg-stone-100 {
+    background-color: rgba(162, 189, 219, 0.12) !important;
+    color: #5a6a7a !important;
+}
+
+.template-modal-blue .btn.bg-stone-100:hover {
+    background-color: rgba(162, 189, 219, 0.2) !important;
+}
+
+.template-modal-blue .btn-ghost.text-stone-700 {
+    color: #5a6a7a !important;
+}
+
+.template-modal-blue .btn-ghost.text-stone-700:hover {
+    color: #3a4a5a !important;
+    background-color: rgba(162, 189, 219, 0.1) !important;
+}
+
+/* 類別選擇器 - 宣紙質感 */
+.template-modal-blue .bg-stone-50 {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.template-modal-blue .bg-stone-50:hover {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 金額顏色 - 維持原本但調淡 */
+.template-modal-blue .text-emerald-600 {
+    color: #5b8c7a !important;
+}
+
+.template-modal-blue .text-rose-600 {
+    color: #b57a7a !important;
+}
+
+/* 標題文字 */
+.template-modal-blue .modal-title {
+    color: #3a4a5a !important;
+}
+
 /* 微調數字欄位微調按鈕樣式 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
