@@ -176,7 +176,7 @@
         </x-slot:actions>
     </x-modal>
 
-    {{-- ==================== 儲存範本 Modal ==================== --}}
+    {{-- ==================== 範本 Modal ==================== --}}
     <x-modal wire:model="showTemplateModal" 
              title="{{ $editingTemplateId ? '編輯範本' : '儲存範本' }}" 
              separator 
@@ -291,35 +291,29 @@
                                 {{ $label }}
                             </div>
                             @foreach($typeTemplates as $template)
-                                <div class="flex items-center justify-between p-3 
-                                            bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 dark:hover:bg-stone-700
-                                            rounded-xl transition-colors mb-1.5">
-                                    <div class="flex-1 cursor-pointer" wire:click="applyTemplate({{ $template['id'] }})">
-                                        <div class="font-bold text-sm text-stone-800 dark:text-stone-200">
-                                            {{ $template['name'] }}
-                                        </div>
-                                        <div class="text-xs font-medium text-stone-500 dark:text-stone-400">
-                                            ${{ number_format($template['amount'], 0) }}
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-1">
-                                        <button type="button"
-                                                wire:click="editTemplate({{ $template['id'] }})"
-                                                class="btn btn-ghost btn-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                            </svg>
-                                        </button>
-                                        <button type="button"
-                                                wire:click="deleteTemplate({{ $template['id'] }})"
-                                                wire:confirm="確定刪除？"
-                                                class="btn btn-ghost btn-xs text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
+                                {{-- 整個區塊可點擊編輯 --}}
+								<div class="flex items-center justify-between p-3 
+											bg-stone-50 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700
+											rounded-xl transition-colors mb-1.5 cursor-pointer group"
+									 x-on:click="$wire.editTemplate({{ $template['id'] }})">
+									<div class="flex-1">
+										<div class="font-bold text-sm text-stone-800 dark:text-stone-200">
+											{{ $template['name'] }}
+										</div>
+										<div class="text-xs font-medium text-stone-500 dark:text-stone-400">
+											${{ number_format($template['amount'], 0) }}
+										</div>
+									</div>
+									{{-- 刪除按鈕：阻止冒泡，避免觸發編輯 --}}
+									<button type="button"
+											x-on:click.stop="$wire.deleteTemplate({{ $template['id'] }})"
+											wire:confirm="確定刪除「{{ $template['name'] }}」？"
+											class="btn btn-ghost btn-xs text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 opacity-0 group-hover:opacity-100 transition-opacity">
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+										</svg>
+									</button>
+								</div>
                             @endforeach
                         </div>
                     @endif

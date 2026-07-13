@@ -88,8 +88,6 @@ class TransactionModal extends Component
         $this->showTransactionModal = true;
     }
 
-    // ... 其他方法 ...
-
     public function updatedFromAccountId($value)
     {
         unset($this->accounts);
@@ -309,14 +307,14 @@ class TransactionModal extends Component
         $this->templateMemo = $template->memo ?? '';
 
         $this->showTemplateListModal = false;
-        $this->showTemplateModal = true;
+        $this->dispatch('open-template-modal');
     }
 
     public function saveAsTemplate()
     {
         $this->validate([
             'templateName' => 'required|string|max:50',
-            'amount' => 'required|numeric|gt:0',
+            'amount' => 'numeric|gte:0',
             'templateFromAccountId' => 'required|exists:financial_accounts,id',
         ]);
 
@@ -336,7 +334,7 @@ class TransactionModal extends Component
         }
 
         $amount = (float) $this->amount;
-        if ($amount <= 0) {
+        if ($amount < 0) {
             throw new \Exception('金額必須大於 0');
         }
 
@@ -535,13 +533,19 @@ class TransactionModal extends Component
      */
     public function openTemplateModalFromList()
     {
-        // 核心修正：除了關閉列表，也必須強制關閉主交易 Modal，避免層級衝突
-        $this->showTransactionModal = false;
         $this->showTemplateListModal = false;
-        
-        // 初始化並開啟
-        $this->openTemplateModal();
-    }
+    $this->resetTemplateForm();
+    
+    // 延遲開啟
+    $this->dispatch('open-template-modal');
+}
+
+#[On('open-template-modal')]
+public function onOpenTemplateModal()
+{
+    $this->showTransactionModal = false;
+    $this->showTemplateModal = true;
+}
 
     /**
      * 初始化範本表單並開啟 Modal
