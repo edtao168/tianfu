@@ -18,8 +18,10 @@ class TransactionModal extends Component
     public bool $showTransactionModal = false;
     public bool $showTemplateModal = false;
     public bool $showTemplateListModal = false;
+	public bool $showTemplateList = false;
     public bool $showCategoryPicker = false;
     public bool $isTemplateCategoryPicker = false;
+    public ?string $categoryPickerReturnTo = null;  // 'transaction' | 'template' | null
 
     public ?int $transactionId = null;
     public string $type = 'expense';
@@ -47,6 +49,9 @@ class TransactionModal extends Component
         $this->recordedAt = now()->format('Y-m-d\TH:i');
         $this->categoryId = 2;
         $this->fromAccountId = 1;
+		
+            $this->type = 'expense';
+            $this->updatedType('expense');
     }
 
     #[On('open-transaction-modal')]
@@ -54,6 +59,7 @@ class TransactionModal extends Component
     {
         $this->resetForm();
         $this->recordedAt = now()->format('Y-m-d\TH:i');
+		$this->showTemplateList = false;
 
         if ($transaction_id) {
             $transaction = Transaction::where('shop_id', $this->shop_id)
@@ -100,26 +106,33 @@ class TransactionModal extends Component
 
     public function updatedType($value)
     {
-        if ($this->categoryId !== null) {
-            $category = Category::find($this->categoryId);
-            if ($category && $category->type === $value) {
-                return;
-            }
+        if ($value === 'expense') {
+            // 點擊支出：fromAccountId = 2, toAccountId = null
+            $this->fromAccountId = 2;
+            $this->toAccountId = null;
+        } elseif ($value === 'income') {
+            // 點擊收入：fromAccountId = null, toAccountId = 70
+            $this->fromAccountId = null;
+            $this->toAccountId = 70;
+        } elseif ($value === 'transfer') {
+            // 轉帳：可視需求預設，或清空由使用者選擇
+            $this->fromAccountId = 2; // 範例：預設從帳戶 2 轉出
+            $this->toAccountId = null;
         }
-        
-        $this->categoryId = match ($value) {
-            'expense' => 2,
-            'income'  => 70,
-            default   => null,
-        };
-        
-        unset($this->filteredCategories);
     }
 
     public function updatedTemplateType($value)
     {
-        $this->templateCategoryId = null;
-        unset($this->filteredCategories);
+        if ($value === 'expense') {
+            $this->templateFromAccountId = 2;
+            $this->templateToAccountId = null;
+        } elseif ($value === 'income') {
+            $this->templateFromAccountId = null;
+            $this->templateToAccountId = 70;
+        } elseif ($value === 'transfer') {
+            $this->templateFromAccountId = 2;
+            $this->templateToAccountId = null;
+        }
     }
 
     public function updatedTemplateFromAccountId($value)
@@ -162,6 +175,7 @@ class TransactionModal extends Component
     public function openCategoryPicker($forTemplate = false)
     {
         $this->isTemplateCategoryPicker = $forTemplate;
+        $this->categoryPickerReturnTo = $forTemplate ? 'template' : 'transaction';
         $this->showCategoryPicker = true;
     }
 
@@ -173,6 +187,7 @@ class TransactionModal extends Component
             $this->categoryId = $categoryId;
         }
         $this->showCategoryPicker = false;
+        $this->categoryPickerReturnTo = null;
         $this->isTemplateCategoryPicker = false;
     }
 
@@ -211,7 +226,6 @@ class TransactionModal extends Component
         $this->amount = '';
     }
 
-    // ✅ 改為 public 方法
     public function resetTemplateForm()
     {
         $this->reset([
@@ -507,24 +521,19 @@ class TransactionModal extends Component
         $this->dispatch('toast', type: 'success', text: '儲存成功，請繼續操作！');
     }
 
-// app/Livewire/Finance/TransactionModal.php
-
     /**
      * 從主要記帳 Modal 開啟範本 Modal
-     * 先關閉交易 Modal，避免兩個 Modal 同時存在造成 Alpine 狀態衝突
      */
     public function openTemplateModalFromTransaction()
     {
-        // 1. 先將主表記帳的資料同步到範本表單中（優化體驗：免去重複輸入）
         $this->templateType = $this->type;
         $this->templateFromAccountId = $this->fromAccountId;
         $this->templateToAccountId = $this->toAccountId;
         $this->templateCategoryId = $this->categoryId;
         $this->templateMemo = $this->memo;
         
-        // 2. 關閉主 Modal，開啟範本 Modal
         $this->showTransactionModal = false;
-        $this->showTemplateListModal = false; // 確保列表也是關閉的
+        $this->showTemplateListModal = false;
         $this->showTemplateModal = true;
     }
 
@@ -534,18 +543,16 @@ class TransactionModal extends Component
     public function openTemplateModalFromList()
     {
         $this->showTemplateListModal = false;
-    $this->resetTemplateForm();
-    
-    // 延遲開啟
-    $this->dispatch('open-template-modal');
-}
+        $this->resetTemplateForm();
+        $this->dispatch('open-template-modal');
+    }
 
-#[On('open-template-modal')]
-public function onOpenTemplateModal()
-{
-    $this->showTransactionModal = false;
-    $this->showTemplateModal = true;
-}
+    #[On('open-template-modal')]
+    public function onOpenTemplateModal()
+    {
+        $this->showTransactionModal = false;
+        $this->showTemplateModal = true;
+    }
 
     /**
      * 初始化範本表單並開啟 Modal
@@ -553,11 +560,8 @@ public function onOpenTemplateModal()
     public function openTemplateModal()
     {
         $this->resetTemplateForm();
-        
-        // 雙重保險：開啟範本 Modal 時，關閉其他所有 Modal 狀態
         $this->showTransactionModal = false;
         $this->showTemplateListModal = false;
-        
         $this->showTemplateModal = true;
     }
 

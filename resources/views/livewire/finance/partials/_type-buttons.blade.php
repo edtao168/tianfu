@@ -1,7 +1,7 @@
 {{-- resources/views/livewire/finance/partials/_type-buttons.blade.php --}}
 
 @props([
-    'model' => 'type',           // 綁定的 Livewire 模型
+    'model' => 'type',
     'types' => ['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'],
     'columns' => 'grid-cols-3',
     'showTemplate' => false,
@@ -11,7 +11,7 @@
 <div class="grid {{ $columns }} gap-1.5 mb-5">
     @if($showTemplate)
         <button type="button"
-                @click="$wire.openTemplateList()"
+                wire:click="openTemplateList"
                 class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 
                        bg-stone-100 text-stone-700 hover:bg-stone-200 
                        dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700">
