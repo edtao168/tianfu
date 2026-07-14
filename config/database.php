@@ -64,7 +64,7 @@ return [
             ]) : [],
 			// 在這裡配置 mysqldump 選項
 			'dump' => [
-				'dump_binary_path' => 'C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/',
+				'dump_binary_path' => '',
 				'use_single_transaction' => true,
 				'timeout' => 60,
 				'exclude_tables' => [
