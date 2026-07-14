@@ -5,7 +5,7 @@
     'memoPlaceholder' => '請輸入備註',
     'class' => 'mb-5',
     'photoLabel' => '照片',
-    'showPhoto' => true,              // ✅ 是否顯示照片區塊
+    'showPhoto' => true,
     'memoRows' => 3,
 ])
 
@@ -25,28 +25,29 @@
             </div>
         </div>
         <div class="col-span-3">
-            <textarea wire:model="{{ $memoModel }}"
-                      placeholder="{{ $memoPlaceholder }}"
-                      class="textarea w-full h-full min-h-[80px] rounded-2xl text-sm p-3 
-                             bg-stone-50 border border-stone-300 text-stone-900 placeholder:text-stone-400 font-medium
-                             dark:bg-slate-900 dark:border-stone-700 dark:text-white dark:placeholder:text-stone-500
-                             focus:border-stone-400 dark:focus:border-stone-500 
-                             focus:text-stone-900 dark:focus:text-stone-400 focus:bg-white dark:focus:bg-slate-950
-                             resize-none"
-                      style="height: 100%;"></textarea>
+            {{-- 仿照 amount 的外層容器結構 --}}
+            <div class="relative w-full h-full min-h-[80px] bg-stone-100/50 dark:bg-slate-900/60 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700">
+                <textarea wire:model="{{ $memoModel }}"
+                          placeholder="{{ $memoPlaceholder }}"
+                          class="w-full h-full bg-transparent focus:outline-none
+                                 text-stone-900 dark:text-stone-100 
+                                 placeholder:text-stone-300 dark:placeholder:text-stone-600 
+                                 font-medium resize-none text-sm"
+                          style="min-height: 60px;"></textarea>
+            </div>
         </div>
     @else
-        {{-- 沒有照片時，備註佔滿整行 --}}
         <div class="col-span-5">
-            <textarea wire:model="{{ $memoModel }}"
-                      placeholder="{{ $memoPlaceholder }}"
-                      rows="{{ $memoRows }}"
-                      class="textarea w-full rounded-2xl text-sm p-3 
-                             bg-stone-50 border border-stone-300 text-stone-900 placeholder:text-stone-400 font-medium
-                             dark:bg-slate-900 dark:border-stone-700 dark:text-white dark:placeholder:text-stone-500
-                             focus:border-stone-400 dark:focus:border-stone-500 
-                             focus:text-stone-900 dark:focus:text-stone-400 focus:bg-white dark:focus:bg-slate-950
-                             resize-none"></textarea>
+            {{-- 仿照 amount 的外層容器結構 --}}
+            <div class="relative w-full bg-stone-100/50 dark:bg-slate-900/60 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700">
+                <textarea wire:model="{{ $memoModel }}"
+                          placeholder="{{ $memoPlaceholder }}"
+                          rows="{{ $memoRows }}"
+                          class="w-full bg-transparent focus:outline-none
+                                 text-stone-900 dark:text-stone-100 
+                                 placeholder:text-stone-300 dark:placeholder:text-stone-600 
+                                 font-medium resize-none text-sm"></textarea>
+            </div>
         </div>
     @endif
 </div>
