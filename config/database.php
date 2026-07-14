@@ -62,6 +62,16 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+			// 在這裡配置 mysqldump 選項
+			'dump' => [
+				'dump_binary_path' => 'C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/',
+				'use_single_transaction' => true,
+				'timeout' => 60,
+				'exclude_tables' => [
+					// 'table_to_exclude',
+				],
+				'add_extra_option' => '--skip-lock-tables',
+			],
         ],
 
         'mariadb' => [

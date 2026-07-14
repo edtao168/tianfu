@@ -4,21 +4,29 @@
     
     {{-- 頁頭區 --}}
     <div class="flex justify-between items-center border-b border-stone-200/60 pb-4">
-        <div>
-            <h1 class="text-lg font-bold tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2">
-                <span class="w-1.5 h-4 rounded-full bg-stone-600"></span>
-                帳簿備份設定
-            </h1>
-            <p class="text-xs text-stone-400 mt-1">管理雲端同步之資料庫備份檔</p>
-        </div>
-        <x-button 
-            label="立即備份" 
-            icon="o-cpu-chip" 
-            class="btn-sm rounded-lg bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 font-medium tracking-wider shadow-sm" 
-            wire:click="runBackup" 
-            spinner="runBackup"
-        />
-    </div>
+		<div>
+			<h1 class="text-lg font-bold tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2">
+				<span class="w-1.5 h-4 rounded-full bg-stone-600"></span>
+				帳簿備份設定
+			</h1>
+			<p class="text-xs text-stone-400 mt-1">管理雲端同步之資料庫備份檔</p>
+		</div>
+		<div class="flex gap-2">
+			<x-button 
+				label="診斷" 
+				icon="o-beaker" 
+				class="btn-sm rounded-lg bg-stone-100 border-stone-200 text-stone-600 hover:bg-stone-200 font-medium" 
+				wire:click="diagnoseBackup" 
+			/>
+			<x-button 
+				label="立即備份" 
+				icon="o-cpu-chip" 
+				class="btn-sm rounded-lg bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 font-medium tracking-wider shadow-sm" 
+				wire:click="runBackup" 
+				spinner="runBackup"
+			/>
+		</div>
+	</div>
 
     {{-- 💻 PC 端大螢幕：嚴謹的 Mary UI 表格 --}}
     <div class="hidden md:block animate-fadeIn">

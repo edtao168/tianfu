@@ -95,12 +95,7 @@ return [
             'icon' => 'heroicon-o-arrow-trending-up',
         ],
     ],
-    
-	'backup' => [
-        'disk' => env('BACKUP_DISK', 'local'),
-        'path' => env('BACKUP_PATH', 'tianfu-backup'),
-    ],
-	
+
     /*
     |--------------------------------------------------------------------------
     | 其他業務邏輯預留
