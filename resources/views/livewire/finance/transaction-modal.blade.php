@@ -153,7 +153,7 @@
                         'type' => $templateType,
                         'amount' => $amount,
                         'model' => 'amount',
-                        'editable' => false,
+                        'editable' => true,
                         'showSign' => true,
                     ])
                 </div>
