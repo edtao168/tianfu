@@ -235,7 +235,7 @@
 		</x-slot:actions>
 	</x-modal>
 
-	{{-- 重構後：按鈕下沉集中底部之「交易流水 Modal」 --}}
+	{{-- 交易流水 Modal --}}
 	<x-modal wire:model="showAccountTransactionsModal" backdrop-blur-md max-width="7xl" box-class="border border-base-200 shadow-2xl rounded-2xl p-0 overflow-hidden">
 		
 		{{-- 頂部標題屏風：清爽純粹，移除右側按鈕防擠壓 --}}
@@ -267,7 +267,7 @@
 				{{-- 月份切換 --}}
 				<div class="flex items-center gap-1 bg-base-100 p-1 rounded-lg border border-base-200 shadow-sm self-start sm:self-auto">
 					<x-button icon="o-chevron-left" class="btn-sm btn-ghost text-stone-500 hover:bg-stone-100" wire:click="previousMonth" />
-					<span class="font-bold text-sm px-4 min-w-[110px] text-center text-stone-800 tracking-wider">
+					<span class="font-bold text-sm px-4 min-w-[90px] text-center text-stone-800 tracking-wider">
 						{{ Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->format('Y 年 m 月') }}
 					</span>
 					<x-button icon="o-chevron-right" class="btn-sm btn-ghost text-stone-500 hover:bg-stone-100" wire:click="nextMonth" 
