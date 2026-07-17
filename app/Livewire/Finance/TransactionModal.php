@@ -5,20 +5,24 @@ namespace App\Livewire\Finance;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\WithFileUploads;
 use App\Models\FinancialAccount;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionTemplate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class TransactionModal extends Component
 {
+    use WithFileUploads;
+
     public bool $showTransactionModal = false;
     public bool $showTemplateModal = false;
     public bool $showTemplateListModal = false;
-	public bool $showTemplateList = false;
+    public bool $showTemplateList = false;
     public bool $showCategoryPicker = false;
     public bool $isTemplateCategoryPicker = false;
     public ?string $categoryPickerReturnTo = null;  // 'transaction' | 'template' | null
@@ -32,6 +36,10 @@ class TransactionModal extends Component
     public string $recordedAt = '';
     public string $memo = '';
     public int $shop_id = 1;
+
+    // 照片上傳相關屬性
+    public $photo;               // 用於綁定前端上傳的暫存圖片檔案物件
+    public ?string $existingPhotoPath = null; // 用於修改記錄時顯示現有圖片
 
     private ?Transaction $originalTransaction = null;
 
@@ -49,9 +57,9 @@ class TransactionModal extends Component
         $this->recordedAt = now()->format('Y-m-d\TH:i');
         $this->categoryId = 2;
         $this->fromAccountId = 1;
-		
-            $this->type = 'expense';
-            $this->updatedType('expense');
+        
+        $this->type = 'expense';
+        $this->updatedType('expense');
     }
 
     #[On('open-transaction-modal')]
@@ -59,7 +67,7 @@ class TransactionModal extends Component
     {
         $this->resetForm();
         $this->recordedAt = now()->format('Y-m-d\TH:i');
-		$this->showTemplateList = false;
+        $this->showTemplateList = false;
 
         if ($transaction_id) {
             $transaction = Transaction::where('shop_id', $this->shop_id)
@@ -83,6 +91,7 @@ class TransactionModal extends Component
             $this->amount = number_format((float)$transaction->amount, 2, '.', '');
             $this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
             $this->memo = $transaction->memo ?? '';
+            $this->existingPhotoPath = $transaction->photo_path; // 載入原有照片路徑
         } else {
             $this->type = 'expense';
             $this->fromAccountId = 1;
@@ -107,16 +116,13 @@ class TransactionModal extends Component
     public function updatedType($value)
     {
         if ($value === 'expense') {
-            // 點擊支出：fromAccountId = 2, toAccountId = null
             $this->fromAccountId = 2;
             $this->toAccountId = null;
         } elseif ($value === 'income') {
-            // 點擊收入：fromAccountId = null, toAccountId = 70
             $this->fromAccountId = null;
             $this->toAccountId = 70;
         } elseif ($value === 'transfer') {
-            // 轉帳：可視需求預設，或清空由使用者選擇
-            $this->fromAccountId = 2; // 範例：預設從帳戶 2 轉出
+            $this->fromAccountId = 2;
             $this->toAccountId = null;
         }
     }
@@ -224,6 +230,8 @@ class TransactionModal extends Component
     {
         $this->transactionId = null;
         $this->amount = '';
+        $this->photo = null;                // 重設圖片上傳欄位
+        $this->existingPhotoPath = null;    // 重設歷史照片路徑
     }
 
     public function resetTemplateForm()
@@ -386,6 +394,7 @@ class TransactionModal extends Component
             'fromAccountId' => 'required|exists:financial_accounts,id',
             'amount' => 'required|numeric|gt:0',
             'recordedAt' => 'required|date',
+            'photo' => 'nullable|image|max:5120', // 4. 驗證上傳圖片限制 (最大 5MB)
         ];
 
         if ($this->type === 'transfer') {
@@ -396,7 +405,18 @@ class TransactionModal extends Component
 
         $this->validate($rules);
 
-        DB::transaction(function () use ($userId) {
+        // 5. 處理圖片上傳儲存
+        $finalPhotoPath = $this->existingPhotoPath;
+        if ($this->photo) {
+            // 刪除舊圖片
+            if ($this->existingPhotoPath) {
+                Storage::disk('public')->delete($this->existingPhotoPath);
+            }
+            // 儲存新圖片並取得相對路徑
+            $finalPhotoPath = $this->photo->store('transactions', 'public');
+        }
+
+        DB::transaction(function () use ($userId, $finalPhotoPath) {
             if ($this->transactionId) {
                 $oldTx = Transaction::where('shop_id', $this->shop_id)
                     ->lockForUpdate()
@@ -442,6 +462,7 @@ class TransactionModal extends Component
                         'amount' => $this->amount,
                         'recorded_at' => $this->recordedAt,
                         'memo' => $this->memo,
+                        'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
                     ]
                 );
             } else {
@@ -465,6 +486,7 @@ class TransactionModal extends Component
                             'amount' => $this->amount,
                             'recorded_at' => $this->recordedAt,
                             'memo' => $this->memo,
+                            'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
                         ]
                     );
                 } else {
@@ -482,6 +504,7 @@ class TransactionModal extends Component
                             'amount' => $this->amount,
                             'recorded_at' => $this->recordedAt,
                             'memo' => $this->memo,
+                            'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
                         ]
                     );
                 }
@@ -512,6 +535,8 @@ class TransactionModal extends Component
         
         $this->transactionId = null;
         $this->amount = '';
+        $this->photo = null;               // 連續記帳時清空上傳暫存圖片
+        $this->existingPhotoPath = null;   // 連續記帳時清空歷史圖片
         
         foreach ($saved as $key => $value) {
             $this->$key = $value;
@@ -521,9 +546,6 @@ class TransactionModal extends Component
         $this->dispatch('toast', type: 'success', text: '儲存成功，請繼續操作！');
     }
 
-    /**
-     * 從主要記帳 Modal 開啟範本 Modal
-     */
     public function openTemplateModalFromTransaction()
     {
         $this->templateType = $this->type;
@@ -537,9 +559,6 @@ class TransactionModal extends Component
         $this->showTemplateModal = true;
     }
 
-    /**
-     * 從範本列表開啟新增/編輯範本 Modal
-     */
     public function openTemplateModalFromList()
     {
         $this->showTemplateListModal = false;
@@ -554,9 +573,6 @@ class TransactionModal extends Component
         $this->showTemplateModal = true;
     }
 
-    /**
-     * 初始化範本表單並開啟 Modal
-     */
     public function openTemplateModal()
     {
         $this->resetTemplateForm();

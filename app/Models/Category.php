@@ -17,28 +17,37 @@ class Category extends Model
         'type',
         'icon',
         'sort_order',
+        'is_active',
+        'is_default',
     ];
 
     protected $casts = [
         'shop_id' => 'integer',
         'parent_id' => 'integer',
         'sort_order' => 'integer',
-		'is_active' => 'boolean',
+        'is_active' => 'boolean',
+        'is_default' => 'boolean',
     ];
 
-    /**
-     * 獲取父級大分類（自關聯：屬於某個大分類）
-     */
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
-    /**
-     * 獲取子級小分類（自關聯：擁有很多子分類）
-     */
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order', 'asc');
+    }
+
+    // 檢查是否有交易記錄
+    public function hasTransactions()
+    {
+        return $this->records()->exists();
+    }
+
+    // 關聯交易記錄（假設 records 是關聯名稱，請根據實際情況調整）
+    public function records()
+    {
+        return $this->hasMany(Transaction::class, 'category_id');
     }
 }
