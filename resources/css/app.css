@@ -88,12 +88,31 @@ body {
 
 .template-modal-blue .modal-box {
     background: linear-gradient(145deg, #e8f0fe, #d4e2f7) !important;
-    /* 或者純色 */
-    /* background-color: #e8f0fe !important; */
     border-color: rgba(162, 189, 219, 0.4) !important;
     box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.2) !important;
     backdrop-filter: blur(8px);
 }
+
+/* 🔽 修正：直接設定下拉選單的背景（不要設 transparent） */
+.template-modal-blue .modal-box select,
+.template-modal-blue .modal-box .select select {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(4px);
+}
+
+/* 如果下拉選單在 focus 時跑掉，可以加上 */
+.template-modal-blue .modal-box select:focus,
+.template-modal-blue .modal-box .select select:focus {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* 如果你想要讓選項清單（dropdown list）也有透明度 */
+.template-modal-blue .modal-box select option {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #4a4a4a !important;
+}
+
+
 
 /* 文字顏色 - 使用宋式墨色 */
 .template-modal-blue .modal-box,

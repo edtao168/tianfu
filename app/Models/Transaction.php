@@ -20,6 +20,7 @@ class Transaction extends Model
         'amount',
         'recorded_at',
         'memo',
+		'photo_path',
     ];
 
     protected $casts = [
@@ -28,7 +29,7 @@ class Transaction extends Model
         'category_id' => 'integer',
         'from_account_id' => 'integer',
         'to_account_id' => 'integer',
-        'amount' => 'decimal:4', // 強制轉換為 4 位小數的精確字串
+        'amount' => 'decimal:4',
         'recorded_at' => 'datetime',
     ];
 	
@@ -80,6 +81,15 @@ class Transaction extends Model
 		
 		return $account->currency;
 	}
+	
+	// 取得照片完整 URL
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if ($this->photo_path) {
+            return asset('storage/' . $this->photo_path);
+        }
+        return null;
+    }
 
 	/**
      * 收支分類關聯

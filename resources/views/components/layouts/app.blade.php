@@ -37,7 +37,7 @@
 		</div>
         
         <div class="flex items-center gap-2">
-            <span class="text-xl font-black tracking-wider text-stone-800">添富記賬</span>
+            <span class="text-xl font-black tracking-wider text-stone-800"></span>
         </div>
 
         <button x-data 

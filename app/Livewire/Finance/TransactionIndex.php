@@ -30,16 +30,6 @@ class TransactionIndex extends Component
 
     // 預留多店店別，預設為 1
     public int $shopId = 1;
-	
-	/* #[On('refresh-data')]
-	public function onDataChanged()
-	{
-		// 重新調用您類別裡撈取流水數據的方法（請根據您實際的方法名調整，通常是重刷或置空 computed property 快取）
-		// 如果您的數據是直接在 render() 裡分頁查詢的，甚至只需要調用 $this->resetPage(); 回到第一頁即可
-		if (method_exists($this, 'resetPage')) {
-			$this->resetPage(); 
-		}
-	} */
 
     /**
      * 當篩選條件變更時，自動跳回第一頁並防呆重置
