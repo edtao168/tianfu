@@ -30,11 +30,11 @@
                     <x-icon name="o-megaphone" class="w-6 h-6" />
                 </div>
                 <div class="space-y-1">
-                    <h3 class="text-sm font-bold text-stone-800 dark:text-stone-200">官方粉絲專頁</h3>
-                    <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">發布最新公告、水晶知識與系統功能更新動態。</p>
+                    <h3 class="text-sm font-bold text-stone-800 dark:text-stone-500">官方粉絲專頁</h3>
+                    <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">發布最新公告與系統功能更新動態。</p>
                     <div class="pt-2">
-                        <a href="https://www.facebook.com/profile.php?id=61592065435427" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4 decoration-stone-400">
-                            前往粉專
+                        <a href="https://www.facebook.com/profile.php?id=61592065435427" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4 decoration-stone-400">
+                            前往粉絲專頁
                             <x-icon name="o-arrow-top-right-on-square" class="w-3 h-3" />
                         </a>
                     </div>
@@ -58,10 +58,10 @@
                     <x-icon name="o-users" class="w-6 h-6" />
                 </div>
                 <div class="space-y-1">
-                    <h3 class="text-sm font-bold text-stone-800 dark:text-stone-200">專屬不公開社團</h3>
+                    <h3 class="text-sm font-bold text-stone-800 dark:text-stone-500">專屬社團</h3>
                     <p class="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">供真實用戶交流體驗、提出痛點與深度改進建議。</p>
                     <div class="pt-2">
-                        <a href="https://www.facebook.com/groups/2592726791129880" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4 decoration-stone-400">
+                        <a href="https://www.facebook.com/groups/2592726791129880" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 underline underline-offset-4 decoration-stone-400">
                             申請加入社團
                             <x-icon name="o-arrow-top-right-on-square" class="w-3 h-3" />
                         </a>
@@ -83,19 +83,24 @@
         <form wire:submit.prevent="submitForm" class="space-y-4">
             
             {{-- 類型選擇 --}}
-            <x-radio :options="[
-                ['id' => 'suggestion', 'name' => '功能建議與改善'],
-                ['id' => 'bug', 'name' => '系統故障 / Bug 回報'],
-            ]" label="反饋類型" wire:model="type" />
+            <div class="space-y-2">
+				<label class="block text-sm font-medium text-stone-700 dark:text-stone-500">反饋類型</label>
+				<div class="border border-stone-200 dark:border-stone-700 rounded-xl p-3 pl-2 bg-stone-50/30">
+					<x-radio :options="[
+						['id' => 'suggestion', 'name' => '功能建議與改善'],
+						['id' => 'bug', 'name' => '系統故障 / Bug 回報'],
+					]" wire:model="type" class="gap-4" />
+				</div>
+			</div>
 
             {{-- 聯絡 Email --}}
-            <x-input label="您的聯絡電子郵件 (選填)" placeholder="example@email.com" wire:model="email" icon="o-envelope" />
+            <x-input label="您的聯絡電子郵件 (選填)" placeholder="example@email.com" wire:model="email" icon="o-envelope" class="border border-stone-200 dark:border-stone-700 rounded-xl p-3 pl-2 bg-stone-50/30" />
 
             {{-- 詳細內容 --}}
-            <x-textarea label="反饋內容詳細說明" placeholder="請填寫您希望新增的功能或遇到的 Bug 細節（至少 5 個字）..." wire:model="content" rows="5" class="text-sm" />
+            <x-textarea label="反饋內容詳細說明" placeholder="請填寫您希望新增的功能或遇到的 Bug 細節（至少 5 個字）..." wire:model="content" rows="2" class="border border-stone-200 dark:border-stone-700 rounded-xl p-3 pl-2 bg-stone-50/30" />
 
             {{-- 提交按鈕 --}}
-            <div class="flex justify-end pt-2">
+            <div class="flex justify-end">
                 <x-button label="送出反饋" icon="o-paper-airplane" type="submit" class="bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 rounded-xl px-5 shadow-sm font-medium" spinner="submitForm" />
             </div>
         </form>
