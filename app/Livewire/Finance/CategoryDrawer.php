@@ -128,25 +128,27 @@ class CategoryDrawer extends Component
     public function enterCategory($id)
     {
         $category = Category::findOrFail($id);
+		$this->resetForm();
+		$this->isOpen = true;
         $this->currentParentId = $id;
         $this->currentParentName = $category->name;
         $this->parentId = $id;
         $this->resetPage();
         $this->search = '';
         $this->showForm = false;
-        $this->resetForm();
+        
     }
 
     // 返回大類列表
     public function backToParents()
     {
-        $this->currentParentId = null;
+        $this->resetForm();
+		$this->currentParentId = null;
         $this->currentParentName = null;
         $this->parentId = null;
         $this->resetPage();
         $this->search = '';
-        $this->showForm = false;
-        $this->resetForm();
+        $this->showForm = false;        
     }
 	
 	// 統一開啟表單的入口

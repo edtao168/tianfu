@@ -183,7 +183,7 @@
                             <div class="flex items-center justify-between">
                                 
                                 @if(!$currentParentId)
-                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" wire:click="enterCategory({{ $category->id }})">
+                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" wire:click.stop="enterCategory({{ $category->id }})">
                                         <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-stone-100/80">
                                             <x-dynamic-component :component="'heroicon-o-' . $category->icon" class="w-5 h-5 text-stone-600" />
                                         </div>
@@ -253,7 +253,7 @@
                                     {{ $currentParentId ? 'bg-white/90 border-[#a2bddb]/20' : 'bg-white/80 border-stone-200' }}">
                             <div class="flex items-center justify-between">
                                 @if(!$currentParentId)
-                                    <div class="flex-1 cursor-pointer" wire:click="enterCategory({{ $category->id }})">
+                                    <div class="flex-1 cursor-pointer" wire:click.stop="enterCategory({{ $category->id }})">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-stone-100">
                                                 <x-dynamic-component :component="'heroicon-o-' . $category->icon" class="w-5 h-5 text-stone-600" />
