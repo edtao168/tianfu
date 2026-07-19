@@ -5,7 +5,7 @@
     {{-- 頁頭區 --}}
     <div class="flex justify-between items-center border-b border-stone-200/60 pb-4">
 		<div>
-			<h1 class="text-lg font-bold tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2">
+			<h1 class="text-lg font-bold tracking-wider text-stone-800 dark:text-stone-500 flex items-center gap-2">
 				<span class="w-1.5 h-4 rounded-full bg-stone-600"></span>
 				帳簿備份設定
 			</h1>

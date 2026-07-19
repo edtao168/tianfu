@@ -56,6 +56,10 @@
 		<p class="mt-2 text-muted">覺得不賴，可以贊助一下。</p>
 		<img src="{{ asset('cathay_qr_code.png') }}" 
 			 alt="國泰QR Code" 
-			 style="width: 180px; height: auto; display: block; margin: 0 auto;">    
+			 style="width: 180px; height: auto; display: block; margin: 0 auto;">
+			 
+		<img src="{{ asset('alipay.jpg') }}" 
+			 alt="支付寶" 
+			 style="width: 180px; height: auto; display: block; margin: 0 auto;">
 	</x-card>
 </div>

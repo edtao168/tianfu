@@ -4,7 +4,7 @@
     {{-- 頁頭操作區 --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200/60 pb-4">
         <div>
-            <h1 class="text-lg font-bold tracking-wider text-stone-800 flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-wider text-stone-800 dark:text-stone-500 flex items-center gap-2">
                 <span class="w-1.5 h-4 rounded-full bg-teal-600"></span>
                 家庭成員管理
             </h1>
