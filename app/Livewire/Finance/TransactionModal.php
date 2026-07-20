@@ -55,6 +55,7 @@ class TransactionModal extends Component
     public function mount()
     {
         $this->recordedAt = now()->format('Y-m-d\TH:i');
+		$this->recordedAt = Carbon::now('Asia/Taipei')->format('Y-m-d\TH:i');
         $this->categoryId = 2;
         $this->fromAccountId = 1;
         
