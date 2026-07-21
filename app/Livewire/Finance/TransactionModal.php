@@ -63,46 +63,57 @@ class TransactionModal extends Component
         $this->updatedType('expense');
     }
 
-    #[On('open-transaction-modal')]
-    public function openModal($transaction_id = null)
-    {
-        $this->resetForm();
-        $this->recordedAt = now()->format('Y-m-d\TH:i');
-        $this->showTemplateList = false;
+	// 修改 openModal 方法，明確指定參數名稱
+	#[On('open-transaction-modal')]
+	public function openModal($transactionId = null)
+	{
+		$this->resetForm();
+		$this->recordedAt = now()->format('Y-m-d\TH:i');
+		$this->showTemplateList = false;
 
-        if ($transaction_id) {
-            $transaction = Transaction::where('shop_id', $this->shop_id)
-                ->findOrFail($transaction_id);
+		if ($transactionId) {
+			$transaction = Transaction::where('shop_id', $this->shop_id)
+				->find($transactionId);
+				
+			if (!$transaction) {
+				$this->dispatch('toast', type: 'error', text: '交易記錄不存在');
+				$this->showTransactionModal = false;
+				return;
+			}
 
-            $this->transactionId = $transaction->id;
-            $this->type = $transaction->type;
+			$this->transactionId = $transaction->id;
+			$this->type = $transaction->type;
 
-            if ($transaction->type === 'income') {
-                $this->fromAccountId = $transaction->to_account_id;
-                $this->toAccountId = null;
-            } elseif ($transaction->type === 'expense') {
-                $this->fromAccountId = $transaction->from_account_id;
-                $this->toAccountId = null;
-            } else {
-                $this->fromAccountId = $transaction->from_account_id;
-                $this->toAccountId = $transaction->to_account_id;
-            }
+			if ($transaction->type === 'income') {
+				$this->fromAccountId = $transaction->to_account_id;
+				$this->toAccountId = null;
+			} elseif ($transaction->type === 'expense') {
+				$this->fromAccountId = $transaction->from_account_id;
+				$this->toAccountId = null;
+			} else {
+				$this->fromAccountId = $transaction->from_account_id;
+				$this->toAccountId = $transaction->to_account_id;
+			}
 
-            $this->categoryId = $transaction->category_id;
-            $this->amount = number_format((float)$transaction->amount, 2, '.', '');
-            $this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
-            $this->memo = $transaction->memo ?? '';
-            $this->existingPhotoPath = $transaction->photo_path; // 載入原有照片路徑
-        } else {
-            $this->type = 'expense';
-            $this->fromAccountId = 1;
-            $this->toAccountId = null;
-            $this->categoryId = 2;
-            $this->amount = '';
-        }
+			$this->categoryId = $transaction->category_id;
+			$this->amount = number_format((float)$transaction->amount, 2, '.', '');
+			$this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
+			$this->memo = $transaction->memo ?? '';
+			$this->existingPhotoPath = $transaction->photo_path;
+		} else {
+			// 新增模式
+			$this->type = 'expense';
+			$this->fromAccountId = 1;
+			$this->toAccountId = null;
+			$this->categoryId = 2;
+			$this->amount = '';
+			$this->memo = '';
+			$this->existingPhotoPath = null;
+		}
 
-        $this->showTransactionModal = true;
-    }
+		$this->showTransactionModal = true;
+		$this->dispatch('focus-amount-input');
+	}
 
     public function updatedFromAccountId($value)
     {

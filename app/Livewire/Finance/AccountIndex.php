@@ -488,58 +488,73 @@ class AccountIndex extends Component
         $this->showAccountTransactionsModal = true;
     }
 
-    public function loadAccountTransactions()
-    {
-        if (!$this->selectedAccountId) {
-            return;
-        }
-        
-        $startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
-        $endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
-        
-        $transactions = Transaction::query()
-            ->where('shop_id', $this->shopId)
-            ->whereBetween('recorded_at', [$startDate, $endDate])
-            ->where(function ($query) {
-                $query->where('from_account_id', $this->selectedAccountId)
-                      ->orWhere('to_account_id', $this->selectedAccountId);
-            })
-            ->orderBy('recorded_at', 'desc')
-            ->get();
-        
-        $totalIncome = '0.00';
-        $totalExpense = '0.00';
-        
-        foreach ($transactions as $tx) {
-            $isIncome = false;
-            $isExpense = false;
-            
-            if ($tx->type === 'income' && $tx->to_account_id == $this->selectedAccountId) {
-                $isIncome = true;
-            } elseif ($tx->type === 'expense' && $tx->from_account_id == $this->selectedAccountId) {
-                $isExpense = true;
-            } elseif ($tx->type === 'transfer') {
-                if ($tx->to_account_id == $this->selectedAccountId) {
-                    $isIncome = true;
-                } elseif ($tx->from_account_id == $this->selectedAccountId) {
-                    $isExpense = true;
-                }
-            }
-            
-            if ($isIncome) {
-                $totalIncome = bcadd($totalIncome, $tx->amount, 4);
-            } elseif ($isExpense) {
-                $totalExpense = bcadd($totalExpense, $tx->amount, 4);
-            }
-        }
-        
-        $this->accountTransactions = [
-            'list' => $transactions->toArray(),
-            'total_income' => number_format((float)$totalIncome, 2),
-            'total_expense' => number_format((float)$totalExpense, 2),
-            'total_count' => $transactions->count(),
-        ];
-    }
+	public function loadAccountTransactions()
+	{
+		if (!$this->selectedAccountId) {
+			return;
+		}
+		
+		$startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
+		$endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
+		
+		$transactions = Transaction::query()
+			->where('shop_id', $this->shopId)
+			->whereBetween('recorded_at', [$startDate, $endDate])
+			->where(function ($query) {
+				$query->where('from_account_id', $this->selectedAccountId)
+					  ->orWhere('to_account_id', $this->selectedAccountId);
+			})
+			->orderBy('recorded_at', 'desc')
+			->get();
+		
+		$totalIncome = '0.00';
+		$totalExpense = '0.00';
+		$formattedList = [];
+		
+		foreach ($transactions as $tx) {
+			// 計算總收入支出
+			$isIncome = false;
+			$isExpense = false;
+			
+			if ($tx->type === 'income' && $tx->to_account_id == $this->selectedAccountId) {
+				$isIncome = true;
+			} elseif ($tx->type === 'expense' && $tx->from_account_id == $this->selectedAccountId) {
+				$isExpense = true;
+			} elseif ($tx->type === 'transfer') {
+				if ($tx->to_account_id == $this->selectedAccountId) {
+					$isIncome = true;
+				} elseif ($tx->from_account_id == $this->selectedAccountId) {
+					$isExpense = true;
+				}
+			}
+			
+			if ($isIncome) {
+				$totalIncome = bcadd($totalIncome, $tx->amount, 4);
+			} elseif ($isExpense) {
+				$totalExpense = bcadd($totalExpense, $tx->amount, 4);
+			}
+			
+			// 格式化單筆交易資料（包含所有顯示需要的欄位）
+			$formattedList[] = [
+				'id' => $tx->id,
+				'type' => $tx->type,
+				'amount' => $tx->amount,
+				'recorded_at' => $tx->recorded_at,
+				'memo' => $tx->memo,
+				'category_id' => $tx->category_id,
+				'from_account_id' => $tx->from_account_id,
+				'to_account_id' => $tx->to_account_id,
+				'currency' => $tx->currency,
+			];
+		}
+		
+		$this->accountTransactions = [
+			'list' => $formattedList,
+			'total_income' => number_format((float)$totalIncome, 2),
+			'total_expense' => number_format((float)$totalExpense, 2),
+			'total_count' => $transactions->count(),
+		];
+	}
 
     public function previousMonth()
     {
@@ -637,6 +652,40 @@ class AccountIndex extends Component
             $this->toast(type: 'error', title: '操作失敗：' . $e->getMessage());
         }
     }
+
+	/**
+	 * 編輯交易 - 觸發全域事件開啟交易 Modal
+	 */
+	#[On('edit-transaction')]
+	public function editTransaction($transactionId)
+	{
+		try {
+			// 驗證交易是否存在
+			$transaction = Transaction::find($transactionId);
+			if (!$transaction) {
+				$this->toast(type: 'error', title: '交易不存在');
+				return;
+			}
+
+			// 關閉當前 Modal
+			$this->showAccountTransactionsModal = false;
+			
+			// 觸發全域事件，通知 TransactionModal 開啟並載入交易資料
+			$this->dispatch('open-transaction-modal', transactionId: $transactionId);
+			
+		} catch (\Exception $e) {
+			\Log::error('Edit transaction error: ' . $e->getMessage());
+			$this->toast(type: 'error', title: '無法編輯交易：' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * 從卡片點擊編輯交易（直接觸發）
+	 */
+	public function editTransactionFromCard($transactionId)
+	{
+		$this->editTransaction($transactionId);
+	}
 
     // ============ 範本管理 ============
     

@@ -85,8 +85,8 @@
                     <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-stone-200 dark:border-stone-700">
                         <x-button label="返回" 
                             type="button"
-                            :link="route('finance.transactions')"
-                            class="btn-sm rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none" />
+                            wire:click="$set('showTransactionModal', false)"
+							class="btn-sm rounded-xl font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 border-none" />
                         
                         @if(!$transactionId)
                             <x-button label="再記一筆" 
