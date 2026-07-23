@@ -109,73 +109,79 @@
     @endforeach
 
     {{-- 宋代汝窯天青美學帳戶 Modal (套用 template-modal-blue 樣式) --}}
-    <x-modal 
+	{{-- 宋代汝窯天青美學帳戶 Modal --}}
+	<x-modal 
 		wire:model="showAccountModal" 
 		class="template-modal-blue backdrop-blur-md"
-		box-class="max-h-[95vh] overflow-y-auto flex flex-col"
+		box-class="max-h-[95vh] flex flex-col w-full md:max-w-2xl m-2 md:m-4 rounded-2xl"
 	>
-        <div class="flex items-center gap-3 pb-4 border-b border-base-200 mb-6">
-            <div class="p-2.5 rounded-xl bg-sky-950/5 text-sky-900">
-                <x-heroicon-o-wallet class="w-6 h-6" />
-            </div>
-            <div>
-                <h3 class="text-lg font-bold text-stone-800 modal-title">{{ $editingAccountId ? '編輯資產帳戶' : '新增資產帳戶' }}</h3>
-                <p class="text-xs text-stone-500 mt-0.5">請填寫零售門市資產帳戶之基礎參數與初始餘額</p>
-            </div>
-        </div>
-
-        <x-form wire:submit="saveAccount" class="space-y-5">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信零售現金、官網 Stripe" icon="o-pencil" required />
-                <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
-            </div>
-
-            <div class="space-y-2">
-                <label class="label p-0 flex items-center gap-1">
-                    <span class="label-text font-bold text-stone-700 text-xs">使用幣別 (Currency)</span>
-                </label>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    @foreach($availableCurrencies as $code => $info)
-                        @php 
-                            $isSelected = ($accountCurrency === $code);
-                            $curConfig = config("business.currencies.{$code}") ?? config("business.currencies.TWD");
-                        @endphp
-                        <button type="button" 
-                            class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border transition-all duration-200 {{ $isSelected ? 'btn-ghost active ring-1 ring-sky-300' : 'bg-stone-50' }}" 
-                            wire:click="$set('accountCurrency', '{{ $code }}')">
-                            <span class="text-xs font-black">{{ $info['name'] }}</span>
-                            <span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }} ({{ $curConfig['symbol'] ?? '$' }})</span>
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-stone-50 p-4 rounded-xl border border-sky-100/50">
-                <div class="md:col-span-2">
-                    <x-input label="初始資產 (以選定幣別計價)" wire:model="accountBalance" 
-                             prefix="{{ config('business.currencies.'.$accountCurrency.'.symbol') ?? '$' }}" 
-                             type="number" step="0.0001" class="font-mono text-lg font-bold" required />
-                </div>
-                <div class="text-xs text-stone-500 leading-relaxed md:pb-2">
-                    💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
-                </div>
-            </div>
-			
-			<div class="grid grid-cols-1 gap-4">
-				<x-textarea 
-					label="備忘 (Memo)" 
-					wire:model="accountMemo" 
-					placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
-					rows="2"
-					hint="僅供內部參考，不會顯示於任何單據上。" />
+		{{-- 標題區（固定） --}}
+		<div class="flex-shrink-0 flex items-center gap-3 pb-4 border-b border-base-200">
+			<div class="p-2.5 rounded-xl bg-sky-950/5 text-sky-900">
+				<x-heroicon-o-wallet class="w-6 h-6" />
 			</div>
+			<div>
+				<h3 class="text-lg font-bold text-stone-800 modal-title">{{ $editingAccountId ? '編輯資產帳戶' : '新增資產帳戶' }}</h3>
+				<p class="text-xs text-stone-500 mt-0.5">請填寫零售門市資產帳戶之基礎參數與初始餘額</p>
+			</div>
+		</div>
 
-            <div class="flex justify-end items-center gap-2 pt-4 border-t">
-                <x-button label="取消" @click="$wire.showAccountModal = false" class="btn-ghost text-stone-700 btn-sm" />
-                <x-button label="確認儲存" type="submit" class="btn bg-stone-100 btn-sm px-6" icon="o-check" />
-            </div>
-        </x-form>
-    </x-modal>
+		{{-- 表單區（可滾動） --}}
+		<div class="flex-1 overflow-y-auto px-0.5 py-3 min-h-0">
+			<x-form wire:submit="saveAccount" class="space-y-5">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信零售現金、官網 Stripe" icon="o-pencil" required />
+					<x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
+				</div>
+
+				<div class="space-y-2">
+					<label class="label p-0 flex items-center gap-1">
+						<span class="label-text font-bold text-stone-700 text-xs">使用幣別 (Currency)</span>
+					</label>
+					<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+						@foreach($availableCurrencies as $code => $info)
+							@php 
+								$isSelected = ($accountCurrency === $code);
+								$curConfig = config("business.currencies.{$code}") ?? config("business.currencies.TWD");
+							@endphp
+							<button type="button" 
+								class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border transition-all duration-200 {{ $isSelected ? 'btn-ghost active ring-1 ring-sky-300' : 'bg-stone-50' }}" 
+								wire:click="$set('accountCurrency', '{{ $code }}')">
+								<span class="text-xs font-black">{{ $info['name'] }}</span>
+								<span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }} ({{ $curConfig['symbol'] ?? '$' }})</span>
+							</button>
+						@endforeach
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-stone-50 p-4 rounded-xl border border-sky-100/50">
+					<div class="md:col-span-2">
+						<x-input label="初始資產 (以選定幣別計價)" wire:model="accountBalance" 
+								 prefix="{{ config('business.currencies.'.$accountCurrency.'.symbol') ?? '$' }}" 
+								 type="number" step="0.0001" class="font-mono text-lg font-bold" required />
+					</div>
+					<div class="text-xs text-stone-500 leading-relaxed md:pb-2">
+						💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 gap-4">
+					<x-textarea 
+						label="備忘錄 (Memo)" 
+						wire:model="accountMemo" 
+						placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
+						rows="2"
+						hint="僅供內部參考，不會顯示於任何客戶單據上" />
+				</div>
+			</x-form>
+		</div>
+
+		{{-- 底部按鈕（固定） --}}
+		<div class="flex-shrink-0 flex flex-wrap justify-end items-center gap-2 pt-4 mt-2 border-t border-base-200">
+			<x-button label="取消" @click="$wire.showAccountModal = false" class="btn-ghost text-stone-700 btn-sm" />
+			<x-button label="確認儲存" type="submit" class="btn bg-stone-100 btn-sm px-6" icon="o-check" wire:click="saveAccount" />
+		</div>
+	</x-modal>
 
 	{{-- 分幣別詳情 Modal --}}
 	<x-modal wire:model="showPeriodDetailModal" :title="$periodDetailTitle" separator width="90%">
