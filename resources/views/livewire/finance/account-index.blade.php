@@ -109,7 +109,11 @@
     @endforeach
 
     {{-- 宋代汝窯天青美學帳戶 Modal (套用 template-modal-blue 樣式) --}}
-    <x-modal wire:model="showAccountModal" class="template-modal-blue backdrop-blur-md">
+    <x-modal 
+		wire:model="showAccountModal" 
+		class="template-modal-blue backdrop-blur-md"
+		box-class="max-h-[95vh] overflow-y-auto flex flex-col"
+	>
         <div class="flex items-center gap-3 pb-4 border-b border-base-200 mb-6">
             <div class="p-2.5 rounded-xl bg-sky-950/5 text-sky-900">
                 <x-heroicon-o-wallet class="w-6 h-6" />
@@ -163,7 +167,7 @@
 					wire:model="accountMemo" 
 					placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
 					rows="2"
-					hint="僅供內部參考，不會顯示於任何客戶單據上" />
+					hint="僅供內部參考，不會顯示於任何單據上。" />
 			</div>
 
             <div class="flex justify-end items-center gap-2 pt-4 border-t">
