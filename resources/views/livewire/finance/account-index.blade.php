@@ -156,6 +156,15 @@
                     💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
                 </div>
             </div>
+			
+			<div class="grid grid-cols-1 gap-4">
+				<x-textarea 
+					label="備忘 (Memo)" 
+					wire:model="accountMemo" 
+					placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
+					rows="2"
+					hint="僅供內部參考，不會顯示於任何客戶單據上" />
+			</div>
 
             <div class="flex justify-end items-center gap-2 pt-4 border-t">
                 <x-button label="取消" @click="$wire.showAccountModal = false" class="btn-ghost text-stone-700 btn-sm" />

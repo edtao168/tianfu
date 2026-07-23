@@ -44,6 +44,7 @@ class AccountIndex extends Component
     public string $accountBalance = '0.00';
     public string $accountCurrency = '';
     public string $creditLimit = '0.00';
+	public string $accountMemo = ''; 
     
     // ============ 範本管理表單 ============
     public string $templateType = 'expense';
@@ -790,6 +791,7 @@ class AccountIndex extends Component
         $this->accountType = $account->type;
         $this->accountBalance = number_format((float)$account->balance, 2, '.', '');
         $this->accountCurrency = $account->currency;
+		$this->accountMemo = $account->memo ?? '';
         $this->showAccountModal = true;
     }
 
@@ -801,7 +803,8 @@ class AccountIndex extends Component
             'accountType',
             'accountBalance',
             'accountCurrency',
-            'creditLimit'
+            'creditLimit',
+			'accountMemo'
         ]);
         $this->accountCurrency = $this->getBaseCurrency();
         $this->showAccountModal = true;
@@ -824,19 +827,21 @@ class AccountIndex extends Component
         if ($this->editingAccountId) {
             $account = FinancialAccount::findOrFail($this->editingAccountId);
             $account->update([
-                'name' => $this->accountName,
-                'type' => $this->accountType,
-                'balance' => $formattedBalance,
-                'currency' => $this->accountCurrency,
+                'name'		=> $this->accountName,
+                'type'		=> $this->accountType,
+                'balance'	=> $formattedBalance,
+                'currency'	=> $this->accountCurrency,
+				'memo'		=> $this->accountMemo ?? '',
             ]);
             $this->toast(type: 'success', title: '帳戶更新成功！');
         } else {
             FinancialAccount::create([
-                'name' => $this->accountName,
-                'type' => $this->accountType,
-                'balance' => $formattedBalance,
-                'currency' => $this->accountCurrency,
-                'is_active' => true,
+                'name'		=> $this->accountName,
+                'type'		=> $this->accountType,
+                'balance'	=> $formattedBalance,
+                'currency'	=> $this->accountCurrency,
+				'memo'		=> $this->accountMemo ?? '',
+                'is_active'	=> true,
             ]);
             $this->toast(type: 'success', title: '帳戶建立成功！');
         }
