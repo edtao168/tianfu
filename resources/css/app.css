@@ -78,7 +78,7 @@ body {
 
 /* 表單輸入框簡約風 */
 .input, .select, .textarea {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.85);
     border-color: var(--song-border);
 }
 
@@ -124,9 +124,9 @@ body {
 .template-modal-blue .input,
 .template-modal-blue .select,
 .template-modal-blue .textarea {
-    background-color: rgba(255, 255, 255, 0.7) !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
     color: #4a4a4a !important;
-    border-color: rgba(162, 189, 219, 0.3) !important;
+    border-color: rgba(162, 189, 219, 0.4) !important;
 }
 
 .template-modal-blue .input:focus,
