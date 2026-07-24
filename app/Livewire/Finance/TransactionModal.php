@@ -103,7 +103,7 @@ class TransactionModal extends Component
 		} else {
 			// 新增模式
 			$this->type = 'expense';
-			$this->fromAccountId = 1;
+			$this->fromAccountId = 2;
 			$this->toAccountId = null;
 			$this->categoryId = 2;
 			$this->amount = '';
@@ -125,33 +125,39 @@ class TransactionModal extends Component
         unset($this->accounts);
     }
 
-    public function updatedType($value)
-    {
-        if ($value === 'expense') {
-            $this->fromAccountId = 2;
-            $this->toAccountId = null;
-        } elseif ($value === 'income') {
-            $this->fromAccountId = null;
-            $this->toAccountId = 70;
-        } elseif ($value === 'transfer') {
-            $this->fromAccountId = 2;
-            $this->toAccountId = null;
-        }
-    }
+	public function updatedType($value)
+	{
+		if ($value === 'expense') {
+			$this->fromAccountId = 2; // 預設支出帳戶
+			$this->toAccountId = null;
+			$this->categoryId = 2;    // 預設支出分類 ID
+		} elseif ($value === 'income') {
+			$this->fromAccountId = 1;  // 預設收入進哪個帳戶 (例如: 1)
+			$this->toAccountId = null;
+			$this->categoryId = 70;   // ✅ 正確設置收入預設分類 ID = 70
+		} elseif ($value === 'transfer') {
+			$this->fromAccountId = 2;
+			$this->toAccountId = null;
+			$this->categoryId = null;
+		}
+	}
 
-    public function updatedTemplateType($value)
-    {
-        if ($value === 'expense') {
-            $this->templateFromAccountId = 2;
-            $this->templateToAccountId = null;
-        } elseif ($value === 'income') {
-            $this->templateFromAccountId = null;
-            $this->templateToAccountId = 70;
-        } elseif ($value === 'transfer') {
-            $this->templateFromAccountId = 2;
-            $this->templateToAccountId = null;
-        }
-    }
+	public function updatedTemplateType($value)
+	{
+		if ($value === 'expense') {
+			$this->templateFromAccountId = 2;
+			$this->templateToAccountId = null;
+			$this->templateCategoryId = 2;
+		} elseif ($value === 'income') {
+			$this->templateFromAccountId = 1;
+			$this->templateToAccountId = null;
+			$this->templateCategoryId = 70; // ✅ 範本切換收入時也同步帶入 ID = 70
+		} elseif ($value === 'transfer') {
+			$this->templateFromAccountId = 2;
+			$this->templateToAccountId = null;
+			$this->templateCategoryId = null;
+		}
+	}
 
     public function updatedTemplateFromAccountId($value)
     {

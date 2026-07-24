@@ -46,7 +46,7 @@
         <div class="flex items-center gap-3">
             <x-button label="新增帳戶" icon="o-plus" class="btn-outline btn-sm" wire:click="openCreateModal" />
             
-            {{-- 核心重構：改為觸發全域事件，通知 Layout 中的共用 TransactionModal 組件彈出 --}}
+            {{-- 觸發全域事件，通知 TransactionModal 組件彈出 --}}
             <x-button label="記一筆" icon="o-pencil-square" class="btn-primary btn-sm w-32" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>
@@ -296,142 +296,182 @@
 				<div class="space-y-5 max-w-full">
 					
 					{{-- 月份導航 --}}
-					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-stone-50/50 p-3 rounded-xl border border-base-200 flex-shrink-0">
-						<div class="flex items-center gap-1 bg-base-100 p-1 rounded-lg border border-base-200 shadow-sm self-start sm:self-auto">
-							<x-button icon="o-chevron-left" class="btn-sm btn-ghost text-stone-500 hover:bg-stone-100" wire:click="previousMonth" />
-							<span class="font-bold text-sm px-4 min-w-[90px] text-center text-stone-800 tracking-wider">
-								{{ Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->format('Y 年 m 月') }}
-							</span>
-							<x-button icon="o-chevron-right" class="btn-sm btn-ghost text-stone-500 hover:bg-stone-100" wire:click="nextMonth" 
-									  :disabled="Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->isSameMonth(now())" />
-						</div>
+					{{-- resources/views/livewire/finance/account-index.blade.php (流水 Modal 內的全寬年月與收支統計區塊) --}}
 
-						<div class="flex flex-wrap items-center gap-3 text-xs">
-							<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-800 shadow-sm font-medium">
-								<x-heroicon-o-arrow-trending-up class="w-3.5 h-3.5 text-emerald-600" />
-								<span>本月收入:</span>
-								<span class="font-mono font-bold text-sm">+{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_income'] ?? 0), 2) }}</span>
-							</div>
-							<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-100 text-rose-800 shadow-sm font-medium">
-								<x-heroicon-o-arrow-trending-down class="w-3.5 h-3.5 text-rose-600" />
-								<span>本月支出:</span>
-								<span class="font-mono font-bold text-sm">-{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_expense'] ?? 0), 2) }}</span>
-							</div>
-						</div>
-					</div>
+<div class="w-full max-w-full space-y-2 flex-shrink-0">
+    
+    {{-- 第一行：全佔一行 年月膠囊選擇器 --}}
+    <div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 w-full shadow-inner">
+        <x-button 
+            icon="o-chevron-left" 
+            class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+            wire:click="previousMonth" 
+        />
+        
+        <div class="flex items-center gap-1.5 font-mono font-black text-sm text-stone-800 tracking-wider select-none">
+            <x-heroicon-o-calendar class="w-4 h-4 text-stone-400" />
+            <span>{{ Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->format('Y 年 m 月') }}</span>
+        </div>
+        
+        <x-button 
+            icon="o-chevron-right" 
+            class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+            wire:click="nextMonth" 
+            :disabled="Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->isSameMonth(now())" 
+        />
+    </div>
 
-					{{-- 交易卡片列表 --}}
-	<div class="space-y-3">
-		@forelse($accountTransactions['list'] ?? [] as $tx)
-			@php
-				$isIncome = false;
-				$isExpense = false;
-				
-				if ($tx['type'] === 'income' && $tx['to_account_id'] == $selectedAccountId) {
-					$isIncome = true;
-				} elseif ($tx['type'] === 'expense' && $tx['from_account_id'] == $selectedAccountId) {
-					$isExpense = true;
-				} elseif ($tx['type'] === 'transfer') {
-					if ($tx['to_account_id'] == $selectedAccountId) {
-						$isIncome = true;
-					} elseif ($tx['from_account_id'] == $selectedAccountId) {
-						$isExpense = true;
-					}
-				}
-				
-				$txCategory = $tx['category_id'] ? App\Models\Category::find($tx['category_id']) : null;
-			@endphp
-			
-			{{-- 點擊卡片觸發編輯事件 --}}
-			<div class="bg-white rounded-xl border border-base-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer
-						{{ $isIncome ? 'hover:border-emerald-200' : ($isExpense ? 'hover:border-rose-200' : 'hover:border-sky-200') }}"
-				 wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx['id'] }} })">
-				
-				<div class="p-4">
-					{{-- 上方：時間、類型、金額 --}}
-					<div class="flex flex-wrap items-start justify-between gap-2">
-						<div class="flex items-center gap-3 flex-wrap min-w-0">
-							<span class="text-sm font-mono text-stone-400 whitespace-nowrap">
-								{{ Carbon\Carbon::parse($tx['recorded_at'])->format('Y-m-d') }}
-							</span>
+    {{-- 第二行：本月收支數據卡片 (1:1 雙欄滿寬) --}}
+    <div class="grid grid-cols-2 gap-2 w-full">
+        
+        {{-- 本月收入 --}}
+        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15 min-w-0">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-semibold text-emerald-900">收入</span>
+            </div>
+            <span class="font-mono font-extrabold text-xs sm:text-sm text-emerald-700 truncate min-w-0 ml-1">
+                +{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_income'] ?? 0), 2, '.', ',') }}
+            </span>
+        </div>
+
+        {{-- 本月支出 --}}
+        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/15 min-w-0">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span class="text-xs font-semibold text-rose-900">支出</span>
+            </div>
+            <span class="font-mono font-extrabold text-xs sm:text-sm text-rose-700 truncate min-w-0 ml-1">
+                -{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_expense'] ?? 0), 2, '.', ',') }}
+            </span>
+        </div>
+
+    </div>
+
+</div>
+
+					{{-- 交易列表（緊湊樣式） --}}
+					<div class="space-y-1.5">
+						@forelse($accountTransactions['list'] ?? [] as $tx)
+							@php
+								$isIncome = $tx['is_income'] ?? false;
+								$isExpense = $tx['is_expense'] ?? false;
+								$isTransfer = $tx['is_transfer'] ?? false;
+								
+								// 使用預先處理好的分類資訊
+								$categoryIcon = $tx['category_icon'] ?? 'folder';
+								$categoryName = $tx['category_name'] ?? null;
+								
+								// 根據交易類型設定顏色（優先判斷轉帳）
+								if ($isTransfer) {
+									// 轉帳：統一使用藍色
+									$amountClass = 'text-sky-600';
+									$iconColor = 'text-sky-500';
+									$borderColor = 'border-sky-200';
+									$hoverBorderColor = 'hover:border-sky-300';
+									$amountPrefix = '';
+									$typeLabel = '轉帳';
+								} elseif ($isIncome) {
+									// 收入：綠色
+									$amountClass = 'text-emerald-600';
+									$iconColor = 'text-emerald-500';
+									$borderColor = 'border-emerald-200';
+									$hoverBorderColor = 'hover:border-emerald-300';
+									$amountPrefix = '+';
+									$typeLabel = '收入';
+								} elseif ($isExpense) {
+									// 支出：紅色
+									$amountClass = 'text-rose-600';
+									$iconColor = 'text-rose-500';
+									$borderColor = 'border-rose-200';
+									$hoverBorderColor = 'hover:border-rose-300';
+									$amountPrefix = '-';
+									$typeLabel = '支出';
+								} else {
+									// 預設
+									$amountClass = 'text-stone-600';
+									$iconColor = 'text-stone-500';
+									$borderColor = 'border-stone-200';
+									$hoverBorderColor = 'hover:border-stone-300';
+									$amountPrefix = '';
+									$typeLabel = '未知';
+								}
+								
+								// 顯示金額
+								$displayAmount = $tx['amount_in_account_currency'] ?? $tx['amount'];
+								
+								// 獲取子類名稱
+								$subCategoryName = '';
+								if ($isTransfer) {
+									if ($tx['from_account_id'] == $selectedAccountId) {
+										$subCategoryName = '轉出';
+									} else {
+										$subCategoryName = '轉入';
+									}
+								} elseif ($categoryName) {
+									$subCategoryName = $categoryName;
+								} else {
+									$subCategoryName = $isIncome ? '收入' : '支出';
+								}
+								
+								// 摘要內容 - 使用帳戶名稱而非 ID
+								$summary = $tx['memo'] ?: '';
+								if ($isTransfer && !$summary) {
+									if ($tx['from_account_id'] == $selectedAccountId) {
+										// 轉出：顯示轉入的帳戶名稱
+										$toName = $tx['to_account_name'] ?? '帳戶 #' . $tx['to_account_id'];
+										$summary = '轉出至 ' . $toName;
+									} else {
+										// 轉入：顯示從哪個帳戶轉入
+										$fromName = $tx['from_account_name'] ?? '帳戶 #' . $tx['from_account_id'];
+										$summary = '從 ' . $fromName . ' 轉入';
+									}
+								}
+							@endphp
 							
-							@if($isIncome)
-								<span class="px-2 py-0.5 rounded text-[14px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/50 whitespace-nowrap">
-									<x-heroicon-o-arrow-trending-up class="w-3 h-3 inline mr-1" />
-									收入
-								</span>
-							@elseif($isExpense)
-								<span class="px-2 py-0.5 rounded text-[14px] font-bold bg-rose-50 text-rose-700 border border-rose-200/50 whitespace-nowrap">
-									<x-heroicon-o-arrow-trending-down class="w-3 h-3 inline mr-1" />
-									支出
-								</span>
-							@else
-								<span class="px-2 py-0.5 rounded text-[14px] font-bold bg-sky-50 text-sky-700 border border-sky-200/50 whitespace-nowrap">
-									<x-heroicon-o-arrow-right-circle class="w-3 h-3 inline mr-1" />
-									轉帳
-								</span>
-							@endif
-							
-							@if($txCategory)
-								<span class="hidden sm:inline-block text-sm font-semibold px-2 py-0.5 rounded bg-stone-100 text-stone-600 whitespace-nowrap">
-									{{ $txCategory->name }}
-								</span>
-							@endif
-						</div>
-						
-						<div class="flex items-center gap-1 font-mono font-bold text-lg 
-									{{ $isIncome ? 'text-emerald-700' : ($isExpense ? 'text-rose-700' : 'text-sky-700') }}">
-							<span class="font-normal text-stone-400">{{ $selectedCurrencySymbol }}</span>
-							{{ $isIncome ? '+' : '-' }}{{ number_format($tx['amount'], 2) }}
-						</div>
-					</div>
-					
-					{{-- 下方：備註、分類、帳戶資訊 --}}
-					<div class="mt-3 pt-3 border-t border-stone-100 flex flex-wrap items-center gap-2 text-sm text-stone-500">
-						@if($tx['memo'])
-							<div class="flex items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-lg flex-1 min-w-[120px]">
-								<x-heroicon-o-document-text class="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
-								<span class="text-stone-700 break-all">{{ $tx['memo'] }}</span>
+							{{-- 點擊卡片觸發編輯事件 --}}
+							<div class="relative flex items-center py-2 px-3 hover:bg-stone-50/80 rounded-lg transition-all duration-150 cursor-pointer group border border-gray-200 {{ $hoverBorderColor }}"
+								 wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx['id'] }} })">
+								
+								{{-- 圖示（動態組裝 component 名稱，顏色跟隨收支類型） --}}
+								<div class="border-2 {{ $borderColor }} rounded-full p-2 flex-shrink-0">
+									<x-dynamic-component 
+										:component="'heroicon-o-' . $categoryIcon" 
+										class="w-5 h-5 {{ $iconColor }}" />
+								</div>
+								
+								{{-- 內容區域（兩行） --}}
+								<div class="flex-1 min-w-0 ml-2">
+									{{-- 第一行：子類名稱 + 金額 --}}
+									<div class="flex items-center justify-between gap-2">
+										<span class="text-sm font-medium text-stone-700 truncate">
+											{{ $subCategoryName }}
+										</span>
+										<span class="font-mono font-bold text-sm {{ $amountClass }} flex-shrink-0">
+											<span class="font-normal text-stone-400 text-xs">{{ $selectedCurrencySymbol }}</span>
+											{{ $amountPrefix }}{{ number_format((float)$displayAmount, 2) }}
+										</span>
+									</div>
+									
+									{{-- 第二行：摘要 + 日期 --}}
+									<div class="flex items-center justify-between gap-2 mt-0.5">
+										<span class="text-xs text-stone-400 truncate {{ $summary ? '' : 'italic' }}">
+											{{ $summary ?: '無備註' }}
+										</span>
+										<span class="text-[10px] font-mono text-stone-300 flex-shrink-0">
+											{{ Carbon\Carbon::parse($tx['recorded_at'])->format('Y-m-d') }}
+										</span>
+									</div>
+								</div>
 							</div>
-						@else
-							<div class="flex items-center gap-1.5 text-stone-300 px-2.5 py-1">
-								<x-heroicon-o-document-text class="w-3.5 h-3.5 flex-shrink-0" />
-								<span class="italic">無備註</span>
+						@empty
+							<div class="text-center text-stone-400 py-12 bg-stone-50/20 rounded-xl border border-dashed border-stone-200">
+								<x-heroicon-o-document-text class="w-12 h-12 mx-auto mb-3 opacity-25 text-stone-400" />
+								<p class="text-sm tracking-wide font-medium">{{ $transactionMonth }} 月份尚無任何收支流水紀錄</p>
+								<p class="text-xs text-stone-300 mt-1">點擊「記一筆」開始記錄您的第一筆交易</p>
 							</div>
-						@endif
-						
-						@if($txCategory)
-							<span class="sm:hidden inline-flex items-center gap-1 px-2 py-0.5 rounded bg-stone-100 text-stone-600 whitespace-nowrap">
-								<x-heroicon-o-tag class="w-3 h-3" />
-								{{ $txCategory->name }}
-							</span>
-						@endif
-						
-						@if($tx['type'] === 'transfer')
-							<span class="inline-flex items-center gap-1 text-stone-400 whitespace-nowrap">
-								<x-heroicon-o-arrow-right-circle class="w-3.5 h-3.5" />
-								@if($tx['from_account_id'] == $selectedAccountId)
-									轉出至 #{{ $tx['to_account_id'] }}
-								@else
-									從 #{{ $tx['from_account_id'] }} 轉入
-								@endif
-							</span>
-						@endif
-						
-						<span class="text-stone-300 font-mono text-[10px] ml-auto whitespace-nowrap">
-							#{{ $tx['id'] }}
-						</span>
+						@endforelse
 					</div>
-				</div>
-			</div>
-		@empty
-			<div class="text-center text-stone-400 py-12 bg-stone-50/20 rounded-xl border border-dashed border-stone-200">
-				<x-heroicon-o-document-text class="w-12 h-12 mx-auto mb-3 opacity-25 text-stone-400" />
-				<p class="text-sm tracking-wide font-medium">{{ $transactionMonth }} 月份尚無任何收支流水紀錄</p>
-				<p class="text-xs text-stone-300 mt-1">點擊「記一筆」開始記錄您的第一筆交易</p>
-			</div>
-		@endforelse
-	</div>
 					
 					{{-- 筆數提示 --}}
 					@if(($accountTransactions['total_count'] ?? 0) > 0)

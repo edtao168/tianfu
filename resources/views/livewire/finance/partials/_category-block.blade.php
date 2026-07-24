@@ -42,7 +42,7 @@
                         flex flex-col items-center justify-center
                         dark:bg-teal-950 dark:border-teal-800">
                 <div class="text-3xl mb-1 flex justify-center">
-                    <x-icon name="o-arrows-right-left" class="w-10 h-10 text-teal-600 dark:text-teal-400" />
+                    <x-icon name="o-arrow-path" class="w-10 h-10 text-teal-600 dark:text-teal-400" />
                 </div>
                 <div class="text-xs font-bold text-teal-700 dark:text-teal-400">轉帳</div>
             </div>

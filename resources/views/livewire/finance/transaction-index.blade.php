@@ -69,7 +69,7 @@
                                 $fromName = $tx->fromAccount->name ?? '?';
                                 $toName = $tx->toAccount->name ?? '?';
                                 $displayTitle = $fromName . ' → ' . $toName;
-                                $iconName = 'o-arrows-right-left';
+                                $iconName = 'o-arrow-path';
                             } elseif ($tx->category) {
                                 // ✅ 有類別：顯示類別名稱（含父類別）
                                 if ($tx->category->parent) {

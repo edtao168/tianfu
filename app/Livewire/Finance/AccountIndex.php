@@ -44,7 +44,7 @@ class AccountIndex extends Component
     public string $accountBalance = '0.00';
     public string $accountCurrency = '';
     public string $creditLimit = '0.00';
-	public string $accountMemo = ''; 
+    public string $accountMemo = ''; 
     
     // ============ 範本管理表單 ============
     public string $templateType = 'expense';
@@ -78,19 +78,21 @@ class AccountIndex extends Component
         $this->recordedAt = now()->format('Y-m-d\TH:i');
         $this->transactionMonth = now()->format('Y-m');
         $this->accountCurrency = $this->getBaseCurrency();
-		
-		$this->accountTransactions = [
-			'list' => [],
-			'total_income' => '0.00',
-			'total_expense' => '0.00',
-			'total_count' => 0,
-		];
+        
+        $this->accountTransactions = [
+            'list' => [],
+            'total_income' => '0.0000',
+            'total_expense' => '0.0000',
+            'total_count' => 0,
+        ];
     }
     
     #[On('refresh-data')]
     public function onDataChanged()
     {
-        // 自動重新 render
+        if ($this->selectedAccountId) {
+            $this->loadAccountTransactions();
+        }
     }
 
     // ============ 匯率工具方法 ============
@@ -121,7 +123,7 @@ class AccountIndex extends Component
     
     private function convertToBase(string $amount, string $currency): string
     {
-        if (!is_numeric($amount)) {
+        if (!is_numeric($amount) || $amount === '') {
             return '0.0000';
         }
         
@@ -133,7 +135,7 @@ class AccountIndex extends Component
     
     private function convertFromBase(string $amount, string $currency): string
     {
-        if (!is_numeric($amount)) {
+        if (!is_numeric($amount) || $amount === '') {
             return '0.0000';
         }
         
@@ -206,8 +208,8 @@ class AccountIndex extends Component
                     ->whereBetween('recorded_at', [$range['start'], $range['end']])
                     ->get();
 
-                $incomeTotal = '0.00';
-                $expenseTotal = '0.00';
+                $incomeTotal = '0.0000';
+                $expenseTotal = '0.0000';
                 $currencyDetails = [];
 
                 foreach ($transactions as $tx) {
@@ -224,8 +226,8 @@ class AccountIndex extends Component
 
                     if (!isset($currencyDetails[$currency])) {
                         $currencyDetails[$currency] = [
-                            'income' => '0.00',
-                            'expense' => '0.00',
+                            'income' => '0.0000',
+                            'expense' => '0.0000',
                             'currency_symbol' => $currencies[$currency]['symbol'] ?? '',
                             'currency_name' => $currencies[$currency]['name'] ?? $currency,
                             'rate' => $currencies[$currency]['rate'] ?? 1,
@@ -268,36 +270,7 @@ class AccountIndex extends Component
         
         return $stats;
     }
-    
-    private function getTransactionCurrencyFromRelations($tx): string
-    {
-        $account = null;
-        
-        if ($tx->type === 'income' && isset($tx->toAccount) && $tx->toAccount) {
-            $account = $tx->toAccount;
-        } elseif ($tx->type === 'expense' && isset($tx->fromAccount) && $tx->fromAccount) {
-            $account = $tx->fromAccount;
-        } elseif ($tx->type === 'transfer') {
-            $account = isset($tx->fromAccount) && $tx->fromAccount 
-                ? $tx->fromAccount 
-                : (isset($tx->toAccount) ? $tx->toAccount : null);
-        }
-        
-        if ($account && isset($account->currency)) {
-            return $account->currency;
-        }
-        
-        \Log::warning('Transaction currency not found from relations, using fallback', [
-            'transaction_id' => $tx->id ?? null,
-            'type' => $tx->type ?? null,
-        ]);
-        
-        return $this->getTransactionCurrency($tx);
-    }
 
-    /**
-     * 顯示分幣別詳情
-     */
     public function showPeriodDetail($period)
     {
         $periodTitles = [
@@ -310,8 +283,8 @@ class AccountIndex extends Component
         $this->periodDetailTitle = $periodTitles[$period] ?? '收支明細';
         $this->periodDetailData = $stats[$period]['details'] ?? [];
         
-        $totalIncomeBase = '0.00';
-        $totalExpenseBase = '0.00';
+        $totalIncomeBase = '0.0000';
+        $totalExpenseBase = '0.0000';
         foreach ($this->periodDetailData as $currency => $data) {
             $totalIncomeBase = bcadd(
                 $totalIncomeBase,
@@ -333,143 +306,7 @@ class AccountIndex extends Component
         ];
         
         $this->canDeletePeriodDetail = !empty($this->periodDetailData);
-        
         $this->showPeriodDetailModal = true;
-    }
-
-    // ============ 分幣別詳情操作 ============
-    
-    public function editPeriodDetail()
-    {
-        $this->toast(type: 'info', title: '即將跳轉至交易明細頁面');
-    }
-
-    public function deletePeriodDetail()
-    {
-        if (empty($this->periodDetailData)) {
-            $this->toast(type: 'error', title: '沒有交易記錄可刪除');
-            return;
-        }
-
-        try {
-            $period = $this->getCurrentPeriodFromTitle();
-            if (!$period) {
-                $this->toast(type: 'error', title: '無法識別期間');
-                return;
-            }
-
-            $start = $period['start'];
-            $end = $period['end'];
-
-            $deletedCount = Transaction::where('shop_id', $this->shopId)
-                ->whereBetween('recorded_at', [$start, $end])
-                ->delete();
-
-            $this->recalculateAllAccountBalances();
-
-            $this->toast(type: 'success', title: "已刪除 {$deletedCount} 筆交易記錄");
-            
-            $this->showPeriodDetailModal = false;
-            $this->dispatch('refresh-data');
-            
-        } catch (\Exception $e) {
-            \Log::error('Delete period detail error: ' . $e->getMessage());
-            $this->toast(type: 'error', title: '刪除失敗：' . $e->getMessage());
-        }
-    }
-
-    public function hidePeriodDetail()
-    {
-        if (empty($this->periodDetailData)) {
-            $this->toast(type: 'error', title: '沒有交易記錄可隱藏');
-            return;
-        }
-
-        try {
-            $period = $this->getCurrentPeriodFromTitle();
-            if (!$period) {
-                $this->toast(type: 'error', title: '無法識別期間');
-                return;
-            }
-
-            $start = $period['start'];
-            $end = $period['end'];
-
-            // 需要先確認 transactions 表有 is_hidden 欄位
-            $updatedCount = Transaction::where('shop_id', $this->shopId)
-                ->whereBetween('recorded_at', [$start, $end])
-                ->update(['is_hidden' => true]);
-
-            $this->toast(type: 'success', title: "已隱藏 {$updatedCount} 筆交易記錄");
-            
-            $this->showPeriodDetailModal = false;
-            $this->dispatch('refresh-data');
-            
-        } catch (\Exception $e) {
-            \Log::error('Hide period detail error: ' . $e->getMessage());
-            $this->toast(type: 'error', title: '隱藏失敗：' . $e->getMessage());
-        }
-    }
-
-    private function getCurrentPeriodFromTitle(): ?array
-    {
-        $now = Carbon::now();
-        $title = $this->periodDetailTitle;
-        
-        if (str_contains($title, '本日')) {
-            return [
-                'start' => $now->copy()->startOfDay(),
-                'end' => $now->copy()->endOfDay()
-            ];
-        } elseif (str_contains($title, '本月')) {
-            return [
-                'start' => $now->copy()->startOfMonth(),
-                'end' => $now->copy()->endOfMonth()
-            ];
-        } elseif (str_contains($title, '本年')) {
-            return [
-                'start' => $now->copy()->startOfYear(),
-                'end' => $now->copy()->endOfYear()
-            ];
-        }
-        
-        return null;
-    }
-
-    private function recalculateAllAccountBalances()
-    {
-        $accounts = FinancialAccount::all();
-        foreach ($accounts as $account) {
-            $balance = $this->calculateAccountBalance($account->id);
-            $account->update(['balance' => $balance]);
-        }
-    }
-
-    private function calculateAccountBalance($accountId): string
-    {
-        $income = Transaction::where('to_account_id', $accountId)
-            ->where('type', 'income')
-            ->sum('amount');
-            
-        $expense = Transaction::where('from_account_id', $accountId)
-            ->where('type', 'expense')
-            ->sum('amount');
-            
-        $transferIn = Transaction::where('to_account_id', $accountId)
-            ->where('type', 'transfer')
-            ->sum('amount');
-            
-        $transferOut = Transaction::where('from_account_id', $accountId)
-            ->where('type', 'transfer')
-            ->sum('amount');
-            
-        $balance = bcadd(
-            bcadd($income, $transferIn, 4),
-            bcsub('0', bcadd($expense, $transferOut, 4), 4),
-            4
-        );
-        
-        return $balance ?: '0.0000';
     }
 
     // ============ 帳戶流水功能 ============
@@ -489,73 +326,149 @@ class AccountIndex extends Component
         $this->showAccountTransactionsModal = true;
     }
 
-	public function loadAccountTransactions()
-	{
-		if (!$this->selectedAccountId) {
-			return;
-		}
-		
-		$startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
-		$endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
-		
-		$transactions = Transaction::query()
-			->where('shop_id', $this->shopId)
-			->whereBetween('recorded_at', [$startDate, $endDate])
-			->where(function ($query) {
-				$query->where('from_account_id', $this->selectedAccountId)
-					  ->orWhere('to_account_id', $this->selectedAccountId);
-			})
-			->orderBy('recorded_at', 'desc')
-			->get();
-		
-		$totalIncome = '0.00';
-		$totalExpense = '0.00';
-		$formattedList = [];
-		
-		foreach ($transactions as $tx) {
-			// 計算總收入支出
-			$isIncome = false;
-			$isExpense = false;
-			
-			if ($tx->type === 'income' && $tx->to_account_id == $this->selectedAccountId) {
-				$isIncome = true;
-			} elseif ($tx->type === 'expense' && $tx->from_account_id == $this->selectedAccountId) {
-				$isExpense = true;
-			} elseif ($tx->type === 'transfer') {
-				if ($tx->to_account_id == $this->selectedAccountId) {
-					$isIncome = true;
-				} elseif ($tx->from_account_id == $this->selectedAccountId) {
-					$isExpense = true;
-				}
-			}
-			
-			if ($isIncome) {
-				$totalIncome = bcadd($totalIncome, $tx->amount, 4);
-			} elseif ($isExpense) {
-				$totalExpense = bcadd($totalExpense, $tx->amount, 4);
-			}
-			
-			// 格式化單筆交易資料（包含所有顯示需要的欄位）
-			$formattedList[] = [
-				'id' => $tx->id,
-				'type' => $tx->type,
-				'amount' => $tx->amount,
-				'recorded_at' => $tx->recorded_at,
-				'memo' => $tx->memo,
-				'category_id' => $tx->category_id,
-				'from_account_id' => $tx->from_account_id,
-				'to_account_id' => $tx->to_account_id,
-				'currency' => $tx->currency,
-			];
-		}
-		
-		$this->accountTransactions = [
-			'list' => $formattedList,
-			'total_income' => number_format((float)$totalIncome, 2),
-			'total_expense' => number_format((float)$totalExpense, 2),
-			'total_count' => $transactions->count(),
-		];
-	}
+    public function loadAccountTransactions()
+    {
+        if (!$this->selectedAccountId) {
+            return;
+        }
+        
+        $startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
+        $endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
+        
+        $account = FinancialAccount::find($this->selectedAccountId);
+        if (!$account) {
+            $this->accountTransactions = [
+                'list' => [],
+                'total_income' => '0.0000',
+                'total_expense' => '0.0000',
+                'total_count' => 0,
+            ];
+            return;
+        }
+        
+        $accountCurrency = $account->currency ?? $this->getBaseCurrency();
+        
+        $transactions = Transaction::query()
+            ->where('shop_id', $this->shopId)
+            ->whereBetween('recorded_at', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('from_account_id', $this->selectedAccountId)
+                      ->orWhere('to_account_id', $this->selectedAccountId);
+            })
+            ->orderBy('recorded_at', 'desc')
+            ->get();
+        
+        $categoryIds = $transactions->pluck('category_id')->filter()->unique()->toArray();
+        $categories = Category::whereIn('id', $categoryIds)->get()->keyBy('id');
+        
+        $accountIds = [];
+        foreach ($transactions as $tx) {
+            if ($tx->type === 'transfer') {
+                if ($tx->from_account_id) $accountIds[] = $tx->from_account_id;
+                if ($tx->to_account_id) $accountIds[] = $tx->to_account_id;
+            }
+        }
+        $accounts = FinancialAccount::whereIn('id', array_unique($accountIds))->get()->keyBy('id');
+        
+        $totalIncome = '0.0000';
+        $totalExpense = '0.0000';
+        $formattedList = [];
+        
+        foreach ($transactions as $tx) {
+            $isTransfer = ($tx->type === 'transfer');
+            $isIncome = false;
+            $isExpense = false;
+            $amountInAccountCurrency = '0.0000';
+            
+            if ($tx->type === 'income' && $tx->to_account_id == $this->selectedAccountId) {
+                $isIncome = true;
+                $amountInAccountCurrency = $this->convertToAccountCurrency((string)$tx->amount, $tx->currency, $accountCurrency);
+            } elseif ($tx->type === 'expense' && $tx->from_account_id == $this->selectedAccountId) {
+                $isExpense = true;
+                $amountInAccountCurrency = $this->convertToAccountCurrency((string)$tx->amount, $tx->currency, $accountCurrency);
+            } elseif ($isTransfer) {
+                if ($tx->to_account_id == $this->selectedAccountId) {
+                    $isIncome = true;
+                    $amountInAccountCurrency = $this->convertToAccountCurrency((string)$tx->amount, $tx->currency, $accountCurrency);
+                } elseif ($tx->from_account_id == $this->selectedAccountId) {
+                    $isExpense = true;
+                    $amountInAccountCurrency = $this->convertToAccountCurrency((string)$tx->amount, $tx->currency, $accountCurrency);
+                }
+            }
+
+            if ($isIncome) {
+                $totalIncome = bcadd($totalIncome, $amountInAccountCurrency, 4);
+            } elseif ($isExpense) {
+                $totalExpense = bcadd($totalExpense, $amountInAccountCurrency, 4);
+            }
+            
+            $categoryIcon = 'folder';
+            $categoryName = null;
+            
+            if ($isTransfer) {
+                $categoryIcon = 'arrow-path';
+            } elseif ($tx->category_id && isset($categories[$tx->category_id])) {
+                $category = $categories[$tx->category_id];
+                $categoryIcon = $category->icon ?? 'folder';
+                $categoryName = $category->name;
+            }
+            
+            $fromAccountName = null;
+            $toAccountName = null;
+            if ($isTransfer) {
+                if ($tx->from_account_id && isset($accounts[$tx->from_account_id])) {
+                    $fromAccountName = $accounts[$tx->from_account_id]->name;
+                }
+                if ($tx->to_account_id && isset($accounts[$tx->to_account_id])) {
+                    $toAccountName = $accounts[$tx->to_account_id]->name;
+                }
+            }
+            
+            $formattedList[] = [
+                'id' => $tx->id,
+                'type' => $tx->type,
+                'amount' => $tx->amount,
+                'recorded_at' => $tx->recorded_at,
+                'memo' => $tx->memo,
+                'category_id' => $tx->category_id,
+                'from_account_id' => $tx->from_account_id,
+                'to_account_id' => $tx->to_account_id,
+                'currency' => $tx->currency,
+                'amount_in_account_currency' => $amountInAccountCurrency,
+                'is_income' => $isIncome,
+                'is_expense' => $isExpense,
+                'is_transfer' => $isTransfer,
+                'category_icon' => $categoryIcon,
+                'category_name' => $categoryName,
+                'from_account_name' => $fromAccountName,
+                'to_account_name' => $toAccountName,
+            ];
+        }
+
+        // 強制寫回 component state 屬性
+        $this->accountTransactions = [
+            'list' => $formattedList,
+            'total_income' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'total_count' => $transactions->count(),
+        ];
+    }
+    
+    private function convertToAccountCurrency(string $amount, string $fromCurrency, string $toCurrency): string
+    {
+        if (!is_numeric($amount) || $amount === '') {
+            return '0.0000';
+        }
+        
+        if ($fromCurrency === $toCurrency) {
+            return bcadd($amount, '0.0000', 4);
+        }
+        
+        $amountInBase = $this->convertToBase($amount, $fromCurrency);
+        $result = $this->convertFromBase($amountInBase, $toCurrency);
+        
+        return $result ?: '0.0000';
+    }
 
     public function previousMonth()
     {
@@ -654,136 +567,33 @@ class AccountIndex extends Component
         }
     }
 
-	/**
-	 * 編輯交易 - 觸發全域事件開啟交易 Modal
-	 */
-	#[On('edit-transaction')]
-	public function editTransaction($transactionId)
-	{
-		try {
-			// 驗證交易是否存在
-			$transaction = Transaction::find($transactionId);
-			if (!$transaction) {
-				$this->toast(type: 'error', title: '交易不存在');
-				return;
-			}
-
-			// 關閉當前 Modal
-			$this->showAccountTransactionsModal = false;
-			
-			// 觸發全域事件，通知 TransactionModal 開啟並載入交易資料
-			$this->dispatch('open-transaction-modal', transactionId: $transactionId);
-			
-		} catch (\Exception $e) {
-			\Log::error('Edit transaction error: ' . $e->getMessage());
-			$this->toast(type: 'error', title: '無法編輯交易：' . $e->getMessage());
-		}
-	}
-
-	/**
-	 * 從卡片點擊編輯交易（直接觸發）
-	 */
-	public function editTransactionFromCard($transactionId)
-	{
-		$this->editTransaction($transactionId);
-	}
-
-    // ============ 範本管理 ============
-    
-    public function getTemplatesProperty()
+    #[On('edit-transaction')]
+    public function editTransaction($transactionId)
     {
-        return TransactionTemplate::where('shop_id', $this->shopId)->get()->toArray();
-    }
-    
-    public function getFilteredTemplatesProperty()
-    {
-        $all = collect($this->templates);
-        
-        return [
-            'expense' => $all->where('type', 'expense')->values()->toArray(),
-            'income' => $all->where('type', 'income')->values()->toArray(),
-            'transfer' => $all->where('type', 'transfer')->values()->toArray(),
-        ];
-    }
+        try {
+            $transaction = Transaction::find($transactionId);
+            if (!$transaction) {
+                $this->toast(type: 'error', title: '交易不存在');
+                return;
+            }
 
-    public function saveCurrentAsTemplate()
-    {
-        $rules = [
-            'type' => 'required|in:expense,income,transfer',
-            'amount' => 'required|numeric|gt:0',
-        ];
-        
-        if ($this->type === 'transfer') {
-            $rules['accountId'] = 'required|exists:financial_accounts,id|different:toAccountId';
-            $rules['toAccountId'] = 'required|exists:financial_accounts,id';
-        } else {
-            $rules['accountId'] = 'required|exists:financial_accounts,id';
-            $rules['categoryId'] = 'required|exists:categories,id';
-        }
-
-        $this->validate($rules);
-
-        $this->resetTemplateForm();
-        $this->templateType = $this->type;
-        $this->templateAmount = $this->amount;
-        $this->templateAccountId = $this->accountId;
-        $this->templateToAccountId = $this->toAccountId;
-        $this->templateCategoryId = $this->categoryId;
-        $this->templateMemo = $this->memo;
-        $this->templateName = '';
-
-        $this->showTransactionModal = false;
-        $this->showTemplateModal = true;
-    }
-
-    public function editTemplate($templateId)
-    {
-        $template = TransactionTemplate::find($templateId);
-        if ($template) {
-            $this->editingTemplateId = $template->id;
-            $this->templateType = $template->type;
-            $this->templateName = $template->name;
-            $this->templateAmount = number_format((float)$template->amount, 2, '.', '');
-            $this->templateAccountId = $template->account_id;
-            $this->templateToAccountId = $template->to_account_id;
-            $this->templateCategoryId = $template->category_id;
-            $this->templateMemo = $template->memo ?? '';
-            $this->showTemplateModal = true;
+            $this->showAccountTransactionsModal = false;
+            $this->dispatch('open-transaction-modal', transactionId: $transactionId);
+            
+        } catch (\Exception $e) {
+            \Log::error('Edit transaction error: ' . $e->getMessage());
+            $this->toast(type: 'error', title: '無法編輯交易：' . $e->getMessage());
         }
     }
 
-    private function resetTemplateForm()
+    public function editTransactionFromCard($transactionId)
     {
-        $this->reset([
-            'templateType',
-            'templateName',
-            'templateAmount',
-            'templateAccountId',
-            'templateToAccountId',
-            'templateCategoryId',
-            'templateMemo',
-            'editingTemplateId'
-        ]);
-    }
-    
-    // ============ 記帳功能 ============
-    
-    public function setQuickAmount($value)
-    {
-        $this->amount = (string)$value;
-    }
-
-    private function resetForm()
-    {
-        $this->amount = '';
-        $this->memo = '';
-        $this->recordedAt = now()->format('Y-m-d\TH:i');
-        $this->toAccountId = null;
+        $this->editTransaction($transactionId);
     }
 
     // ============ 帳戶管理 ============
     
-    public function editAccountFromList(int $id)  // 改名避免與 editAccount 衝突
+    public function editAccountFromList(int $id)
     {
         $account = FinancialAccount::findOrFail($id);
         $this->editingAccountId = $account->id;
@@ -791,7 +601,7 @@ class AccountIndex extends Component
         $this->accountType = $account->type;
         $this->accountBalance = number_format((float)$account->balance, 2, '.', '');
         $this->accountCurrency = $account->currency;
-		$this->accountMemo = $account->memo ?? '';
+        $this->accountMemo = $account->memo ?? '';
         $this->showAccountModal = true;
     }
 
@@ -804,7 +614,7 @@ class AccountIndex extends Component
             'accountBalance',
             'accountCurrency',
             'creditLimit',
-			'accountMemo'
+            'accountMemo'
         ]);
         $this->accountCurrency = $this->getBaseCurrency();
         $this->showAccountModal = true;
@@ -827,21 +637,21 @@ class AccountIndex extends Component
         if ($this->editingAccountId) {
             $account = FinancialAccount::findOrFail($this->editingAccountId);
             $account->update([
-                'name'		=> $this->accountName,
-                'type'		=> $this->accountType,
-                'balance'	=> $formattedBalance,
-                'currency'	=> $this->accountCurrency,
-				'memo'		=> $this->accountMemo ?? '',
+                'name'     => $this->accountName,
+                'type'     => $this->accountType,
+                'balance'  => $formattedBalance,
+                'currency' => $this->accountCurrency,
+                'memo'     => $this->accountMemo ?? '',
             ]);
             $this->toast(type: 'success', title: '帳戶更新成功！');
         } else {
             FinancialAccount::create([
-                'name'		=> $this->accountName,
-                'type'		=> $this->accountType,
-                'balance'	=> $formattedBalance,
-                'currency'	=> $this->accountCurrency,
-				'memo'		=> $this->accountMemo ?? '',
-                'is_active'	=> true,
+                'name'      => $this->accountName,
+                'type'      => $this->accountType,
+                'balance'   => $formattedBalance,
+                'currency'  => $this->accountCurrency,
+                'memo'      => $this->accountMemo ?? '',
+                'is_active' => true,
             ]);
             $this->toast(type: 'success', title: '帳戶建立成功！');
         }
@@ -888,38 +698,10 @@ class AccountIndex extends Component
             $accountTypeOptions[] = ['id' => $key, 'name' => $value['name']];
         }
 
-        $dropdownAccounts = $accounts->map(function ($acc) use ($currencyConfig) {
-            $symbol = $currencyConfig[$acc->currency]['symbol'] ?? '';
-            return [
-                'id' => $acc->id,
-                'name' => "{$acc->name} ({$symbol}" . number_format($acc->balance, 2) . ")"
-            ];
-        });
-
-        $hierarchicalCategories = Category::where('type', $this->type)
-            ->whereNull('parent_id')
-            ->with(['children' => function($query) {
-                $query->orderBy('sort_order');
-            }])
-            ->orderBy('sort_order')
-            ->get();
-            
-        $templateCategories = Category::where('type', $this->templateType)
-            ->whereNull('parent_id')
-            ->with(['children' => function($query) {
-                $query->orderBy('sort_order');
-            }])
-            ->orderBy('sort_order')
-            ->get();
-
         return view('livewire.finance.account-index', [
             'currencyGroups' => $currencyGroups,
             'availableCurrencies' => $currencyConfig,
             'accountTypeOptions' => $accountTypeOptions,
-            'dropdownAccounts' => $dropdownAccounts,
-            'hierarchicalCategories' => $hierarchicalCategories,
-            'templateCategories' => $templateCategories,
-            'filteredTemplates' => $this->filteredTemplates,
             'accountCurrency' => $this->accountCurrency,
         ])->layout('components.layouts.app');
     }
