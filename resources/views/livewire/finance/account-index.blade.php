@@ -264,7 +264,7 @@
 		</x-slot:actions>
 	</x-modal>
 
-	{{-- 交易流水 Modal --}}
+	{{-- 交易列表 Modal --}}
 	<x-modal wire:model="showAccountTransactionsModal" backdrop-blur-md max-width="7xl" box-class="border border-base-200 shadow-2xl rounded-2xl p-0 overflow-hidden">
 		
 		{{-- 使用 flex 容器控制高度 --}}
@@ -279,7 +279,7 @@
 					<div>
 						<h3 class="text-lg font-black text-stone-800 tracking-wide font-sans flex items-center gap-2">
 							{{ $selectedAccountName }} 
-							<span class="text-xs font-medium text-stone-400 font-mono tracking-normal">明細流水</span>
+							<span class="text-xs font-medium text-stone-400 font-mono tracking-normal">交易列表</span>
 						</h3>
 						<p class="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5">
 							<span>共計有 <strong class="text-stone-800 font-mono">{{ $accountTransactions['total_count'] ?? 0 }}</strong> 筆交易歷史</span>
@@ -295,60 +295,58 @@
 			<div class="p-6 bg-base-100/40 flex-1 overflow-y-auto min-h-0">
 				<div class="space-y-5 max-w-full">
 					
-					{{-- 月份導航 --}}
-					{{-- resources/views/livewire/finance/account-index.blade.php (流水 Modal 內的全寬年月與收支統計區塊) --}}
+					{{-- 月份導航+本月收支 --}}
+					<div class="w-full max-w-full space-y-2 flex-shrink-0">
+						
+						{{-- 第一行：全佔一行 年月膠囊選擇器 --}}
+						<div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 w-full shadow-inner">
+							<x-button 
+								icon="o-chevron-left" 
+								class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+								wire:click="previousMonth" 
+							/>
+							
+							<div class="flex items-center gap-1.5 font-mono font-black text-sm text-stone-800 tracking-wider select-none">
+								<x-heroicon-o-calendar class="w-4 h-4 text-stone-400" />
+								<span>{{ Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->format('Y 年 m 月') }}</span>
+							</div>
+							
+							<x-button 
+								icon="o-chevron-right" 
+								class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+								wire:click="nextMonth" 
+								:disabled="Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->isSameMonth(now())" 
+							/>
+						</div>
 
-<div class="w-full max-w-full space-y-2 flex-shrink-0">
-    
-    {{-- 第一行：全佔一行 年月膠囊選擇器 --}}
-    <div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 w-full shadow-inner">
-        <x-button 
-            icon="o-chevron-left" 
-            class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
-            wire:click="previousMonth" 
-        />
-        
-        <div class="flex items-center gap-1.5 font-mono font-black text-sm text-stone-800 tracking-wider select-none">
-            <x-heroicon-o-calendar class="w-4 h-4 text-stone-400" />
-            <span>{{ Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->format('Y 年 m 月') }}</span>
-        </div>
-        
-        <x-button 
-            icon="o-chevron-right" 
-            class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
-            wire:click="nextMonth" 
-            :disabled="Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->isSameMonth(now())" 
-        />
-    </div>
+						{{-- 第二行：本月收支數據卡片 (1:1 雙欄滿寬) --}}
+						<div class="grid grid-cols-2 gap-2 w-full">
+							
+							{{-- 本月收入 --}}
+							<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15 min-w-0">
+								<div class="flex items-center gap-1.5 flex-shrink-0">
+									<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+									<span class="text-xs font-semibold text-emerald-900">收入</span>
+								</div>
+								<span class="font-mono font-extrabold text-xs sm:text-sm text-emerald-700 truncate min-w-0 ml-1">
+									+{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_income'] ?? 0), 2, '.', ',') }}
+								</span>
+							</div>
 
-    {{-- 第二行：本月收支數據卡片 (1:1 雙欄滿寬) --}}
-    <div class="grid grid-cols-2 gap-2 w-full">
-        
-        {{-- 本月收入 --}}
-        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15 min-w-0">
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="text-xs font-semibold text-emerald-900">收入</span>
-            </div>
-            <span class="font-mono font-extrabold text-xs sm:text-sm text-emerald-700 truncate min-w-0 ml-1">
-                +{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_income'] ?? 0), 2, '.', ',') }}
-            </span>
-        </div>
+							{{-- 本月支出 --}}
+							<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/15 min-w-0">
+								<div class="flex items-center gap-1.5 flex-shrink-0">
+									<span class="w-2 h-2 rounded-full bg-rose-500"></span>
+									<span class="text-xs font-semibold text-rose-900">支出</span>
+								</div>
+								<span class="font-mono font-extrabold text-xs sm:text-sm text-rose-700 truncate min-w-0 ml-1">
+									-{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_expense'] ?? 0), 2, '.', ',') }}
+								</span>
+							</div>
 
-        {{-- 本月支出 --}}
-        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/15 min-w-0">
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span class="text-xs font-semibold text-rose-900">支出</span>
-            </div>
-            <span class="font-mono font-extrabold text-xs sm:text-sm text-rose-700 truncate min-w-0 ml-1">
-                -{{ $selectedCurrencySymbol }}{{ number_format((float)($accountTransactions['total_expense'] ?? 0), 2, '.', ',') }}
-            </span>
-        </div>
+						</div>
 
-    </div>
-
-</div>
+					</div>
 
 					{{-- 交易列表（緊湊樣式） --}}
 					<div class="space-y-1.5">

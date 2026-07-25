@@ -10,37 +10,105 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 use Mary\Traits\Toast;
 
 class TransactionIndex extends Component
 {
-    use WithPagination;
     use Toast;
 
     // 篩選器綁定變數
-    public string $searchCurrency = '';  // 篩選幣別 (TWD, CNY, HKD, USD)
-    public ?int $searchAccountId = null; // 篩選特定帳戶
-    public ?int $searchCategoryId = null; // 篩選特定分類
-    public string $searchType = '';       // 篩選類型 (expense, income)
+    public string $searchCurrency = '';
+    public ?int $searchAccountId = null;
+    public ?int $searchCategoryId = null;
+    public string $searchType = '';
 
     // 控制是否顯示進階篩選抽屜
     public bool $showFilters = false;
 
+    // 年月選擇器
+    public string $transactionMonth = '';
+
     // 預留多店店別，預設為 1
     public int $shopId = 1;
 
-    /**
-     * 當篩選條件變更時，自動跳回第一頁並防呆重置
-     */
-    public function updatedSearchCurrency() { $this->resetPage(); $this->searchAccountId = null; }
-    public function updatedSearchAccountId() { $this->resetPage(); }
-    public function updatedSearchCategoryId() { $this->resetPage(); }
-    public function updatedSearchType() { $this->resetPage(); }
+    public function mount()
+    {
+        $this->transactionMonth = now()->format('Y-m');
+    }
 
     /**
-     * 刪除單筆記帳紀錄（反向高精度回滾帳戶餘額，嚴格防併發）
+     * 當篩選條件變更時，重新載入數據
+     */
+    public function updatedSearchCurrency() { $this->loadTransactions(); }
+    public function updatedSearchAccountId() { $this->loadTransactions(); }
+    public function updatedSearchCategoryId() { $this->loadTransactions(); }
+    public function updatedSearchType() { $this->loadTransactions(); }
+
+    /**
+     * 監聽數據刷新事件
+     */
+    #[On('refresh-data')]
+    public function onDataChanged()
+    {
+        $this->loadTransactions();
+    }
+
+    /**
+     * 監聽點擊編輯交易
+     */
+    #[On('edit-transaction')]
+    public function editTransaction($transactionId)
+    {
+        try {
+            $transaction = Transaction::find($transactionId);
+            if (!$transaction) {
+                $this->toast(type: 'error', title: '交易不存在');
+                return;
+            }
+
+            $this->dispatch('open-transaction-modal', transactionId: $transactionId);
+            
+        } catch (\Exception $e) {
+            \Log::error('Edit transaction error: ' . $e->getMessage());
+            $this->toast(type: 'error', title: '無法編輯交易：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 上一個月
+     */
+    public function previousMonth()
+    {
+        $date = Carbon::createFromFormat('Y-m', $this->transactionMonth)->subMonth();
+        $this->transactionMonth = $date->format('Y-m');
+        $this->loadTransactions();
+    }
+
+    /**
+     * 下一個月
+     */
+    public function nextMonth()
+    {
+        $date = Carbon::createFromFormat('Y-m', $this->transactionMonth)->addMonth();
+        if ($date->isFuture()) {
+            $date = now();
+        }
+        $this->transactionMonth = $date->format('Y-m');
+        $this->loadTransactions();
+    }
+
+    /**
+     * 載入交易數據（無分頁）
+     */
+    private function loadTransactions()
+    {
+        // 這個方法會在 render 中被重新執行，不需要額外操作
+        // 保留此方法以維持一致性
+    }
+
+    /**
+     * 刪除單筆記帳紀錄
      */
     public function deleteTransaction(int $id)
     {
@@ -50,25 +118,22 @@ class TransactionIndex extends Component
                     ->where('shop_id', $this->shopId)
                     ->firstOrFail();
 
-                // 獲取關聯的帳戶，採用行鎖 (lockForUpdate)
                 $accountId = $transaction->from_account_id ?? $transaction->to_account_id;
                 $account = FinancialAccount::where('id', $accountId)->lockForUpdate()->firstOrFail();
 
-                // 根據原本的支出/收入性質，執行高精度的反向餘額沖正
                 if ($transaction->type === 'expense') {
-                    // 原本是支出（扣錢），刪除時要「加回」金額
                     $newBalance = bcadd($account->balance, $transaction->amount, 4);
                 } else {
-                    // 原本是收入（加錢），刪除時要「扣除」金額
                     $newBalance = bcsub($account->balance, $transaction->amount, 4);
                 }
 
-                // 更新餘額並刪除交易明細
                 $account->update(['balance' => $newBalance]);
                 $transaction->delete();
             });
 
             $this->toast(type: 'success', title: '刪除成功', description: '該筆紀錄已移除，帳戶餘額已精確沖正回滾。');
+            $this->dispatch('refresh-data');
+            
         } catch (\Exception $e) {
             $this->toast(type: 'error', title: '刪除失敗', description: $e->getMessage());
         }
@@ -79,10 +144,15 @@ class TransactionIndex extends Component
      */
     public function render()
     {
-        // 建立基本查詢器，預載關聯以優化 SQL 效能 (防止 N+1 問題)
+        // 解析月份範圍
+        $startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
+        $endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
+
+        // 建立基本查詢器
         $query = Transaction::query()
-            ->with(['category', 'fromAccount', 'toAccount'])
+            ->with(['category', 'category.parent', 'fromAccount', 'toAccount'])
             ->where('shop_id', $this->shopId)
+            ->whereBetween('recorded_at', [$startDate, $endDate])
             ->orderBy('recorded_at', 'desc');
 
         // 套用動態條件過濾
@@ -105,27 +175,57 @@ class TransactionIndex extends Component
             });
         }
 
-        // 分頁抓取流水（每頁 15 筆）
-        $transactions = $query->paginate(15);
+        // 取得所有交易（無分頁）
+        $transactions = $query->get();
 
-        // 將當前頁面的紀錄依「日期 (Y-m-d)」進行分組，供前端時間線渲染
-        $groupedTransactions = collect($transactions->items())->groupBy(function ($item) {
+        // 依日期分組
+        $groupedTransactions = $transactions->groupBy(function ($item) {
             return Carbon::parse($item->recorded_at)->format('Y-m-d');
         });
 
-        // 撈取篩選選單所需資料，並與設定檔幣別關聯
+        // 計算本月收支統計
+        $totalIncome = '0.0000';
+        $totalExpense = '0.0000';
+        $baseCurrency = config('business.base_currency', 'TWD');
+        $currencies = config('business.currencies', []);
+        $baseSymbol = $currencies[$baseCurrency]['symbol'] ?? 'NT$';
+
+        foreach ($transactions as $tx) {
+            $currency = $tx->currency ?? $baseCurrency;
+            $amount = $tx->amount;
+
+            // 轉換為基礎貨幣
+            $rate = $currencies[$currency]['rate'] ?? 1;
+            $amountInBase = bcmul($amount, (string)$rate, 4);
+
+            if ($tx->type === 'income') {
+                $totalIncome = bcadd($totalIncome, $amountInBase, 4);
+            } elseif ($tx->type === 'expense') {
+                $totalExpense = bcadd($totalExpense, $amountInBase, 4);
+            }
+        }
+
+        // 撈取篩選選單所需資料
         $accounts = FinancialAccount::where('is_active', true)->get();
         $filteredAccounts = $this->searchCurrency ? $accounts->where('currency', $this->searchCurrency) : $accounts;
-
-        // 僅撈取子分類供篩選（parent_id 不為 null）
         $categories = Category::whereNotNull('parent_id')->orderBy('sort_order')->get();
+
+        // 計算當前月份顯示文字
+        $monthDisplay = Carbon::createFromFormat('Y-m', $this->transactionMonth)->format('Y 年 m 月');
+        $isCurrentMonth = Carbon::createFromFormat('Y-m', $this->transactionMonth)->isSameMonth(now());
 
         return view('livewire.finance.transaction-index', [
             'groupedTransactions' => $groupedTransactions,
-            'transactionsPaginator' => $transactions, // 給分頁組件讀取
-            'currencies' => config('business.currencies', []),
+            'transactions' => $transactions,
+            'currencies' => $currencies,
             'accounts' => $filteredAccounts,
-            'categories' => $categories
+            'categories' => $categories,
+            'totalIncome' => number_format((float)$totalIncome, 2),
+            'totalExpense' => number_format((float)$totalExpense, 2),
+            'baseSymbol' => $baseSymbol,
+            'monthDisplay' => $monthDisplay,
+            'isCurrentMonth' => $isCurrentMonth,
+            'transactionCount' => $transactions->count(),
         ])->layout('components.layouts.app');
     }
 }

@@ -1,42 +1,93 @@
 {{-- resources/views/livewire/finance/transaction-index.blade.php --}}
 
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-    
-    <!-- 頂部標題與篩選開關 -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-5">
-        <div>
-            <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
-            <p class="text-sm text-gray-500 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
+<div class="h-screen overflow-y-auto">
+    <div class="sticky top-0 z-10 bg-base-100/95 backdrop-blur-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
+                <p class="text-sm text-gray-500 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <x-button label="資產帳戶" icon="o-wallet" class="btn-outline btn-sm" link="{{ route('finance.accounts') }}" />
+                <x-button label="篩選明細" icon="o-funnel" class="btn-sm {{ $showFilters ? 'btn-primary' : 'btn-ghost border-base-200' }}" wire:click="$toggle('showFilters')" />
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <x-button label="資產帳戶" icon="o-wallet" class="btn-outline btn-sm" link="{{ route('finance.accounts') }}" />
-            <x-button label="篩選明細" icon="o-funnel" class="btn-sm {{ $showFilters ? 'btn-primary' : 'btn-ghost border-base-200' }}" wire:click="$toggle('showFilters')" />
+
+        {{-- 月份導航 + 本月收支 --}}
+        <div class="mt-4 space-y-3">
+            {{-- 年月膠囊選擇器 --}}
+            <div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 shadow-inner">
+                <x-button 
+                    icon="o-chevron-left" 
+                    class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+                    wire:click="previousMonth" 
+                />
+                
+                <div class="flex items-center gap-1.5 font-mono font-black text-sm text-stone-800 tracking-wider select-none">
+                    <x-heroicon-o-calendar class="w-4 h-4 text-stone-400" />
+                    <span>{{ $monthDisplay }}</span>
+                    @if($isCurrentMonth)
+                        <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">本月</span>
+                    @endif
+                    <span class="text-xs font-normal text-stone-400 ml-1">({{ $transactionCount }} 筆)</span>
+                </div>
+                
+                <x-button 
+                    icon="o-chevron-right" 
+                    class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+                    wire:click="nextMonth" 
+                    :disabled="$isCurrentMonth" 
+                />
+            </div>
+
+            {{-- 本月收支數據卡片 (1:1 雙欄) --}}
+            <div class="grid grid-cols-2 gap-2">
+                <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-xs font-semibold text-emerald-900">收入</span>
+                    </div>
+                    <span class="font-mono font-extrabold text-xs sm:text-sm text-emerald-700 truncate ml-1">
+                        +{{ $baseSymbol }}{{ $totalIncome }}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/15">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span class="text-xs font-semibold text-rose-900">支出</span>
+                    </div>
+                    <span class="font-mono font-extrabold text-xs sm:text-sm text-rose-700 truncate ml-1">
+                        -{{ $baseSymbol }}{{ $totalExpense }}
+                    </span>
+                </div>
+            </div>
         </div>
+
+        <!-- 動態展開的進階篩選面板 -->
+        @if($showFilters)
+            <div class="mt-4 bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-2xl border border-stone-200/60 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 transition-all duration-300 animate-fadeIn">
+                <x-select label="貨幣種類" wire:model.live="searchCurrency" placeholder="全部貨幣" 
+                          :options="collect($currencies)->map(fn($info, $code) => ['id' => $code, 'name' => $info['name']])->toArray()" 
+                          class="select-sm" inline />
+                
+                <x-select label="資產帳戶" wire:model.live="searchAccountId" placeholder="全部帳戶" 
+                          :options="$accounts->map(fn($a) => ['id' => $a->id, 'name' => $a->name.' ('.$a->currency.')'])->toArray()" 
+                          class="select-sm" inline />
+                
+                <x-select label="收支分類" wire:model.live="searchCategoryId" placeholder="全部分類" 
+                          :options="$categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->toArray()" 
+                          class="select-sm" inline />
+                
+                <x-select label="收支性質" wire:model.live="searchType" placeholder="全部性質" 
+                          :options="[['id' => 'expense', 'name' => '純支出'], ['id' => 'income', 'name' => '純收入']]" 
+                          class="select-sm" inline />
+            </div>
+        @endif
     </div>
 
-    <!-- 動態展開的進階篩選面板 -->
-    @if($showFilters)
-        <div class="bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-2xl border border-stone-200/60 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 transition-all duration-300 animate-fadeIn">
-            <x-select label="貨幣種類" wire:model.live="searchCurrency" placeholder="全部貨幣" 
-                      :options="collect($currencies)->map(fn($info, $code) => ['id' => $code, 'name' => $info['name']])->toArray()" 
-                      class="select-sm" inline />
-            
-            <x-select label="資產帳戶" wire:model.live="searchAccountId" placeholder="全部帳戶" 
-                      :options="$accounts->map(fn($a) => ['id' => $a->id, 'name' => $a->name.' ('.$a->currency.')'])->toArray()" 
-                      class="select-sm" inline />
-            
-            <x-select label="收支分類" wire:model.live="searchCategoryId" placeholder="全部分類" 
-                      :options="$categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->toArray()" 
-                      class="select-sm" inline />
-            
-            <x-select label="收支性質" wire:model.live="searchType" placeholder="全部性質" 
-                      :options="[['id' => 'expense', 'name' => '純支出'], ['id' => 'income', 'name' => '純收入']]" 
-                      class="select-sm" inline />
-        </div>
-    @endif
-
     <!-- 流水時間線主體 -->
-    <div class="space-y-6">
+    <div class="space-y-6 mt-4">
         @forelse($groupedTransactions as $date => $dayTransactions)
             <div class="space-y-3">
                 
@@ -45,33 +96,26 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500/70"></span>
                     <span>{{ date('Y 年 m 月 d 日', strtotime($date)) }}</span>
                     <span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][date('w', strtotime($date))] }}</span>
+                    <span class="text-[10px] font-normal text-gray-300 ml-1">({{ count($dayTransactions) }} 筆)</span>
                 </div>
 
                 <!-- 當天所有交易明細卡片群 -->
                 <div class="bg-base-100 rounded-2xl border border-stone-200/50 shadow-sm divide-y divide-stone-100 dark:divide-stone-900/40 overflow-hidden">
                     @foreach($dayTransactions as $tx)
                         @php
-                            // 獲取該筆交易所屬的資產帳戶
                             $acc = $tx->fromAccount ?? $tx->toAccount;
-                            
-                            // 讀取該幣別對應的色卡配置
                             $curStyle = config("business.currencies.{$acc->currency}") ?? config("business.currencies.TWD");
-                            
-                            // 讀取該帳戶類型的色卡配置
                             $typeStyle = config("business.account_types.{$acc->type}") ?? config("business.account_types.cash");
                             
-                            // ✅ 決定顯示的標題
                             $displayTitle = '未分類';
                             $iconName = 'o-hashtag';
                             
                             if ($tx->type === 'transfer') {
-                                // ✅ 轉帳：顯示 from → to
                                 $fromName = $tx->fromAccount->name ?? '?';
                                 $toName = $tx->toAccount->name ?? '?';
                                 $displayTitle = $fromName . ' → ' . $toName;
                                 $iconName = 'o-arrow-path';
                             } elseif ($tx->category) {
-                                // ✅ 有類別：顯示類別名稱（含父類別）
                                 if ($tx->category->parent) {
                                     $displayTitle = $tx->category->parent->name . ' › ' . $tx->category->name;
                                 } else {
@@ -79,24 +123,21 @@
                                 }
                                 $iconName = $tx->category->icon ?? 'o-hashtag';
                             } else {
-                                // ✅ 無類別的一般收支：顯示帳戶名稱
                                 $displayTitle = $acc->name ?? '未分類';
                                 $iconName = $tx->type === 'expense' ? 'o-credit-card' : 'o-wallet';
                             }
                             
-                            // 處理圖示名稱
                             if (!str_starts_with($iconName, 'heroicon')) {
                                 $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
                             }
                         @endphp
                         
-                        <div wire:click="$dispatch('open-transaction-modal', { transaction_id: {{ $tx->id }} })" class="p-4 flex items-center justify-between hover:bg-stone-50/40 dark:hover:bg-stone-900/10 transition-all duration-200 group relative pl-6 cursor-pointer">
+                        <div wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx->id }} })" 
+                             class="p-4 flex items-center justify-between hover:bg-stone-50/40 dark:hover:bg-stone-900/10 transition-all duration-200 group relative pl-6 cursor-pointer">
                             
-                            <!-- 帳戶類型的左側垂直條 -->
                             <span class="absolute left-0 top-0 bottom-0 w-1 {{ $typeStyle['left_bar'] }} opacity-70"></span>
 
                             <div class="flex items-center gap-3.5 flex-1 min-w-0">
-                                <!-- 分類/轉帳 圓圈圖示 -->
                                 <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 
                                     {{ $tx->type === 'expense' ? 'bg-stone-100 text-stone-600' : 
                                        ($tx->type === 'transfer' ? 'bg-sky-100 text-sky-600 dark:bg-sky-950/30' : 
@@ -105,7 +146,6 @@
                                 </div>
                                 
                                 <div class="flex-1 min-w-0">
-                                    <!-- 標題 -->
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="font-bold text-sm text-base-content truncate">
                                             {{ $displayTitle }}
@@ -113,7 +153,6 @@
                                         @if($tx->memo)
                                             <span class="text-xs text-gray-400 max-w-[180px] sm:max-w-xs truncate font-medium">({{ $tx->memo }})</span>
                                         @endif
-                                        {{-- 轉帳標籤 --}}
                                         @if($tx->type === 'transfer')
                                             <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400 flex-shrink-0">
                                                 轉帳
@@ -121,7 +160,6 @@
                                         @endif
                                     </div>
                                     
-                                    <!-- 帳戶名稱與類型徽章 -->
                                     <div class="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
                                         <span class="font-bold truncate">{{ $acc->name }}</span>
                                         <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md {{ $typeStyle['badge'] }} flex-shrink-0">
@@ -134,7 +172,6 @@
                                 </div>
                             </div>
 
-                            <!-- 右側金額與刪除按鍵 -->
                             <div class="flex items-center gap-4 flex-shrink-0">
                                 <div class="text-right">
                                     <span class="font-mono text-base font-black 
@@ -147,7 +184,6 @@
                                     <div class="text-[10px] text-gray-400 font-mono mt-0.5 opacity-80">{{ date('H:i', strtotime($tx->recorded_at)) }}</div>
                                 </div>
 
-                                <!-- 刪除按鍵 -->
                                 <button type="button" 
                                         wire:click.stop="deleteTransaction({{ $tx->id }})"
                                         wire:confirm="確定要刪除這筆記帳明細嗎？對應帳戶的餘額將會使用高精度運算自動退回沖正。"
@@ -163,14 +199,18 @@
         @empty
             <div class="bg-base-100 rounded-2xl p-16 border border-dashed border-stone-200 text-center text-gray-400 text-sm">
                 <x-heroicon-o-document-magnifying-glass class="w-10 h-10 mx-auto mb-3 opacity-40 text-stone-400" />
-                沒有找到符合篩選條件的大宋美學記帳紀錄
+                <p class="font-medium">{{ $monthDisplay }} 沒有符合篩選條件的大宋美學記帳紀錄</p>
+                <p class="text-xs text-stone-300 mt-1">試試調整篩選條件或切換其他月份</p>
             </div>
         @endforelse
     </div>
 
-    <!-- 分頁導航列 -->
-    <div class="pt-2">
-        {{ $transactionsPaginator->links() }}
-    </div>
+    {{-- 底部統計資訊 --}}
+    @if($transactionCount > 0)
+        <div class="mt-6 pt-4 border-t border-stone-200/50 flex justify-between items-center text-xs text-stone-400">
+            <span>共 {{ $transactionCount }} 筆交易</span>
+            <span>{{ $monthDisplay }}</span>
+        </div>
+    @endif
 
 </div>
