@@ -2,38 +2,64 @@
 <div class="p-6 max-w-7xl mx-auto space-y-8">
     
 	{{-- 1. 頂部收支統計卡片 --}}
-	<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-		@foreach(['today' => ['本日收支摘要', 'bg-gradient-to-r from-sky-400 to-sky-500'], 'month' => ['本月收支累計', 'bg-gradient-to-r from-emerald-400 to-emerald-500'], 'year' => ['本年年度統計', 'bg-gradient-to-r from-purple-400 to-purple-500']] as $period => $meta)
-			@php
-				$stats = $this->periodStats[$period];
-				$baseSymbol = $stats['base_symbol'] ?? 'NT$';
-				$currencyCount = count($stats['details'] ?? []);
-			@endphp			
-			<div class="stats shadow bg-base-100 border border-base-200 hover:shadow-lg transition-all duration-300 cursor-pointer" 
-				 wire:click="showPeriodDetail('{{ $period }}')">
-				<div class="stat">
-					<div class="stat-title flex items-center gap-1.5 text-gray-500 font-medium">
-						<span class="flex h-2 w-2 rounded-full {{ $meta[1] }}"></span>
-						{{ $meta[0] }}
-						@if($currencyCount > 1)
-							<span class="text-xs text-gray-400 ml-1 flex items-center gap-0.5">
-								( {{ $currencyCount }}種幣別 )
-							</span>
-						@endif
-					</div>
-					<div class="mt-3 space-y-2">
-						<div class="flex justify-between items-center">
-							<span class="text-sm text-gray-400">收入</span>
-							<span class="text-lg font-bold text-success">+{{ $baseSymbol }} {{ $stats['income'] }}</span>
+	<div class="space-y-3">
+		<div class="flex items-center justify-between">
+			<h2 class="text-sm font-bold text-gray-500 tracking-wider flex items-center gap-2">
+				<span class="w-1.5 h-4.5 rounded-full bg-sky-500"></span>
+				期間資產統計
+				<span class="text-xs text-gray-400">點擊卡片看幣別</span>
+			</h2>			
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+			@foreach(['today' => ['本日收支摘要', 'bg-gradient-to-r from-sky-400 to-sky-500'], 'month' => ['本月收支累計', 'bg-gradient-to-r from-emerald-400 to-emerald-500'], 'year' => ['本年年度統計', 'bg-gradient-to-r from-purple-400 to-purple-500']] as $period => $meta)
+				@php
+					$stats = $this->periodStats[$period];
+					$baseSymbol = $stats['base_symbol'] ?? 'NT$';
+					$currencyCount = count($stats['details'] ?? []);
+
+					$income = (string) ($stats['income'] ?? '0');
+					$expense = (string) ($stats['expense'] ?? '0');
+					
+					// 純數值計算盈餘 (bcsub)
+					$incomeClean = str_replace(',', '', $income);
+					$expenseClean = str_replace(',', '', $expense);
+					$profitValue = bcsub($incomeClean, $expenseClean, 2);
+					$isProfitNegative = bccomp($profitValue, '0', 2) < 0;
+					$profitFormatted = number_format((float)$profitValue, 2);
+				@endphp			
+				<div class="stats shadow bg-base-100 border border-base-200 hover:shadow-lg transition-all duration-300 cursor-pointer" 
+					 wire:click="showPeriodDetail('{{ $period }}')">
+					<div class="stat">
+						<div class="stat-title flex items-center gap-1.5 text-gray-500 font-medium">
+							<span class="flex h-2 w-2 rounded-full {{ $meta[1] }}"></span>
+							{{ $meta[0] }}
+							@if($currencyCount > 1)
+								<span class="text-xs text-gray-400 ml-1 flex items-center gap-0.5">
+									( {{ $currencyCount }}種幣別 )
+								</span>
+							@endif
 						</div>
-						<div class="flex justify-between items-center">
-							<span class="text-sm text-gray-400">支出</span>
-							<span class="text-lg font-bold text-error">-{{ $baseSymbol }} {{ $stats['expense'] }}</span>
+						<div class="mt-3 space-y-2">
+							<div class="flex justify-between items-center">
+								<span class="text-sm text-emerald-400">收入</span>
+								<span class="text-lg font-bold text-emerald-500">+{{ $baseSymbol }} {{ $income }}</span>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-sm text-rose-400">支出</span>
+								<span class="text-lg font-bold text-rose-600">-{{ $baseSymbol }} {{ $expense }}</span>
+							</div>
+							<div class="flex justify-between items-center pt-2 border-t border-base-200">
+								<span class="text-sm font-medium -stone-500">盈餘</span>
+								<span class="text-lg font-extrabold {{ $isProfitNegative ? 'text-stone-600' : 'text-base-content' }}">
+									{{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
+								</span>
+							</div>
 						</div>
-					</div>
-				</div>				
-			</div>
-		@endforeach
+					</div>				
+				</div>
+			@endforeach
+		</div>
 	</div>
 
     {{-- 2. 操作標題列 --}}
@@ -43,7 +69,7 @@
             <p class="text-sm text-gray-500 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
-            <x-button label="新增帳戶" icon="o-plus" class="btn-green" wire:click="openCreateModal" />
+            <x-button label="新增帳戶" icon="o-plus" class="btn-dark" wire:click="openCreateModal" />
             <x-button label="記一筆" icon="o-pencil-square" class="btn-green" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>
@@ -71,6 +97,7 @@
             <h2 class="text-sm font-bold text-gray-500 tracking-wider flex items-center gap-2">
                 <span class="w-1.5 h-4.5 rounded-full {{ $curStyle['tag'] }} bg-current"></span> 
                 {{ $group['currency_name'] }}資產明細
+				<span class="text-xs text-gray-400">點擊卡片看明細</span>
             </h2>
             
             {{-- 手機端卡片式 --}}
@@ -215,7 +242,7 @@
 		</div>
 	</x-modal>
 
-	{{-- 6. 分幣別詳情 Modal --}}
+	{{-- 6. 分幣別統計 Modal --}}
 	<x-modal wire:model="showPeriodDetailModal" :title="$periodDetailTitle" separator width="90%">
 		<div class="space-y-4 p-2">
 			@if(empty($periodDetailData))
@@ -226,26 +253,40 @@
 			@else
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					@foreach($periodDetailData as $currency => $data)
-						<div class="rounded-lg p-4 border {{ $data['bg'] ?? 'bg-base-200' }}">
-							<div class="flex justify-between items-center mb-3">
-								<div>
-									<span class="font-bold text-lg">{{ $data['currency_name'] }}</span>
-									<span class="text-sm text-gray-400 ml-2">({{ $currency }})</span>
+						@php
+							$incVal = (string) ($data['income'] ?? '0');
+							$expVal = (string) ($data['expense'] ?? '0');
+							$profVal = bcsub(str_replace(',', '', $incVal), str_replace(',', '', $expVal), 2);
+							$isProfNeg = bccomp($profVal, '0', 2) < 0;
+						@endphp
+						<div class="rounded-xl p-5 border shadow-sm bg-base-100 space-y-4">
+							<div class="flex justify-between items-center border-b border-base-200 pb-3">
+								<div class="flex items-center gap-2">
+									<span class="font-bold text-lg text-base-content">{{ $data['currency_name'] }}</span>
 								</div>
-								<span class="text-2xl font-bold opacity-20">{{ $currency }}</span>
+								<span class="text-xl font-bold font-mono opacity-20">{{ $currency }}</span>
 							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="bg-success/10 rounded-lg p-3">
-									<div class="text-xs text-gray-500">收入</div>
-									<div class="text-success font-bold text-lg">
-										+{{ $data['currency_symbol'] }}{{ number_format((float)$data['income'], 2) }}
-									</div>
+
+							<div class="space-y-2.5">
+								<div class="flex justify-between items-center text-sm">
+									<span class="text-emerald-400 font-medium">收入</span>
+									<span class="font-mono font-bold text-emerald-500">
+										+{{ $data['currency_symbol'] }}{{ number_format((float)$incVal, 2) }}
+									</span>
 								</div>
-								<div class="bg-error/10 rounded-lg p-3">
-									<div class="text-xs text-gray-500">支出</div>
-									<div class="text-error font-bold text-lg">
-										-{{ $data['currency_symbol'] }}{{ number_format((float)$data['expense'], 2) }}
-									</div>
+
+								<div class="flex justify-between items-center text-sm">
+									<span class="text-rose-400 font-medium">支出</span>
+									<span class="font-mono font-bold text-rose-500">
+										-{{ $data['currency_symbol'] }}{{ number_format((float)$expVal, 2) }}
+									</span>
+								</div>
+
+								<div class="flex justify-between items-center text-sm pt-2 border-t border-base-200">
+									<span class="text-stone-400 font-bold">盈餘</span>
+									<span class="font-mono font-stone {{ $isProfNeg ? 'text-rose-500' : 'text-base-content' }}">
+										{{ $isProfNeg ? '' : '+' }}{{ $data['currency_symbol'] }}{{ number_format((float)$profVal, 2) }}
+									</span>
 								</div>
 							</div>
 						</div>
