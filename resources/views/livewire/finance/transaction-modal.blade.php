@@ -294,7 +294,7 @@
                     @else
                         {{-- 修改模式：刪除、儲存 --}}
                         <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t">
-                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-rose" spinner="deleteTransaction" />
+                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-red" spinner="deleteTransaction" />
                             <x-button label="儲存" type="submit" class="btn-green" spinner="saveTransaction" />
                         </div>
                     @endif

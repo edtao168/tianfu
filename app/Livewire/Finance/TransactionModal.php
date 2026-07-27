@@ -605,7 +605,7 @@ class TransactionModal extends Component
 		$this->fromAccountId = $this->toAccountId;
 		$this->toAccountId = $temp;
 	}
-	
+
 	/**
 	 * 刪除交易記錄
 	 */
@@ -683,7 +683,8 @@ class TransactionModal extends Component
 
 			// 5. 關閉 Modal 並刷新頁面
 			$this->showTransactionModal = false;
-			$this->dispatch('page-reload');
+			$this->dispatch('refresh-transaction-list'); // 刷新 Modal
+			$this->dispatch('refresh-data');             // 刷新主列表
 			$this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
 
 		} catch (\Exception $e) {
