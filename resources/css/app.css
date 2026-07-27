@@ -91,28 +91,40 @@ body {
 .btn-orange,
 .btn-green,
 .btn-blue,
+.btn-purple,
+.btn-dark,
 .btn-ghost {
   @apply rounded-xl;  /* 或 rounded-2xl，看你喜歡哪種圓潤度 */
 }
 
-/* 宋式 - 朱砂點絳 (鈞窯海棠紅 / 宋畫朱砂) */
+/* 宋式 - 朱砂點絳 (鈞窯海棠紅 / 宋畫朱砂) 刪除 */
 .btn-red {
   @apply bg-rose-100 text-rose-900 border border-rose-200 hover:bg-rose-200 focus:ring-rose-300;
 }
 
-/* 宋式 - 蜜色溫潤 (柿染 / 赭石 / 香色) */
+/* 宋式 - 蜜色溫潤 (柿染 / 赭石 / 香色)  修改、編輯 */
 .btn-orange {
   @apply bg-amber-100 text-amber-900 border border-amber-200 hover:bg-amber-200 focus:ring-amber-300;
 }
 
-/* 宋式 - 龍泉青瓷 (Longquan Celadon Green) */
+/* 宋式 - 龍泉青瓷 (Longquan Celadon Green) 新增、儲存 */
 .btn-green {
   @apply bg-emerald-100 text-emerald-900 border border-emerald-200 hover:bg-emerald-200 focus:ring-emerald-300;
 }
 
-/* 宋式 - 汝窯天青 (Ru Kiln Blue) */
+/* 宋式 - 汝窯天青 (Ru Kiln Blue) 關閉、返回 */
 .btn-blue {
   @apply bg-sky-100 text-sky-900 border border-sky-200 hover:bg-sky-200 focus:ring-sky-300;
+}
+
+/* 宋式 - 暮山煙紫 (Purple / Lavender) 標籤、特殊操作 */
+.btn-purple {
+  @apply bg-purple-100 text-purple-900 border border-purple-200 hover:bg-purple-200 focus:ring-purple-300;
+}
+
+/* 宋式 - 松煙墨色 (Dark / Obsidian) 主要操作、沉穩標示 */
+.btn-dark {
+  @apply bg-stone-800 text-stone-50 border border-stone-800 hover:bg-stone-700 focus:ring-stone-600 font-medium tracking-wider shadow-sm;
 }
 
 /* 宋式 - 定窯牙白 (Ding Kiln White) - 可作為預設或 ghost 樣式 */

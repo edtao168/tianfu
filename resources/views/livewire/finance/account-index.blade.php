@@ -43,8 +43,8 @@
             <p class="text-sm text-gray-500 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
-            <x-button label="新增帳戶" icon="o-plus" class="btn-outline btn-sm" wire:click="openCreateModal" />
-            <x-button label="記一筆" icon="o-pencil-square" class="btn-primary btn-sm w-32" wire:click="$dispatch('open-transaction-modal')" />
+            <x-button label="新增帳戶" icon="o-plus" class="btn-green" wire:click="openCreateModal" />
+            <x-button label="記一筆" icon="o-pencil-square" class="btn-green" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>
 

@@ -8,8 +8,8 @@
                 <p class="text-sm text-gray-500 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
             </div>
             <div class="flex items-center gap-2">
-                <x-button label="資產帳戶" icon="o-wallet" class="btn-outline btn-sm" link="{{ route('finance.accounts') }}" />
-                <x-button label="篩選明細" icon="o-funnel" class="btn-sm {{ $showFilters ? 'btn-primary' : 'btn-ghost border-base-200' }}" wire:click="$toggle('showFilters')" />
+                <x-button label="資產帳戶" icon="o-wallet" class="btn-ghost" link="{{ route('finance.accounts') }}" />
+                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-primary' : 'btn-ghost border-base-200' }}" wire:click="$toggle('showFilters')" />
             </div>
         </div>
 

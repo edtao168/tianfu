@@ -142,20 +142,20 @@
 								
 								<div class="flex-1 min-w-0 ml-2">
 									<div class="flex items-center justify-between gap-2">
-										<span class="text-xs md:text-sm font-medium text-stone-700 truncate">
+										<span class="text-sm md:text-sm font-medium text-stone-700 truncate">
 											{{ $subCategoryName }}
 										</span>
 										<span class="font-mono font-bold text-xs md:text-sm {{ $amountClass }} flex-shrink-0">
-											<span class="font-normal text-stone-400 text-xs">{{ $currencySymbol }}</span>
+											<span class="font-normal text-stone-400 text-sm">{{ $currencySymbol }}</span>
 											{{ $amountPrefix }}{{ number_format((float)$displayAmount, 2) }}
 										</span>
 									</div>
 									
 									<div class="flex items-center justify-between gap-2 mt-0.5">
-										<span class="text-[11px] md:text-xs text-stone-400 truncate {{ $summary ? '' : 'italic' }}">
+										<span class="text-xs text-stone-500 truncate {{ $summary ? '' : 'italic' }}">
 											{{ $summary ?: '無備註' }}
 										</span>
-										<span class="text-[10px] font-mono text-stone-300 flex-shrink-0">
+										<span class="text-xs font-mono text-stone-500 flex-shrink-0">
 											{{ Carbon\Carbon::parse($tx['recorded_at'])->format('Y-m-d') }}
 										</span>
 									</div>
@@ -175,14 +175,14 @@
 			<div class="flex flex-wrap items-center justify-between gap-2 p-3 md:p-4 border-t border-base-200 bg-stone-50 flex-shrink-0">
 				<div class="flex items-center gap-1.5 flex-wrap">
 					@if($accountId)
-						<x-button label="帳戶修改" icon="o-pencil" class="btn-red" 
+						<x-button label="帳戶修改" icon="o-pencil" class="btn-orange" 
 								  wire:click="editAccount" />
 						
 						@if($currentAccount && $currentAccount->is_active)
-							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-orange" 
+							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple" 
 									  wire:click="toggleAccountVisibility" />
 						@else
-							<x-button label="恢復顯示" icon="o-eye" class="btn-orange" 
+							<x-button label="恢復顯示" icon="o-eye" class="btn-purple" 
 									  wire:click="toggleAccountVisibility" />
 						@endif
 					@endif

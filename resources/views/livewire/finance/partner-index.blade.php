@@ -11,8 +11,8 @@
             <p class="text-xs text-stone-400 mt-1">點擊卡片任一處即可編輯</p>
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
-            <x-input wire:model.live.debounce.400ms="search" icon="o-magnifying-glass" placeholder="搜尋姓名..." class="input-sm rounded-xl bg-white/60 flex-1 sm:flex-initial" clearable />
-            <x-button label="建立成員" icon="o-plus" class="btn-sm rounded-xl bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 font-medium tracking-wide shadow-sm whitespace-nowrap" wire:click="create" />
+            <x-input wire:model.live.debounce.400ms="search" icon="o-magnifying-glass" placeholder="搜尋姓名..." class="rounded-xl bg-white/60 flex-1 sm:flex-initial" clearable />
+            <x-button label="建立成員" icon="o-plus" class="btn-green" wire:click="create" />
         </div>
     </div>
 
@@ -69,8 +69,8 @@
                 <div class="flex justify-end mt-3 pt-2 border-t border-stone-100/60">
                     <x-button 
                         icon="o-trash" 
-                        class="btn-xs btn-ghost text-stone-400 hover:text-rose-500 hover:bg-rose-50 transition-colors" 
-                        wire:confirm="確定要將「{{ $partner->name }}」移出金櫃嗎？" 
+                        class="btn-red" 
+                        wire:confirm="確定要將「{{ $partner->name }}」移出嗎？" 
                         wire:click.stop="delete({{ $partner->id }})" 
                         tooltip="刪除成員"
                     />
@@ -144,7 +144,7 @@
                     <x-button 
                         label="返回" 
                         icon="o-arrow-left" 
-                        class="w-full sm:w-auto btn-ghost text-stone-500 hover:bg-stone-100" 
+                        class="btn-blue" 
                         wire:click="closeDrawer" 
                         type="button"
                     />
@@ -152,7 +152,7 @@
                         label="存檔" 
                         type="submit" 
                         icon="o-check" 
-                        class="w-full sm:w-auto bg-stone-800 text-stone-50 hover:bg-stone-700 px-6" 
+                        class="btn-green" 
                         spinner="save" 
                     />
                 </div>

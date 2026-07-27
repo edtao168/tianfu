@@ -73,17 +73,17 @@
                 <div class="flex items-center gap-1">
                     <div class="join hidden sm:inline-flex border transition-all duration-300
                                 {{ $currentParentId ? 'border-[#a2bddb]/20 bg-white/60' : 'border-stone-200 bg-stone-100/80' }}">
-                        <button wire:click="setViewMode('list')" class="join-item btn btn-xs {{ $viewMode === 'list' ? ($currentParentId ? 'bg-[#a2bddb]/20 text-[#3a4a5a]' : 'btn-neutral') : 'btn-ghost text-stone-500' }}">
+                        <button wire:click="setViewMode('list')" class="join-item {{ $viewMode === 'list' ? ($currentParentId ? 'bg-[#a2bddb]/20 text-[#3a4a5a]' : 'btn-dark') : 'btn-ghost text-stone-500' }}">
                             <x-heroicon-o-bars-3 class="w-4 h-4" />
                         </button>
-                        <button wire:click="setViewMode('grid')" class="join-item btn btn-xs {{ $viewMode === 'grid' ? ($currentParentId ? 'bg-[#a2bddb]/20 text-[#3a4a5a]' : 'btn-neutral') : 'btn-ghost text-stone-500' }}">
+                        <button wire:click="setViewMode('grid')" class="join-item {{ $viewMode === 'grid' ? ($currentParentId ? 'bg-[#a2bddb]/20 text-[#3a4a5a]' : 'btn-dark') : 'btn-ghost text-stone-500' }}">
                             <x-heroicon-o-squares-2x2 class="w-4 h-4" />
                         </button>
                     </div>
                     
                     <button wire:click="openForm" 
                             class="btn btn-xs gap-1 transition-all duration-200
-                                   {{ $currentParentId ? 'bg-white/80 hover:bg-white border-[#a2bddb]/30 text-[#4a5a6a]' : 'btn-neutral' }}">
+                                   {{ $currentParentId ? 'btn-blue' : 'btn-dark' }}">
                         @if($showForm)
                             <x-heroicon-o-x-mark class="w-3.5 h-3.5" />
                             <span>取消</span>
@@ -159,7 +159,7 @@
                         </div>
 
                         <div class="pt-2 border-t border-stone-100">
-                            <button type="submit" class="btn btn-neutral btn-sm w-full gap-1">
+                            <button type="submit" class="btn btn-dark btn-sm w-full gap-1">
                                 <x-heroicon-o-archive-box-arrow-down class="w-4 h-4" />
                                 {{ $editingId ? '儲存修改' : '建立分類' }}
                             </button>
@@ -229,7 +229,7 @@
                                     
                                     @if(!$isDefault)
                                         <button wire:click.stop="editCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-stone-500 hover:text-stone-700">
+                                                class="btn btn-ghost btn-xs p-1 text-stone-500 hover:text-amber-700">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
                                         </button>
                                         
@@ -298,11 +298,11 @@
                                     
                                     @if(!$isDefault)
                                         <button wire:click.stop="editCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-stone-500 hover:text-[#4a5a6a]">
+                                                class="btn btn-ghost btn-xs p-1 text-stone-500 hover:text-amber-700">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
                                         </button>
                                         <button wire:click.stop="confirmDeleteCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-[#b57a7a]">
+                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-rose-600">
                                             <x-heroicon-o-trash class="w-4 h-4" />
                                         </button>
                                     @else
@@ -331,7 +331,7 @@
             @if($currentParentId)
                 <div class="pt-2">
                     <button wire:click="backToParents" 
-                            class="btn bg-white/70 hover:bg-white text-[#4a5a6a] border border-[#a2bddb]/20 btn-sm w-full gap-1">
+                            class="btn btn-blue btn-sm w-full gap-1">
                         <x-heroicon-o-arrow-uturn-left class="w-4 h-4" />
                         返回大分類列表
                     </button>
@@ -373,13 +373,13 @@
                 <div class="flex items-center justify-end gap-2 mt-6">
                     <button type="button" 
                             wire:click="$set('confirmingDeletion', null)" 
-                            class="btn btn-ghost btn-sm text-stone-500 hover:bg-stone-100 rounded-lg text-xs font-bold px-4">
+                            class="btn btn-ghost btn-sm px-4">
                         取消
                     </button>
                     <button type="button" 
                             wire:click="deleteCategory({{ $confirmingDeletion }})" 
-                            class="btn btn-sm border-0 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold px-4 shadow-sm transition-colors">
-						確認刪除
+                            class="btn btn-red btn-sm px-4">
+                        確認刪除
                     </button>
                 </div>
             </div>

@@ -15,13 +15,13 @@
 			<x-button 
 				label="診斷" 
 				icon="o-beaker" 
-				class="btn-sm rounded-lg bg-stone-100 border-stone-200 text-stone-600 hover:bg-stone-200 font-medium" 
+				class="btn-purple" 
 				wire:click="diagnoseBackup" 
 			/>
 			<x-button 
 				label="立即備份" 
 				icon="o-cpu-chip" 
-				class="btn-sm rounded-lg bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 font-medium tracking-wider shadow-sm" 
+				class="btn-dark" 
 				wire:click="runBackup" 
 				spinner="runBackup"
 			/>

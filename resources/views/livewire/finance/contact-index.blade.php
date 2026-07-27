@@ -101,7 +101,7 @@
 
             {{-- 提交按鈕 --}}
             <div class="flex justify-end">
-                <x-button label="送出反饋" icon="o-paper-airplane" type="submit" class="bg-stone-800 border-stone-800 text-stone-50 hover:bg-stone-700 rounded-xl px-5 shadow-sm font-medium" spinner="submitForm" />
+                <x-button label="送出反饋" icon="o-paper-airplane" type="submit" class="btn-dark" spinner="submitForm" />
             </div>
         </form>
     </x-card>
