@@ -3,6 +3,17 @@
     {{-- ==================== 主要記帳 Modal ==================== --}}
     {{-- 移除了 !max-w-md，讓 CSS 中的 .modal-box 規則來控制寬度 --}}
     <x-modal wire:model="showTransactionModal" title="{{ $transactionId ? '修改記錄' : '新增記錄' }}" separator persistent size="lg" x-on:click.stop>
+		{{-- 添加右上角關閉按鈕 --}}
+        <button 
+			type="button" 
+			wire:click="$set('showTransactionModal', false)" 
+			class="btn btn-ghost btn-sm btn-square absolute right-4 top-4 text-base-content/60 hover:text-base-content"
+		>
+			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+			</svg>
+		</button>
+		
         {{-- ================ 核心切換邏輯 ================ --}}
         @if($showCategoryPicker && $categoryPickerReturnTo === 'transaction')
             {{-- 1. 類別選擇器 --}}
@@ -149,16 +160,37 @@
 					<div class="grid grid-cols-2 gap-3 mb-4">
 						{{-- 转出金额 --}}
 						<div>
-							<label class="block text-xs font-bold mb-1">转出金额</label>
-							<div class="w-full px-3 py-2 rounded-xl border">
-								<span class="text-lg font-bold text-rose-500">-</span>
-								<span class="text-lg font-bold">{{ $amount ?? 0 }}</span>
+							<label class="block text-xs font-bold mb-1">轉出金額</label>
+							<div class="relative w-full flex items-center px-3 py-2 rounded-xl border">
+								{{-- 顏色類別保留，因為它們是動態的業務邏輯 --}}
+								<span class="text-lg font-bold shrink-0 mr-1 text-rose-500">-</span>
+								<input 
+									type="text" 
+									inputmode="decimal" 
+									wire:model.live.debounce.500ms="amount" 
+									x-data="{ shouldFocus: false }" 
+									x-init="
+										$watch('shouldFocus', value => { 
+											if (value) { 
+												$nextTick(() => { 
+													$el.focus(); 
+													$el.select(); 
+													shouldFocus = false; 
+												}); 
+											} 
+										})
+									" 
+									x-on:focus-amount-input.window="shouldFocus = true" 
+									placeholder="0" 
+									autocomplete="off" 
+									class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-stone-900 text-lg text-rose-500" 
+								/>
 							</div>
 						</div>
 						{{-- 转入金额 (示例) --}}
 						<div>
-							<label class="block text-xs font-bold mb-1">转入金额 (估算)</label>
-							<div class="w-full px-3 py-2 rounded-xl border">
+							<label class="block text-xs font-bold mb-1">轉入金額 (估算)</label>
+							<div class="w-full px-3 py-2 rounded-xl border border-stone-200">
 								<span class="text-lg font-bold text-emerald-500">+</span>
 								<span class="text-lg font-bold">{{ $amount ?? 0 }}</span>
 							</div>
@@ -252,14 +284,20 @@
 
                 {{-- 操作按鈕 --}}
                 <x-slot:actions>
-                    <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t">
-                        <x-button label="返回" type="button" wire:click="$set('showTransactionModal', false)" class="btn-blue" />
-                        @if(!$transactionId)
+                    @if(!$transactionId)
+                        {{-- 新增模式：存為範本、再記一筆、儲存 --}}
+                        <div class="grid grid-cols-3 gap-2 w-full pt-3 border-t">
+                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-ghost" />
                             <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-ghost" spinner="saveAndKeepOpen" />
-                        @endif
-                        <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-ghost" />
-                        <x-button label="儲存" type="submit" class="btn-green" spinner="saveTransaction" />
-                    </div>
+                            <x-button label="儲存" type="submit" class="btn-green" spinner="saveTransaction" />
+                        </div>
+                    @else
+                        {{-- 修改模式：刪除、儲存 --}}
+                        <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t">
+                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-rose" spinner="deleteTransaction" />
+                            <x-button label="儲存" type="submit" class="btn-green" spinner="saveTransaction" />
+                        </div>
+                    @endif
                 </x-slot:actions>
             </x-form>
         @endif

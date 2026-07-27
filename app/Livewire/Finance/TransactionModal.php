@@ -605,6 +605,91 @@ class TransactionModal extends Component
 		$this->fromAccountId = $this->toAccountId;
 		$this->toAccountId = $temp;
 	}
+	
+	/**
+	 * 刪除交易記錄
+	 */
+	public function deleteTransaction()
+	{
+		$userId = Auth::id();
+		if (!$userId) {
+			$this->dispatch('toast', type: 'error', text: '請先登入才能刪除記錄');
+			return;
+		}
+
+		if (!$this->transactionId) {
+			$this->dispatch('toast', type: 'error', text: '找不到要刪除的記錄');
+			return;
+		}
+
+		try {
+			DB::transaction(function () use ($userId) {
+				// 1. 鎖定並取得要刪除的交易記錄
+				$transaction = Transaction::where('shop_id', $this->shop_id)
+					->where('id', $this->transactionId)
+					->lockForUpdate()
+					->firstOrFail();
+
+				// 2. 根據交易類型回滾帳戶餘額
+				if ($transaction->type === 'transfer') {
+					// 轉帳：轉出帳戶加回金額，轉入帳戶扣回金額
+					$fromAccount = FinancialAccount::where('id', $transaction->from_account_id)
+						->where('shop_id', $this->shop_id)
+						->lockForUpdate()
+						->first();
+					$toAccount = FinancialAccount::where('id', $transaction->to_account_id)
+						->where('shop_id', $this->shop_id)
+						->lockForUpdate()
+						->first();
+
+					if ($fromAccount) {
+						$fromAccount->balance = bcadd($fromAccount->balance, $transaction->amount, 4);
+						$fromAccount->save();
+					}
+					if ($toAccount) {
+						$toAccount->balance = bcsub($toAccount->balance, $transaction->amount, 4);
+						$toAccount->save();
+					}
+				} elseif ($transaction->type === 'expense') {
+					// 支出：帳戶加回金額
+					$account = FinancialAccount::where('id', $transaction->from_account_id)
+						->where('shop_id', $this->shop_id)
+						->lockForUpdate()
+						->first();
+					if ($account) {
+						$account->balance = bcadd($account->balance, $transaction->amount, 4);
+						$account->save();
+					}
+				} elseif ($transaction->type === 'income') {
+					// 收入：帳戶扣回金額
+					$account = FinancialAccount::where('id', $transaction->to_account_id)
+						->where('shop_id', $this->shop_id)
+						->lockForUpdate()
+						->first();
+					if ($account) {
+						$account->balance = bcsub($account->balance, $transaction->amount, 4);
+						$account->save();
+					}
+				}
+
+				// 3. 刪除關聯的圖片檔案（如果有）
+				if ($transaction->photo_path) {
+					Storage::disk('public')->delete($transaction->photo_path);
+				}
+
+				// 4. 刪除交易記錄
+				$transaction->delete();
+			});
+
+			// 5. 關閉 Modal 並刷新頁面
+			$this->showTransactionModal = false;
+			$this->dispatch('page-reload');
+			$this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
+
+		} catch (\Exception $e) {
+			$this->dispatch('toast', type: 'error', text: '刪除失敗：' . $e->getMessage());
+		}
+	}
 
     public function render()
     {
