@@ -11,18 +11,10 @@
 	<!-- Chart.js -->
 		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
-            background-color: #FAF9F6;
+		/* 隱藏 Alpine 未完成初始化前的元素 */
+        [x-cloak] { 
+            display: none !important; 
         }
-		/* 🔥 強制 Drawer 在所有元素之上 */
-		[x-drawer] {
-			z-index: 9999 !important;
-		}		
-		
-		.drawer {
-			z-index: 9999 !important;
-		}
     </style>
 </head>
 <body class="min-h-screen pb-28 md:pb-32">
