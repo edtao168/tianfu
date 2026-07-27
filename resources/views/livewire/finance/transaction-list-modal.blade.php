@@ -3,38 +3,51 @@
 	<x-modal 
 		wire:model="showModal" 
 		backdrop-blur-md 
-		max-width="7xl" 
+		max-width="5xl" 
 		box-class="border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl p-0 overflow-hidden pt-16 pb-24 md:pt-0 md:pb-0"
 	>
-		<div class="flex flex-col h-[calc(100vh-10rem)] md:h-[85vh] max-h-[85vh]">
+		<div class="flex flex-col h-[calc(100vh-10rem)] md:h-[80vh] max-h-[80vh]">
 			
 			{{-- 頂部標題屏風 --}}
 			<div class="p-4 md:p-5 bg-stone-50 border-b border-base-200 flex-shrink-0">
-				<div class="flex items-center gap-3">
-					<div class="p-2 md:p-2.5 rounded-xl bg-base-200 text-stone-700 shadow-inner">
-						<x-heroicon-o-document-magnifying-glass class="w-5 h-5 md:w-6 md:h-6" />
+				<div class="flex items-center justify-between gap-3">
+					<div class="flex items-center gap-3 min-w-0">
+						<div class="p-2 md:p-2.5 rounded-xl bg-base-200 text-stone-700 shadow-inner flex-shrink-0">
+							<x-heroicon-o-document-magnifying-glass class="w-5 h-5 md:w-6 md:h-6" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<h3 class="text-base md:text-lg font-black text-stone-800 tracking-wide font-sans flex items-center gap-2 truncate">
+								<span class="truncate">{{ $title }}</span> 
+								<span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-200/60 text-stone-600 font-mono flex-shrink-0">
+									{{ $transactionType === 'expense' ? '月支出' : ($transactionType === 'income' ? '月收入' : '交易明細') }}
+								</span>
+							</h3>
+							<p class="text-xs text-stone-500 mt-0.5 flex items-center gap-2 flex-wrap">
+								<span>當月共 <strong class="text-stone-800 font-mono">{{ $transactionsData['total_count'] ?? 0 }}</strong> 筆記錄</span>
+								@if($currentAccount && !$currentAccount->is_active)
+									<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">已隱藏帳戶</span>
+								@endif
+							</p>
+						</div>
 					</div>
-					<div class="min-w-0 flex-1">
-						<h3 class="text-base md:text-lg font-black text-stone-800 tracking-wide font-sans flex items-center gap-2 truncate">
-							<span class="truncate">{{ $title }}</span> 
-							<span class="text-xs font-medium text-stone-400 font-mono tracking-normal flex-shrink-0">{{ $subtitle }}</span>
-						</h3>
-						<p class="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-							<span>共計有 <strong class="text-stone-800 font-mono">{{ $transactionsData['total_count'] ?? 0 }}</strong> 筆交易歷史</span>
-							@if($currentAccount && !$currentAccount->is_active)
-								<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">已隱藏帳戶</span>
-							@endif
-						</p>
+
+					{{-- 總金額顯示 --}}
+					<div class="text-right flex-shrink-0 mr-6">
+						<div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">合計金額</div>
+						<div class="text-base md:text-xl font-black font-mono {{ $transactionType === 'expense' ? 'text-rose-600' : ($transactionType === 'income' ? 'text-emerald-600' : 'text-stone-800') }}">
+							{{ $currencySymbol }}{{ number_format((float)($transactionType === 'income' ? $transactionsData['total_income'] : $transactionsData['total_expense']), 2) }}
+						</div>
 					</div>
 				</div>
 			</div>
 
 			{{-- 內文與數據區塊 --}}
-			<div class="p-4 md:p-6 bg-base-100/40 flex-1 overflow-y-auto min-h-0">
+			<div class="p-4 md:p-6 bg-base-100/40 flex-1 overflow-y-auto min-h-0 space-y-4">
+				
 				<div class="space-y-4 md:space-y-5 max-w-full">
 					
-					{{-- 年月導航 + 本月收支 --}}
-					<div class="w-full max-w-full space-y-2 flex-shrink-0">
+					{{-- 年月導航 --}}
+					<div class="w-full max-w-full flex-shrink-0">
 						<div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 w-full shadow-inner">
 							<x-button 
 								icon="o-chevron-left" 
@@ -54,31 +67,9 @@
 								:disabled="Carbon\Carbon::createFromFormat('Y-m', $transactionMonth)->isSameMonth(now())" 
 							/>
 						</div>
-
-						<div class="grid grid-cols-2 gap-2 w-full">
-							<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15 min-w-0">
-								<div class="flex items-center gap-1 flex-shrink-0">
-									<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-									<span class="text-xs font-semibold text-emerald-900">小計收入</span>
-								</div>
-								<span class="font-mono font-extrabold text-xs sm:text-sm text-emerald-700 truncate min-w-0 ml-1">
-									+{{ $currencySymbol }}{{ number_format((float)($transactionsData['total_income'] ?? 0), 2, '.', ',') }}
-								</span>
-							</div>
-
-							<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/15 min-w-0">
-								<div class="flex items-center gap-1 flex-shrink-0">
-									<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-									<span class="text-xs font-semibold text-rose-900">小計支出</span>
-								</div>
-								<span class="font-mono font-extrabold text-xs sm:text-sm text-rose-700 truncate min-w-0 ml-1">
-									-{{ $currencySymbol }}{{ number_format((float)($transactionsData['total_expense'] ?? 0), 2, '.', ',') }}
-								</span>
-							</div>
-						</div>
 					</div>
 
-					{{-- 交易列表 --}}
+					{{-- 交易明細列表 --}}
 					<div class="space-y-1.5">
 						@forelse($transactionsData['list'] ?? [] as $tx)
 							@php
@@ -184,20 +175,20 @@
 			<div class="flex flex-wrap items-center justify-between gap-2 p-3 md:p-4 border-t border-base-200 bg-stone-50 flex-shrink-0">
 				<div class="flex items-center gap-1.5 flex-wrap">
 					@if($accountId)
-						<x-button label="帳戶修改" icon="o-pencil" class="btn-xs md:btn-sm bg-base-100 border-base-300 hover:bg-stone-200 text-stone-700" 
+						<x-button label="帳戶修改" icon="o-pencil" class="btn-red" 
 								  wire:click="editAccount" />
 						
 						@if($currentAccount && $currentAccount->is_active)
-							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-xs md:btn-sm btn-ghost text-amber-700 hover:bg-amber-50" 
+							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-orange" 
 									  wire:click="toggleAccountVisibility" />
 						@else
-							<x-button label="恢復顯示" icon="o-eye" class="btn-xs md:btn-sm btn-ghost text-emerald-700 hover:bg-emerald-50" 
+							<x-button label="恢復顯示" icon="o-eye" class="btn-orange" 
 									  wire:click="toggleAccountVisibility" />
 						@endif
 					@endif
 				</div>
 
-				<x-button label="關閉" @click="$wire.showModal = false" class="btn-xs md:btn-sm btn-ghost text-stone-500 hover:bg-stone-200 px-4" />
+				<x-button label="關閉" @click="$wire.showModal = false" class="btn-blue" />
 			</div>
 		</div>
 	</x-modal>

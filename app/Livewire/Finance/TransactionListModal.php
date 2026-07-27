@@ -18,7 +18,7 @@ class TransactionListModal extends Component
     public bool $showModal = false;
     public $shopId = 1;
 
-    // 查詢篩選條件 (支援多元維度)
+    // 查詢篩選條件
     public ?int $accountId = null;
     public ?int $categoryId = null;
     public ?string $transactionType = null; // income, expense, transfer
@@ -33,7 +33,15 @@ class TransactionListModal extends Component
     public array $transactionsData = [];
     public string $transactionMonth = '';
 
-    // 關聯實體快照 (例如目前選中的帳戶)
+    // 四項總體統計（月支出、月收入、年支出、年收入）
+    public array $statsSummary = [
+        'month_expense' => '0.00',
+        'month_income' => '0.00',
+        'year_expense' => '0.00',
+        'year_income' => '0.00',
+    ];
+
+    // 關聯實體快照
     public ?FinancialAccount $currentAccount = null;
 
     public function mount()
@@ -42,14 +50,6 @@ class TransactionListModal extends Component
         $this->resetTransactionsData();
     }
 
-    /**
-     * 通用開啟 Modal 事件
-     * 支援參數:
-     * - accountId: 帳戶 ID
-     * - categoryId: 分類 ID
-     * - type: 交易類型 (income/expense/transfer)
-     * - title: 自訂標題
-     */
     #[On('open-transaction-list-modal')]
     public function openModal(array $params = [])
     {
@@ -75,8 +75,8 @@ class TransactionListModal extends Component
             $this->currencySymbol = $currencies[$account->currency]['symbol'] ?? 'NT$';
         } elseif ($this->categoryId) {
             $category = Category::find($this->categoryId);
-            $this->title = $category ? $category->name : '分類交易';
-            $this->subtitle = '分類明細';
+            $this->title = $params['title'] ?? ($category ? $category->name : '分類交易');
+            $this->subtitle = '大類與關聯子類明細';
             $this->targetCurrency = $this->getBaseCurrency();
             $this->currencySymbol = $this->getBaseCurrencySymbol();
         } else {
@@ -100,32 +100,69 @@ class TransactionListModal extends Component
 
     public function loadTransactions()
     {
-        $startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
-        $endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
+        $currentDate = Carbon::createFromFormat('Y-m', $this->transactionMonth);
+        $monthStart = $currentDate->copy()->startOfMonth();
+        $monthEnd = $currentDate->copy()->endOfMonth();
+        $yearStart = $currentDate->copy()->startOfYear();
+        $yearEnd = $currentDate->copy()->endOfYear();
 
-        $query = Transaction::query()
-            ->where('shop_id', $this->shopId)
-            ->whereBetween('recorded_at', [$startDate, $endDate]);
-
-        // 依據傳入條件彈性組裝 Query
-        if ($this->accountId) {
-            $query->where(function ($q) {
-                $q->where('from_account_id', $this->accountId)
-                  ->orWhere('to_account_id', $this->accountId);
-            });
-        }
-
+        // 1. 若有 categoryId，包含該大類及所有子類 ID
+        $targetCategoryIds = [];
         if ($this->categoryId) {
-            $query->where('category_id', $this->categoryId);
+            $subCategoryIds = Category::where('parent_id', $this->categoryId)->pluck('id')->toArray();
+            $targetCategoryIds = array_merge([$this->categoryId], $subCategoryIds);
         }
 
-        if ($this->transactionType) {
-            $query->where('type', $this->transactionType);
+        // 2. 構建基底 Query 閉包
+        $applyFilter = function ($query) use ($targetCategoryIds) {
+            $query->where('shop_id', $this->shopId);
+
+            if ($this->accountId) {
+                $query->where(function ($q) {
+                    $q->where('from_account_id', $this->accountId)
+                      ->orWhere('to_account_id', $this->accountId);
+                });
+            }
+
+            if (!empty($targetCategoryIds)) {
+                $query->whereIn('category_id', $targetCategoryIds);
+            }
+
+            if ($this->transactionType) {
+                $query->where('type', $this->transactionType);
+            }
+        };
+
+        // 3. 計算（月支出、月收入、年支出、年收入）數據
+        $monthTxs = Transaction::query()->where($applyFilter)->whereBetween('recorded_at', [$monthStart, $monthEnd])->get();
+        $yearTxs = Transaction::query()->where($applyFilter)->whereBetween('recorded_at', [$yearStart, $yearEnd])->get();
+
+        $monthExpense = '0.0000';
+        $monthIncome = '0.0000';
+        foreach ($monthTxs as $tx) {
+            $amt = (string)$tx->amount;
+            if ($tx->type === 'expense') $monthExpense = bcadd($monthExpense, $amt, 4);
+            if ($tx->type === 'income') $monthIncome = bcadd($monthIncome, $amt, 4);
         }
 
-        $transactions = $query->orderBy('recorded_at', 'desc')->get();
+        $yearExpense = '0.0000';
+        $yearIncome = '0.0000';
+        foreach ($yearTxs as $tx) {
+            $amt = (string)$tx->amount;
+            if ($tx->type === 'expense') $yearExpense = bcadd($yearExpense, $amt, 4);
+            if ($tx->type === 'income') $yearIncome = bcadd($yearIncome, $amt, 4);
+        }
 
-        // 預載入 Category 與 Account 資訊
+        $this->statsSummary = [
+            'month_expense' => number_format((float)$monthExpense, 2),
+            'month_income' => number_format((float)$monthIncome, 2),
+            'year_expense' => number_format((float)$yearExpense, 2),
+            'year_income' => number_format((float)$yearIncome, 2),
+        ];
+
+        // 4. 取得當月交易流水清單
+        $transactions = $monthTxs->sortByDesc('recorded_at');
+
         $categoryIds = $transactions->pluck('category_id')->filter()->unique()->toArray();
         $categories = Category::whereIn('id', $categoryIds)->get()->keyBy('id');
 
@@ -147,7 +184,6 @@ class TransactionListModal extends Component
             $displayAmount = (string)$tx->amount;
 
             if ($this->accountId) {
-                // 如果是指定帳戶視角，按該帳戶幣別換算
                 if ($tx->type === 'income' && $tx->to_account_id == $this->accountId) {
                     $isIncome = true;
                     $displayAmount = $this->convertToAccountCurrency((string)$tx->amount, $tx->currency, $this->targetCurrency);
@@ -164,7 +200,6 @@ class TransactionListModal extends Component
                     }
                 }
             } else {
-                // 一般全局視角
                 if ($tx->type === 'income') $isIncome = true;
                 if ($tx->type === 'expense') $isExpense = true;
             }
@@ -217,6 +252,12 @@ class TransactionListModal extends Component
             'total_count' => $transactions->count(),
         ];
     }
+	
+	public function closeModal()
+	{
+		$this->showModal = false;
+		$this->dispatch('modal-closed');
+	}
 
     private function resetFilter()
     {
@@ -253,7 +294,6 @@ class TransactionListModal extends Component
         $this->loadTransactions();
     }
 
-    // 專屬帳戶管理的延伸操作 (僅在 accountId 存在時有效)
     public function editAccount()
     {
         if (!$this->accountId) return;
@@ -281,7 +321,6 @@ class TransactionListModal extends Component
         }
     }
 
-    // BCMath 工具
     private function getBaseCurrency(): string
     {
         return config('business.base_currency', 'TWD');

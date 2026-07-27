@@ -30,16 +30,33 @@ class ReportStats extends Component
     #[On('refresh-data')]
     public function onDataChanged()
     {
-        // 重新調用計算報表、圓餅圖數據的方法
         if (method_exists($this, 'loadStatsData')) {
             $this->loadStatsData();
         }
     }
+	
+	#[On('modal-closed')]
+	public function onModalClosed()
+	{
+		$this->dispatch('refreshChart', $this->getChartData());
+	}
 
     public function mount()
     {
         $this->selectedYear = (int)date('Y');
         $this->selectedMonth = (int)date('n');
+    }
+
+    /**
+     * 點擊大類列時觸發：呼叫通用交易明細 Modal
+     */
+    public function openCategoryTransactions(int $categoryId, string $categoryName)
+    {
+        $this->dispatch('open-transaction-list-modal', params: [
+            'categoryId' => $categoryId,
+            'type' => $this->tab2, // 'expense' 或 'income'
+            'title' => $categoryName . ' - 交易明細',
+        ]);
     }
 
     /**
@@ -100,6 +117,7 @@ class ReportStats extends Component
 
             if (!isset($categorySummary[$catId])) {
                 $categorySummary[$catId] = [
+                    'id' => $catId,
                     'name' => $catName,
                     'amount' => '0.0000'
                 ];
@@ -122,7 +140,6 @@ class ReportStats extends Component
 
         uasort($categorySummary, fn($a, $b) => bccomp($b['amount'], $a['amount'], 4));
 
-        // 重置索引避免 JSON 轉換問題
         $list = array_values($categorySummary);
 
         return [
@@ -138,7 +155,6 @@ class ReportStats extends Component
     {
         $list = [];
         if ($this->tab3 === 'month') {
-            // 當年 12 個月
             for ($m = 1; $m <= 12; $m++) {
                 $list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
             }
@@ -153,7 +169,6 @@ class ReportStats extends Component
                 $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx);
             }
         } else {
-            // 當月 1~31 日
             $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 $list[$d] = ['label' => $d . '日', 'amount' => '0.0000'];
@@ -171,7 +186,6 @@ class ReportStats extends Component
             }
         }
 
-        // 重置索引並格式化顯示
         $result = [];
         foreach ($list as $key => $item) {
             $result[] = [
@@ -195,9 +209,6 @@ class ReportStats extends Component
         return $tx->type === $this->tab2 ? bcadd($currentAmount, $tx->amount, 4) : $currentAmount;
     }
 
-    /**
-     * 打包給前端 Chart.js 的 JSON 數據
-     */
     public function getChartData()
     {
         if ($this->tab1 === 'category') {
@@ -215,7 +226,7 @@ class ReportStats extends Component
                 'labels' => collect($data)->pluck('label')->toArray(),
                 'values' => collect($data)->map(fn($item) => (float)$item['amount'])->toArray(),
                 'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
-                'centerText' => null // 趨勢圖不顯示中央文字
+                'centerText' => null
             ];
         }
     }
