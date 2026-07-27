@@ -598,6 +598,13 @@ class TransactionModal extends Component
         $this->showTemplateListModal = false;
         $this->showTemplateModal = true;
     }
+	
+	public function swapAccounts()
+	{
+		$temp = $this->fromAccountId;
+		$this->fromAccountId = $this->toAccountId;
+		$this->toAccountId = $temp;
+	}
 
     public function render()
     {

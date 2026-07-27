@@ -83,6 +83,44 @@ body {
 }
 
 /* ==========================================================================
+   宋式按鈕配色系統
+   ========================================================================== */
+
+/* 所有宋式按鈕統一倒角 */
+.btn-red,
+.btn-orange,
+.btn-green,
+.btn-blue,
+.btn-ghost {
+  @apply rounded-xl;  /* 或 rounded-2xl，看你喜歡哪種圓潤度 */
+}
+
+/* 宋式 - 朱砂點絳 (鈞窯海棠紅 / 宋畫朱砂) */
+.btn-red {
+  @apply bg-rose-100 text-rose-900 border border-rose-200 hover:bg-rose-200 focus:ring-rose-300;
+}
+
+/* 宋式 - 蜜色溫潤 (柿染 / 赭石 / 香色) */
+.btn-orange {
+  @apply bg-amber-100 text-amber-900 border border-amber-200 hover:bg-amber-200 focus:ring-amber-300;
+}
+
+/* 宋式 - 龍泉青瓷 (Longquan Celadon Green) */
+.btn-green {
+  @apply bg-emerald-100 text-emerald-900 border border-emerald-200 hover:bg-emerald-200 focus:ring-emerald-300;
+}
+
+/* 宋式 - 汝窯天青 (Ru Kiln Blue) */
+.btn-blue {
+  @apply bg-sky-100 text-sky-900 border border-sky-200 hover:bg-sky-200 focus:ring-sky-300;
+}
+
+/* 宋式 - 定窯牙白 (Ding Kiln White) - 可作為預設或 ghost 樣式 */
+.btn-ghost {
+  @apply bg-stone-100 text-stone-700 border border-stone-200 hover:bg-stone-200 focus:ring-stone-300;
+}
+
+/* ==========================================================================
    範本 Modal - 宋式汝窯天青主題
    ========================================================================== */
 
