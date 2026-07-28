@@ -15,7 +15,7 @@ class AccountIndex extends Component
     use Toast;
     
     // ============ Modal 控制 ============
-    public bool $showPeriodDetailModal = false;
+    // public bool $showPeriodDetailModal = false;
     public bool $showAccountModal = false;
     
     // ============ 基本設定 ============
@@ -31,10 +31,10 @@ class AccountIndex extends Component
     public string $accountMemo = ''; 
     
     // ============ 分幣別詳情 Modal 資料 ============
-    public string $periodDetailTitle = '';
-    public array $periodDetailData = [];
-    public array $periodDetailSummary = [];
-    public bool $canDeletePeriodDetail = false;
+    // public string $periodDetailTitle = '';
+    // public array $periodDetailData = [];
+    // public array $periodDetailSummary = [];
+    // public bool $canDeletePeriodDetail = false;
 
     // ============ 生命週期與事件 ============
     
@@ -55,7 +55,8 @@ class AccountIndex extends Component
     public function viewAccountTransactions(int $accountId)
     {
         $this->dispatch('open-transaction-list-modal', params: [
-            'accountId' => $accountId
+            'accountId' => $accountId,
+			'dateMode' => 'month',
         ]);
     }
 
@@ -180,31 +181,17 @@ class AccountIndex extends Component
     public function showPeriodDetail($period)
     {
         $periodTitles = [
-            'today' => '本日收支明細（分幣別）',
-            'month' => '本月收支明細（分幣別）',
-            'year'  => '本年收支明細（分幣別）'
+            'today' => '日',
+            'month' => '月',
+            'year'  => '年'
         ];
         
-        $stats = $this->periodStats;
-        $this->periodDetailTitle = $periodTitles[$period] ?? '收支明細';
-        $this->periodDetailData = $stats[$period]['details'] ?? [];
-        
-        $totalIncomeBase = '0.0000';
-        $totalExpenseBase = '0.0000';
-        foreach ($this->periodDetailData as $currency => $data) {
-            $totalIncomeBase = bcadd($totalIncomeBase, $this->convertToBase($data['income'], $currency), 4);
-            $totalExpenseBase = bcadd($totalExpenseBase, $this->convertToBase($data['expense'], $currency), 4);
-        }
-        
-        $this->periodDetailSummary = [
-            'total_income' => number_format((float)$totalIncomeBase, 2),
-            'total_expense' => number_format((float)$totalExpenseBase, 2),
-            'base_currency' => $this->getBaseCurrency(),
-            'base_symbol' => $this->getBaseCurrencySymbol(),
-        ];
-        
-        $this->canDeletePeriodDetail = !empty($this->periodDetailData);
-        $this->showPeriodDetailModal = true;
+        $this->dispatch('open-transaction-list-modal', params: [
+			'dateMode' => $period, // 'today', 'month', 'year'
+			'baseDate' => now()->format('Y-m-d'),
+			'title' => $periodTitles[$period] ?? '交易明細',
+			'type' => null, // 顯示全部交易
+		]);
     }
 
     // ============ 帳戶新增 / 編輯管理 ============

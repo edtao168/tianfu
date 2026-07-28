@@ -56,6 +56,8 @@ class ReportStats extends Component
             'categoryId' => $categoryId,
             'type' => $this->tab2, // 'expense' 或 'income'
             'title' => $categoryName . ' - 交易明細',
+			'dateMode' => $this->tab3 === 'year' ? 'year' : 'month',
+			'baseDate' => $this->selectedYear . '-' . ($this->selectedMonth ?? 1) . '-01',
         ]);
     }
 

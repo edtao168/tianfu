@@ -31,6 +31,10 @@
 		<p class="text-sm text-stone-600 leading-relaxed tracking-wide">		
             本系統結合大宋汝窯天青、千山青綠之色彩美學，讓記帳不再是冰冷的數字，而是一場治癒的每日生活儀式。
         </p>
+		<br>
+		<p class="text-sm text-stone-600 leading-relaxed tracking-wide">		
+		本系統的編寫始自2026/6/28，7/1上線運行至今，這是因為有了前一套編寫了近兩年「陶老闆進銷存」的經驗，才有今天的效率。而今本系統仍持續更新，歡迎到粉絲專頁留下讚美，或到社團提出建議、批評，讓「添富記賬」越來越接近你的需求。
+        </p>
     </x-card>
 
     {{-- 設計細節與規格 --}}

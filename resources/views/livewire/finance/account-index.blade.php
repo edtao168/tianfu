@@ -21,7 +21,7 @@
 					$income = (string) ($stats['income'] ?? '0');
 					$expense = (string) ($stats['expense'] ?? '0');
 					
-					// 純數值計算盈餘 (bcsub)
+					// 純數值計算結餘 (bcsub)
 					$incomeClean = str_replace(',', '', $income);
 					$expenseClean = str_replace(',', '', $expense);
 					$profitValue = bcsub($incomeClean, $expenseClean, 2);
@@ -50,7 +50,7 @@
 								<span class="text-lg font-bold text-rose-600">-{{ $baseSymbol }} {{ $expense }}</span>
 							</div>
 							<div class="flex justify-between items-center pt-2 border-t border-base-200">
-								<span class="text-sm font-medium -stone-500">盈餘</span>
+								<span class="text-sm font-medium -stone-500">結餘</span>
 								<span class="text-lg font-extrabold {{ $isProfitNegative ? 'text-stone-600' : 'text-base-content' }}">
 									{{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
 								</span>
@@ -230,7 +230,7 @@
 							wire:model="accountMemo" 
 							placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
 							rows="2"
-							hint="僅供內部參考，不會顯示於任何客戶單據上" />
+							hint="僅供內部參考，不會顯示於任何單據上" />
 					</div>
 				</x-form>
 			</div>
@@ -240,63 +240,6 @@
 				<x-button label="確認儲存" type="submit" class="btn bg-stone-100 btn-sm px-6" icon="o-check" wire:click="saveAccount" />
 			</div>
 		</div>
-	</x-modal>
-
-	{{-- 6. 分幣別統計 Modal --}}
-	<x-modal wire:model="showPeriodDetailModal" :title="$periodDetailTitle" separator width="90%">
-		<div class="space-y-4 p-2">
-			@if(empty($periodDetailData))
-				<div class="text-center text-gray-400 py-8">
-					<x-heroicon-o-information-circle class="w-12 h-12 mx-auto mb-2 opacity-30" />
-					<p>此期間無任何交易記錄</p>
-				</div>
-			@else
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					@foreach($periodDetailData as $currency => $data)
-						@php
-							$incVal = (string) ($data['income'] ?? '0');
-							$expVal = (string) ($data['expense'] ?? '0');
-							$profVal = bcsub(str_replace(',', '', $incVal), str_replace(',', '', $expVal), 2);
-							$isProfNeg = bccomp($profVal, '0', 2) < 0;
-						@endphp
-						<div class="rounded-xl p-5 border shadow-sm bg-base-100 space-y-4">
-							<div class="flex justify-between items-center border-b border-base-200 pb-3">
-								<div class="flex items-center gap-2">
-									<span class="font-bold text-lg text-base-content">{{ $data['currency_name'] }}</span>
-								</div>
-								<span class="text-xl font-bold font-mono opacity-20">{{ $currency }}</span>
-							</div>
-
-							<div class="space-y-2.5">
-								<div class="flex justify-between items-center text-sm">
-									<span class="text-emerald-400 font-medium">收入</span>
-									<span class="font-mono font-bold text-emerald-500">
-										+{{ $data['currency_symbol'] }}{{ number_format((float)$incVal, 2) }}
-									</span>
-								</div>
-
-								<div class="flex justify-between items-center text-sm">
-									<span class="text-rose-400 font-medium">支出</span>
-									<span class="font-mono font-bold text-rose-500">
-										-{{ $data['currency_symbol'] }}{{ number_format((float)$expVal, 2) }}
-									</span>
-								</div>
-
-								<div class="flex justify-between items-center text-sm pt-2 border-t border-base-200">
-									<span class="text-stone-400 font-bold">盈餘</span>
-									<span class="font-mono font-stone {{ $isProfNeg ? 'text-rose-500' : 'text-base-content' }}">
-										{{ $isProfNeg ? '' : '+' }}{{ $data['currency_symbol'] }}{{ number_format((float)$profVal, 2) }}
-									</span>
-								</div>
-							</div>
-						</div>
-					@endforeach
-				</div>
-			@endif
-		</div>
-		<x-slot:actions>
-			<x-button label="關閉" @click="$wire.showPeriodDetailModal = false" class="btn-ghost" />
-		</x-slot:actions>
 	</x-modal>
 
 	{{-- 7. 按需引入交易流水通用 Modal (避免全域載入浪費資源) --}}
