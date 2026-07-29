@@ -6,7 +6,6 @@
 | DaisyUI v5 外掛配置 (自動感應系統 Light/Dark 主題)
 | -------------------------------------------------------------------------- */
 @plugin "daisyui" {
-    /* 載入內建的 light 與 dark 主題，DaisyUI 會自動依據瀏覽器的 prefers-color-scheme 切換 */
     themes: light, dark; 
 }
 
@@ -18,9 +17,6 @@
 @source '../../app/Livewire/**/*.php';
 @source '../../storage/framework/views/*.php';
 @source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
-
-/* 💡 關鍵：務必讓 Tailwind 掃描你的業務邏輯字典，否則 config 內的顏色樣式無法被編譯出來 */
-@source '../../config/business.php'; 
 
 /* --------------------------------------------------------------------------
 | 字體與設計系統擴充
@@ -35,32 +31,27 @@
    ========================================================================== */
 
 :root {
-    /* 【明亮模式】基準底色：定窯牙白與墨色 */
-    --song-bg: #FAF9F6;       /* 定窯牙白 */
-    --song-text: #292524;     /* 松煙黛墨 / 煙墨色 */
+    --song-bg: #FAF9F6;
+    --song-text: #292524;
     --song-border: rgba(231, 229, 228, 0.7);
     --song-card-bg: rgba(255, 255, 255, 0.75);
     --song-modal-bg: rgba(250, 249, 246, 0.98);
 }
 
-/* 當瀏覽器切換至深色模式，DaisyUI 自動將 <html> 加上 [data-theme="dark"] 標籤時 */
 [data-theme="dark"] {
-    /* 【暗色模式】基準底色：建窯天目與玄武黛紫 */
-    --song-bg: #141212;       /* 天目鷓鴣斑漆黑底 */
-    --song-text: #E7E5E4;     /* 絲絹白 / 淺砂色 */
+    --song-bg: #141212;
+    --song-text: #E7E5E4;
     --song-border: rgba(68, 64, 60, 0.5);
     --song-card-bg: rgba(28, 25, 23, 0.7);
     --song-modal-bg: rgba(20, 18, 18, 0.98);
 }
 
-/* 應用全域基礎樣式 */
 body {
     background-color: var(--song-bg);
     color: var(--song-text);
-    transition: background-color 0.3s ease, color 0.3s ease; /* 確保切換明暗時有絲滑的淡入淡出感 */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 覆蓋 Flux / Mary UI / DaisyUI 的卡片與對話框，使其完美融入書畫卷軸與屏風意象 */
 .card {
     border-radius: 0.75rem;
     border: 1px solid var(--song-border);
@@ -76,60 +67,138 @@ body {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
 }
 
-/* 表單輸入框簡約風 */
 .input, .select, .textarea {
     background-color: rgba(255, 255, 255, 0.85);
     border-color: var(--song-border);
 }
 
 /* ==========================================================================
-   宋式按鈕配色系統
+   宋式按鈕配色系統 - 淡雅版本
    ========================================================================== */
 
-/* 所有宋式按鈕統一倒角 */
-.btn-red,
-.btn-orange,
-.btn-green,
-.btn-blue,
-.btn-purple,
-.btn-dark,
-.btn-ghost {
-  @apply rounded-xl;  /* 或 rounded-2xl，看你喜歡哪種圓潤度 */
+.red,
+.orange,
+.green,
+.blue,
+.purple,
+.dark,
+.light {
+    @apply rounded-xl transition-all duration-200;
 }
 
-/* 宋式 - 朱砂點絳 (鈞窯海棠紅 / 宋畫朱砂) 刪除 */
-.btn-red {
-  @apply bg-rose-100 text-rose-900 border border-rose-200 hover:bg-rose-200 focus:ring-rose-300;
+/* ----- 鈞窯海棠紅 - 極淡版 ----- */
+.red {
+    @apply bg-rose-50/60 text-rose-800 border border-rose-200/50 hover:bg-rose-100/50 hover:border-rose-300/60 focus:ring-rose-300/30;
+    
+    .currency-card {
+        @apply bg-rose-50/30 border-rose-200/40 dark:bg-rose-950/10 dark:border-rose-800/30;
+    }
+    .currency-symbol {
+        @apply text-rose-500/80 dark:text-rose-400/70;
+    }
+    .currency-tag {
+        @apply text-rose-400/70;
+    }
 }
 
-/* 宋式 - 蜜色溫潤 (柿染 / 赭石 / 香色)  修改、編輯 */
-.btn-orange {
-  @apply bg-amber-100 text-amber-900 border border-amber-200 hover:bg-amber-200 focus:ring-amber-300;
+/* ----- 柿染赭石 - 極淡版 ----- */
+.orange {
+    @apply bg-amber-50/60 text-amber-800 border border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-300/60 focus:ring-amber-300/30;
+    
+    .account-card {
+        @apply bg-amber-50/30 border-amber-200/40 hover:bg-amber-100/30 dark:bg-amber-950/10 dark:border-amber-800/30 dark:hover:bg-amber-950/20;
+    }
+    .account-left-bar {
+        @apply bg-amber-400/60 dark:bg-amber-500/40;
+    }
+    .account-badge {
+        @apply bg-amber-100/50 text-amber-700/80 dark:bg-amber-900/30 dark:text-amber-300/70;
+    }
 }
 
-/* 宋式 - 龍泉青瓷 (Longquan Celadon Green) 新增、儲存 */
-.btn-green {
-  @apply bg-emerald-100 text-emerald-900 border border-emerald-200 hover:bg-emerald-200 focus:ring-emerald-300;
+/* ----- 龍泉青瓷 - 極淡版 ----- */
+.green {
+    @apply bg-emerald-50/60 text-emerald-800 border border-emerald-200/50 hover:bg-emerald-100/50 hover:border-emerald-300/60 focus:ring-emerald-300/30;
+    
+    .currency-card {
+        @apply bg-emerald-50/30 border-emerald-200/40 dark:bg-emerald-950/10 dark:border-emerald-800/30;
+    }
+    .currency-symbol {
+        @apply text-emerald-500/80 dark:text-emerald-400/70;
+    }
+    .currency-tag {
+        @apply text-emerald-400/70;
+    }
+    
+    .account-card {
+        @apply bg-emerald-50/30 border-emerald-200/40 hover:bg-emerald-100/30 dark:bg-emerald-950/10 dark:border-emerald-800/30 dark:hover:bg-emerald-950/20;
+    }
+    .account-left-bar {
+        @apply bg-emerald-400/60 dark:bg-emerald-500/40;
+    }
+    .account-badge {
+        @apply bg-emerald-100/50 text-emerald-700/80 dark:bg-emerald-900/30 dark:text-emerald-300/70;
+    }
 }
 
-/* 宋式 - 汝窯天青 (Ru Kiln Blue) 關閉、返回 */
-.btn-blue {
-  @apply bg-sky-100 text-sky-900 border border-sky-200 hover:bg-sky-200 focus:ring-sky-300;
+/* ----- 汝窯天青 - 極淡版 ----- */
+.blue {
+    @apply bg-sky-50/60 text-sky-800 border border-sky-200/50 hover:bg-sky-100/50 hover:border-sky-300/60 focus:ring-sky-300/30;
+    
+    .currency-card {
+        @apply bg-sky-50/30 border-sky-200/40 dark:bg-sky-950/10 dark:border-sky-800/30;
+    }
+    .currency-symbol {
+        @apply text-sky-500/80 dark:text-sky-400/70;
+    }
+    .currency-tag {
+        @apply text-sky-400/70;
+    }
+    
+    .account-card {
+        @apply bg-sky-50/30 border-sky-200/40 hover:bg-sky-100/30 dark:bg-sky-950/10 dark:border-sky-800/30 dark:hover:bg-sky-950/20;
+    }
+    .account-left-bar {
+        @apply bg-sky-400/60 dark:bg-sky-500/40;
+    }
+    .account-badge {
+        @apply bg-sky-100/50 text-sky-700/80 dark:bg-sky-900/30 dark:text-sky-300/70;
+    }
 }
 
-/* 宋式 - 暮山煙紫 (Purple / Lavender) 標籤、特殊操作 */
-.btn-purple {
-  @apply bg-purple-100 text-purple-900 border border-purple-200 hover:bg-purple-200 focus:ring-purple-300;
+/* ----- 暮山煙紫 - 極淡版 ----- */
+.purple {
+    @apply bg-purple-50/60 text-purple-800 border border-purple-200/50 hover:bg-purple-100/50 hover:border-purple-300/60 focus:ring-purple-300/30;
+    
+    .currency-card {
+        @apply bg-violet-50/30 border-violet-200/40 dark:bg-violet-950/10 dark:border-violet-800/30;
+    }
+    .currency-symbol {
+        @apply text-violet-500/80 dark:text-violet-400/70;
+    }
+    .currency-tag {
+        @apply text-violet-400/70;
+    }
+    
+    .account-card {
+        @apply bg-violet-50/30 border-violet-200/40 hover:bg-violet-100/30 dark:bg-violet-950/10 dark:border-violet-800/30 dark:hover:bg-violet-950/20;
+    }
+    .account-left-bar {
+        @apply bg-violet-400/60 dark:bg-violet-500/40;
+    }
+    .account-badge {
+        @apply bg-violet-100/50 text-violet-700/80 dark:bg-violet-900/30 dark:text-violet-300/70;
+    }
 }
 
-/* 宋式 - 松煙墨色 (Dark / Obsidian) 主要操作、沉穩標示 */
-.btn-dark {
-  @apply bg-stone-800 text-stone-50 border border-stone-800 hover:bg-stone-700 focus:ring-stone-600 font-medium tracking-wider shadow-sm;
+/* ----- 松煙墨色 (主要操作) ----- */
+.dark {
+    @apply bg-stone-800/90 text-stone-50 border border-stone-700/80 hover:bg-stone-700/90 focus:ring-stone-500/30 font-medium tracking-wider shadow-sm;
 }
 
-/* 宋式 - 定窯牙白 (Ding Kiln White) - 可作為預設或 ghost 樣式 */
-.btn-ghost {
-  @apply bg-stone-100 text-stone-700 border border-stone-200 hover:bg-stone-200 focus:ring-stone-300;
+/* ----- 定窯牙白 (Ghost) ----- */
+.light {
+    @apply bg-stone-100/60 text-stone-600 border border-stone-200/60 hover:bg-stone-200/60 hover:text-stone-700 focus:ring-stone-300/30;
 }
 
 /* ==========================================================================
@@ -137,80 +206,70 @@ body {
    ========================================================================== */
 
 .template-modal-blue .modal-box {
-    background: linear-gradient(145deg, #e8f0fe, #d4e2f7) !important;
-    border-color: rgba(162, 189, 219, 0.4) !important;
-    box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.2) !important;
-    backdrop-filter: blur(8px);
+    background: linear-gradient(145deg, rgba(232, 240, 254, 0.6), rgba(212, 226, 247, 0.5)) !important;
+    backdrop-filter: blur(16px) !important;
+    border-color: rgba(162, 189, 219, 0.25) !important;
+    box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.12) !important;
 }
 
-/* 🔽 修正：直接設定下拉選單的背景（不要設 transparent） */
 .template-modal-blue .modal-box select,
 .template-modal-blue .modal-box .select select {
-    background-color: rgba(255, 255, 255, 0.85) !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
     backdrop-filter: blur(4px);
 }
 
-/* 如果下拉選單在 focus 時跑掉，可以加上 */
 .template-modal-blue .modal-box select:focus,
 .template-modal-blue .modal-box .select select:focus {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
 }
 
-/* 如果你想要讓選項清單（dropdown list）也有透明度 */
 .template-modal-blue .modal-box select option {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
     color: #4a4a4a !important;
 }
 
-
-
-/* 文字顏色 - 使用宋式墨色 */
 .template-modal-blue .modal-box,
 .template-modal-blue .modal-box *:not(.btn):not(.input):not(.select):not(.textarea) {
     color: #4a4a4a !important;
 }
 
-/* 表單元件 - 紙張質感 */
 .template-modal-blue .input,
 .template-modal-blue .select,
 .template-modal-blue .textarea {
-    background-color: rgba(255, 255, 255, 0.85) !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
     color: #4a4a4a !important;
-    border-color: rgba(162, 189, 219, 0.4) !important;
+    border-color: rgba(162, 189, 219, 0.25) !important;
 }
 
 .template-modal-blue .input:focus,
 .template-modal-blue .select:focus,
 .template-modal-blue .textarea:focus {
-    border-color: #a2bddb !important;
-    box-shadow: 0 0 0 3px rgba(162, 189, 219, 0.15) !important;
+    border-color: rgba(162, 189, 219, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(162, 189, 219, 0.1) !important;
 }
 
 .template-modal-blue .input::placeholder {
     color: #b0b8c5 !important;
 }
 
-/* 類型按鈕 - 宋式淡雅 */
 .template-modal-blue .btn-ghost {
     color: #6a7a8a !important;
 }
 
 .template-modal-blue .btn-ghost:hover {
-    background-color: rgba(162, 189, 219, 0.15) !important;
+    background-color: rgba(162, 189, 219, 0.08) !important;
     color: #4a5a6a !important;
 }
 
 .template-modal-blue .btn-ghost.active {
-    background-color: rgba(162, 189, 219, 0.2) !important;
+    background-color: rgba(162, 189, 219, 0.12) !important;
     color: #4a6a8a !important;
 }
 
-/* 分隔線 - 水墨淡痕 */
 .template-modal-blue .border-t {
-    border-color: rgba(162, 189, 219, 0.2) !important;
+    border-color: rgba(162, 189, 219, 0.12) !important;
 }
 
-/* 文字顏色調整 */
 .template-modal-blue .text-stone-500,
 .template-modal-blue .text-stone-400 {
     color: #8a9aaa !important;
@@ -221,14 +280,13 @@ body {
     color: #4a5a6a !important;
 }
 
-/* 按鈕樣式 - 保留宋式內斂 */
 .template-modal-blue .btn.bg-stone-100 {
-    background-color: rgba(162, 189, 219, 0.12) !important;
+    background-color: rgba(162, 189, 219, 0.08) !important;
     color: #5a6a7a !important;
 }
 
 .template-modal-blue .btn.bg-stone-100:hover {
-    background-color: rgba(162, 189, 219, 0.2) !important;
+    background-color: rgba(162, 189, 219, 0.15) !important;
 }
 
 .template-modal-blue .btn-ghost.text-stone-700 {
@@ -237,19 +295,17 @@ body {
 
 .template-modal-blue .btn-ghost.text-stone-700:hover {
     color: #3a4a5a !important;
-    background-color: rgba(162, 189, 219, 0.1) !important;
+    background-color: rgba(162, 189, 219, 0.06) !important;
 }
 
-/* 類別選擇器 - 宣紙質感 */
 .template-modal-blue .bg-stone-50 {
-    background-color: rgba(255, 255, 255, 0.5) !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 .template-modal-blue .bg-stone-50:hover {
-    background-color: rgba(255, 255, 255, 0.8) !important;
+    background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* 金額顏色 - 維持原本但調淡 */
 .template-modal-blue .text-emerald-600 {
     color: #5b8c7a !important;
 }
@@ -258,12 +314,10 @@ body {
     color: #b57a7a !important;
 }
 
-/* 標題文字 */
 .template-modal-blue .modal-title {
     color: #3a4a5a !important;
 }
 
-/* 微調數字欄位微調按鈕樣式 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     position: absolute;
