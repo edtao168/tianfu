@@ -57,30 +57,31 @@ class TransactionListModal extends Component
     /**
      * 設定日期範圍
      */
-    private function setDateRange(string $mode, ?string $baseDate = null)
-    {
-        $this->dateRangeMode = $mode;
-        $now = $baseDate ? Carbon::parse($baseDate) : Carbon::now();
+	private function setDateRange(string $mode, ?string $baseDate = null)
+	{
+		$this->dateRangeMode = $mode;
+		$now = $baseDate ? Carbon::parse($baseDate) : Carbon::now();
 
-        switch ($mode) {
-            case 'day':
-                $this->startDate = $now->copy()->startOfDay()->format('Y-m-d');
-                $this->endDate = $now->copy()->endOfDay()->format('Y-m-d');
-                break;
-            case 'month':
-                $this->startDate = $now->copy()->startOfMonth()->format('Y-m-d');
-                $this->endDate = $now->copy()->endOfMonth()->format('Y-m-d');
-                break;
-            case 'year':
-                $this->startDate = $now->copy()->startOfYear()->format('Y-m-d');
-                $this->endDate = $now->copy()->endOfYear()->format('Y-m-d');
-                break;
-            default:
-                $this->startDate = $now->copy()->startOfMonth()->format('Y-m-d');
-                $this->endDate = $now->copy()->endOfMonth()->format('Y-m-d');
-                break;
-        }
-    }
+		switch ($mode) {
+			case 'day':
+				// 修正：使用 startOfDay 和 endOfDay
+				$this->startDate = $now->copy()->startOfDay()->format('Y-m-d');
+				$this->endDate = $now->copy()->endOfDay()->format('Y-m-d');
+				break;
+			case 'month':
+				$this->startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+				$this->endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+				break;
+			case 'year':
+				$this->startDate = $now->copy()->startOfYear()->format('Y-m-d');
+				$this->endDate = $now->copy()->endOfYear()->format('Y-m-d');
+				break;
+			default:
+				$this->startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+				$this->endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+				break;
+		}
+	}
 
     /**
      * 獲取日期範圍顯示文字

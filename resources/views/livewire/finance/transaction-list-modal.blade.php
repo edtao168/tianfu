@@ -16,7 +16,7 @@
 							<x-heroicon-o-document-magnifying-glass class="w-5 h-5 md:w-6 md:h-6" />
 						</div>
 						<div class="min-w-0 flex-1">
-							<h3 class="text-base md:text-lg font-black text-stone-800 tracking-wide font-sans flex items-center gap-2 truncate">
+							<h3 class="text-base md:text-lg font-black text-stone-800 tracking-wide font-sans flex items-center gap-2 flex-wrap">
 								<span class="truncate">{{ $title }}</span> 
 								<span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-200/60 text-stone-600 font-mono flex-shrink-0">
 									{{ $transactionType === 'expense' ? '支出' : ($transactionType === 'income' ? '收入' : '交易明細') }}
@@ -32,9 +32,6 @@
 								@if($currentAccount && !$currentAccount->is_active)
 									<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">已隱藏帳戶</span>
 								@endif
-								<span class="text-stone-400 text-[10px]">
-									{{ Carbon\Carbon::parse($startDate)->format('Y/m/d') }} ~ {{ Carbon\Carbon::parse($endDate)->format('Y/m/d') }}
-								</span>
 							</p>
 						</div>
 					</div>
@@ -42,7 +39,7 @@
 					{{-- ========== 統計資訊顯示（依情境不同） ========== --}}
 					@if($accountId)
 						{{-- 帳戶模式：期初 → 收入 → 支出 → 期末 --}}
-						<div class="flex-shrink-0 mr-6">
+						<div class="flex-shrink-0 hidden md:block">
 							<div class="grid grid-cols-[60px_1fr] gap-x-4 text-right items-center">
 								{{-- 期初 --}}
 								<span class="text-xs text-stone-400 text-left">期初</span>
@@ -73,10 +70,43 @@
 								</span>
 							</div>
 						</div>
+						{{-- 手機版：期初 → 收入 → 支出 → 期末 (橫向滾動) --}}
+						<div class="flex-shrink-0 md:hidden overflow-x-auto -mx-1 px-1">
+							<div class="flex gap-3 min-w-max py-1">
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									<span class="text-[10px] text-stone-400">期初</span>
+									<span class="font-mono font-bold text-stone-600 text-[11px]">
+										{{ $currencySymbol }}{{ number_format((float)($statsSummary['opening_balance'] ?? 0), 2) }}
+									</span>
+								</div>
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									<span class="text-[10px] text-emerald-400">收入</span>
+									<span class="font-mono font-bold text-emerald-500 text-[11px]">
+										+{{ $currencySymbol }}{{ number_format((float)($statsSummary['total_income'] ?? 0), 2) }}
+									</span>
+								</div>
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									<span class="text-[10px] text-rose-400">支出</span>
+									<span class="font-mono font-bold text-rose-500 text-[11px]">
+										-{{ $currencySymbol }}{{ number_format((float)($statsSummary['total_expense'] ?? 0), 2) }}
+									</span>
+								</div>
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									@php
+										$closing = (float)($statsSummary['closing_balance'] ?? 0);
+										$closingClass = $closing >= 0 ? 'text-emerald-600' : 'text-rose-600';
+									@endphp
+									<span class="text-[10px] font-bold text-stone-500">期末</span>
+									<span class="font-mono font-black text-[11px] {{ $closingClass }}">
+										{{ $currencySymbol }}{{ number_format($closing, 2) }}
+									</span>
+								</div>
+							</div>
+						</div>
 					@else
 						{{-- 期間模式：收入 → 支出（差額） --}}
-						<div class="flex-shrink-0 mr-6">
-							<div class="grid grid-cols-[40px_1fr] gap-x-4 text-right items-center">
+						<div class="flex-shrink-0 hidden md:block">
+							<div class="grid grid-cols-[40px_1fr] gap-x-4 text-right items-center mr-4">
 								{{-- 收入 --}}
 								<span class="text-xs text-emerald-400 text-left">收入</span>
 								<span class="font-mono font-bold text-emerald-500 text-sm">
@@ -100,6 +130,33 @@
 								</span>
 							</div>
 						</div>
+						{{-- 手機版：收入 → 支出 → 差額 (橫向滾動) --}}
+						<div class="flex-shrink-0 md:hidden overflow-x-auto -mx-1 px-1">
+							<div class="flex gap-3 min-w-max py-1">
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									<span class="text-[10px] text-emerald-400">收入</span>
+									<span class="font-mono font-bold text-emerald-500 text-[11px]">
+										+{{ $currencySymbol }}{{ number_format((float)($statsSummary['total_income'] ?? 0), 2) }}
+									</span>
+								</div>
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									<span class="text-[10px] text-rose-400">支出</span>
+									<span class="font-mono font-bold text-rose-500 text-[11px]">
+										-{{ $currencySymbol }}{{ number_format((float)($statsSummary['total_expense'] ?? 0), 2) }}
+									</span>
+								</div>
+								<div class="flex flex-col items-center bg-white/60 rounded-lg px-2 py-1 min-w-[60px]">
+									@php
+										$net = (float)($statsSummary['net_amount'] ?? 0);
+										$netClass = $net > 0 ? 'text-emerald-600' : ($net < 0 ? 'text-rose-600' : 'text-stone-500');
+									@endphp
+									<span class="text-[10px] font-bold text-stone-500">差額</span>
+									<span class="font-mono font-black text-[11px] {{ $netClass }}">
+										{{ $net > 0 ? '+' : '' }}{{ $currencySymbol }}{{ number_format($net, 2) }}
+									</span>
+								</div>
+							</div>
+						</div>
 					@endif
 				</div>
 			</div>
@@ -121,19 +178,6 @@
 							<div class="flex items-center gap-1.5 font-mono font-black text-xs md:text-sm text-stone-800 tracking-wider select-none">
 								<x-heroicon-o-calendar class="w-4 h-4 text-stone-400" />
 								<span>{{ $this->dateRangeDisplay }}</span>
-								@if($accountId)
-									{{-- 帳戶模式：固定顯示「月」標籤 --}}
-									<span class="text-[10px] text-stone-400 font-normal bg-stone-200/50 px-1.5 py-0.5 rounded">月</span>
-								@else
-									{{-- 期間模式：顯示當前模式標籤 --}}
-									@if($dateRangeMode === 'day')
-										<span class="text-[10px] text-stone-400 font-normal bg-stone-200/50 px-1.5 py-0.5 rounded">日</span>
-									@elseif($dateRangeMode === 'month')
-										<span class="text-[10px] text-stone-400 font-normal bg-stone-200/50 px-1.5 py-0.5 rounded">月</span>
-									@elseif($dateRangeMode === 'year')
-										<span class="text-[10px] text-stone-400 font-normal bg-stone-200/50 px-1.5 py-0.5 rounded">年</span>
-									@endif
-								@endif
 							</div>
 							
 							<x-button 

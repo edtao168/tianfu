@@ -8,18 +8,17 @@
                 <p class="text-sm text-gray-500 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
             </div>
             <div class="flex items-center gap-2">
-                <x-button label="資產帳戶" icon="o-wallet" class="btn-ghost" link="{{ route('finance.accounts') }}" />
-                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-primary' : 'btn-ghost border-base-200' }}" wire:click="$toggle('showFilters')" />
+                <x-button label="資產帳戶" icon="o-wallet" class="btn-light" link="{{ route('finance.accounts') }}" />
+                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-dark' : 'btn-light border-base-200' }}" wire:click="$toggle('showFilters')" />
             </div>
         </div>
 
         {{-- 月份導航 + 本月收支 --}}
         <div class="mt-4 space-y-3">
-            {{-- 年月膠囊選擇器 --}}
             <div class="flex items-center justify-between bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/60 shadow-inner">
                 <x-button 
                     icon="o-chevron-left" 
-                    class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+                    class="btn-xs btn-light text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
                     wire:click="previousMonth" 
                 />
                 
@@ -34,7 +33,7 @@
                 
                 <x-button 
                     icon="o-chevron-right" 
-                    class="btn-xs btn-ghost text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
+                    class="btn-xs btn-light text-stone-500 hover:text-stone-800 hover:bg-white px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
                     wire:click="nextMonth" 
                     :disabled="$isCurrentMonth" 
                 />
@@ -107,6 +106,15 @@
                             $curStyle = config("business.currencies.{$acc->currency}") ?? config("business.currencies.TWD");
                             $typeStyle = config("business.account_types.{$acc->type}") ?? config("business.account_types.cash");
                             
+                            // 帳戶類型 → btn-* 主題映射
+                            $accountThemeMap = [
+                                'cash' => 'orange',
+                                'bank' => 'blue',
+                                'e-wallet' => 'green',
+                                'securities' => 'purple',
+                            ];
+                            $accountTheme = $accountThemeMap[$acc->type] ?? 'blue';
+                            
                             $displayTitle = '未分類';
                             $iconName = 'o-hashtag';
                             
@@ -132,66 +140,72 @@
                             }
                         @endphp
                         
-                        <div wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx->id }} })" 
-                             class="p-4 flex items-center justify-between hover:bg-stone-50/40 dark:hover:bg-stone-900/10 transition-all duration-200 group relative pl-6 cursor-pointer">
-                            
-                            <span class="absolute left-0 top-0 bottom-0 w-1 {{ $typeStyle['left_bar'] }} opacity-70"></span>
-
-                            <div class="flex items-center gap-3.5 flex-1 min-w-0">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 
-                                    {{ $tx->type === 'expense' ? 'bg-stone-100 text-stone-600' : 
-                                       ($tx->type === 'transfer' ? 'bg-sky-100 text-sky-600 dark:bg-sky-950/30' : 
-                                       'bg-emerald-50/50 text-emerald-600 dark:bg-emerald-950/20') }}">
-                                    <x-dynamic-component :component="$iconName" class="w-5 h-5 opacity-80" />
-                                </div>
+                        {{-- 關鍵：每個交易卡片都用 btn-* 包裹，讓 account-badge / currency-symbol / account-left-bar 繼承樣式 --}}
+                        <div class="btn-{{ $accountTheme }}">
+                            <div wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx->id }} })" 
+                                 class="p-4 flex items-center justify-between hover:bg-stone-50/40 dark:hover:bg-stone-900/10 transition-all duration-200 group relative pl-6 cursor-pointer">
                                 
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="font-bold text-sm text-base-content truncate">
-                                            {{ $displayTitle }}
-                                        </span>
-                                        @if($tx->memo)
-                                            <span class="text-xs text-gray-400 max-w-[180px] sm:max-w-xs truncate font-medium">({{ $tx->memo }})</span>
-                                        @endif
-                                        @if($tx->type === 'transfer')
-                                            <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400 flex-shrink-0">
-                                                轉帳
-                                            </span>
-                                        @endif
+                                {{-- 左側色條：使用 account-left-bar --}}
+                                <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1 opacity-70"></span>
+
+                                <div class="flex items-center gap-3.5 flex-1 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 
+                                        {{ $tx->type === 'expense' ? 'bg-stone-100 text-stone-600' : 
+                                           ($tx->type === 'transfer' ? 'bg-sky-100 text-sky-600 dark:bg-sky-950/30' : 
+                                           'bg-emerald-50/50 text-emerald-600 dark:bg-emerald-950/20') }}">
+                                        <x-dynamic-component :component="$iconName" class="w-5 h-5 opacity-80" />
                                     </div>
                                     
-                                    <div class="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
-                                        <span class="font-bold truncate">{{ $acc->name }}</span>
-                                        <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md {{ $typeStyle['badge'] }} flex-shrink-0">
-                                            {{ $typeStyle['name'] }}
-                                        </span>
-                                        <span class="text-[10px] font-mono opacity-60 flex-shrink-0">
-                                            {{ $acc->currency }}
-                                        </span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-bold text-sm text-base-content truncate">
+                                                {{ $displayTitle }}
+                                            </span>
+                                            @if($tx->memo)
+                                                <span class="text-xs text-gray-400 max-w-[180px] sm:max-w-xs truncate font-medium">({{ $tx->memo }})</span>
+                                            @endif
+                                            @if($tx->type === 'transfer')
+                                                <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400 flex-shrink-0">
+                                                    轉帳
+                                                </span>
+                                            @endif
+                                        </div>
+                                        
+                                        {{-- 帳戶名稱 + Badge：使用 account-badge --}}
+                                        <div class="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+                                            <span class="font-bold truncate">{{ $acc->name }}</span>
+                                            <span class="account-badge px-1.5 py-0.5 text-[9px] font-extrabold rounded-md flex-shrink-0">
+                                                {{ $typeStyle['name'] }}
+                                            </span>
+                                            <span class="text-[10px] font-mono opacity-60 flex-shrink-0">
+                                                {{ $acc->currency }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="flex items-center gap-4 flex-shrink-0">
-                                <div class="text-right">
-                                    <span class="font-mono text-base font-black 
-                                        {{ $tx->type === 'expense' ? 'text-base-content' : 
-                                           ($tx->type === 'transfer' ? 'text-sky-600' : 'text-emerald-600') }}">
-                                        {{ $tx->type === 'expense' ? '-' : 
-                                           ($tx->type === 'transfer' ? '↕' : '+') }} 
-                                        <span class="{{ $curStyle['symbol_color'] }} text-xs font-bold mr-0.5">{{ $curStyle['symbol'] }}</span>{{ number_format($tx->amount, 2) }}
-                                    </span>
-                                    <div class="text-[10px] text-gray-400 font-mono mt-0.5 opacity-80">{{ date('H:i', strtotime($tx->recorded_at)) }}</div>
+                                <div class="flex items-center gap-4 flex-shrink-0">
+                                    <div class="text-right">
+                                        <span class="font-mono text-base font-black 
+                                            {{ $tx->type === 'expense' ? 'text-base-content' : 
+                                               ($tx->type === 'transfer' ? 'text-sky-600' : 'text-emerald-600') }}">
+                                            {{ $tx->type === 'expense' ? '-' : 
+                                               ($tx->type === 'transfer' ? '↕' : '+') }} 
+                                            {{-- 貨幣符號：使用 currency-symbol --}}
+                                            <span class="currency-symbol text-xs font-bold mr-0.5">{{ $curStyle['symbol'] }}</span>{{ number_format($tx->amount, 2) }}
+                                        </span>
+                                        <div class="text-[10px] text-gray-400 font-mono mt-0.5 opacity-80">{{ date('H:i', strtotime($tx->recorded_at)) }}</div>
+                                    </div>
+
+                                    <button type="button" 
+                                            wire:click.stop="deleteTransaction({{ $tx->id }})"
+                                            wire:confirm="確定要刪除這筆記帳明細嗎？對應帳戶的餘額將會使用高精度運算自動退回沖正。"
+                                            class="text-stone-300 hover:text-error transition-all p-1.5 md:opacity-0 group-hover:opacity-100">
+                                        <x-heroicon-o-trash class="w-4 h-4" />
+                                    </button>
                                 </div>
 
-                                <button type="button" 
-                                        wire:click.stop="deleteTransaction({{ $tx->id }})"
-                                        wire:confirm="確定要刪除這筆記帳明細嗎？對應帳戶的餘額將會使用高精度運算自動退回沖正。"
-                                        class="text-stone-300 hover:text-error transition-all p-1.5 md:opacity-0 group-hover:opacity-100">
-                                    <x-heroicon-o-trash class="w-4 h-4" />
-                                </button>
                             </div>
-
                         </div>
                     @endforeach
                 </div>

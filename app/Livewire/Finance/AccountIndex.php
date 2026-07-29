@@ -29,12 +29,6 @@ class AccountIndex extends Component
     public string $accountCurrency = '';
     public string $creditLimit = '0.00';
     public string $accountMemo = ''; 
-    
-    // ============ 分幣別詳情 Modal 資料 ============
-    // public string $periodDetailTitle = '';
-    // public array $periodDetailData = [];
-    // public array $periodDetailSummary = [];
-    // public bool $canDeletePeriodDetail = false;
 
     // ============ 生命週期與事件 ============
     
@@ -186,8 +180,10 @@ class AccountIndex extends Component
             'year'  => '年'
         ];
         
+		$dateMode = $period === 'today' ? 'day' : $period;
+		
         $this->dispatch('open-transaction-list-modal', params: [
-			'dateMode' => $period, // 'today', 'month', 'year'
+			'dateMode' => $dateMode, // 'today', 'month', 'year'
 			'baseDate' => now()->format('Y-m-d'),
 			'title' => $periodTitles[$period] ?? '交易明細',
 			'type' => null, // 顯示全部交易
