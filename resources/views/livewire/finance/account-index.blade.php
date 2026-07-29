@@ -37,7 +37,7 @@
                     $theme = $periodThemeMap[$period] ?? 'blue';
                 @endphp
             
-                <div class="{{ $theme }} stats shadow bg-base-100 border border-base-200 hover:shadow-lg transition-all duration-300 cursor-pointer" 
+                <div class="btn-{{ $theme }} stats shadow bg-base-100 border border-base-200 hover:shadow-lg transition-all duration-300 cursor-pointer" 
                      wire:click="showPeriodDetail('{{ $period }}')">
                     <div class="stat">
                         <div class="stat-title flex items-center gap-1.5 text-gray-500 font-medium">
@@ -78,8 +78,8 @@
             <p class="text-sm text-gray-500 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
-            <x-button label="新增帳戶" icon="o-plus" class="dark" wire:click="openCreateModal" />
-            <x-button label="記一筆" icon="o-pencil-square" class="green" wire:click="$dispatch('open-transaction-modal')" />
+            <x-button label="新增帳戶" icon="o-plus" class="btn-dark" wire:click="openCreateModal" />
+            <x-button label="記一筆" icon="o-pencil-square" class="btn-green" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>
 
@@ -97,7 +97,7 @@
             @php
                 $theme = $currencyThemeMap[$group['currency']] ?? 'blue';
             @endphp
-            <div class="{{ $theme }}">
+            <div class="btn-{{ $theme }}">
                 <div class="currency-card flex justify-between items-center p-5 rounded-2xl border shadow-sm transition-all duration-300 hover:scale-[1.02]">
                     <div>
                         <div class="text-[11px] font-bold opacity-60 tracking-wider uppercase">{{ $group['currency_name'] }} ({{ $group['currency'] }})</div>
@@ -112,100 +112,109 @@
     </div>
 
     {{-- 4. 帳戶列表（區分手機卡片 / PC網格） --}}
-    @php
-        $accountThemeMap = [
-            'cash' => 'orange',
-            'bank' => 'blue',
-            'e-wallet' => 'green',
-            'securities' => 'purple',
-        ];
-    @endphp
-    @foreach($currencyGroups as $group)
-        @php
-            $theme = $currencyThemeMap[$group['currency']] ?? 'blue';
-        @endphp
-        <div class="{{ $theme }} space-y-3 pt-2 animate-fadeIn">
-            <h2 class="text-sm font-bold text-gray-500 tracking-wider flex items-center gap-2">
-                <span class="w-1.5 h-4.5 rounded-full currency-tag bg-current"></span> 
-                {{ $group['currency_name'] }}資產明細
-                <span class="text-xs text-gray-400">點擊卡片看明細</span>
-            </h2>
-            
-            {{-- 手機端卡片式 --}}
-            <div class="block md:hidden">
-                <div class="grid grid-cols-1 gap-4">
-                    @foreach($group['accounts'] as $account)
-                        @php
-                            $accountTheme = $accountThemeMap[$account->type] ?? 'blue';
-                            $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                            $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
-                        @endphp
+	@php
+		$accountThemeMap = [
+			'cash' => 'orange',
+			'bank' => 'blue',
+			'e-wallet' => 'green',
+			'securities' => 'purple',
+		];
+	@endphp
+	@foreach($currencyGroups as $group)
+		@php
+			$currencyTheme = $currencyThemeMap[$group['currency']] ?? 'blue';
+			// 幣別主題色（用於標題裝飾）
+			$currencyColorMap = [
+				'blue' => 'sky',
+				'red' => 'rose',
+				'green' => 'emerald',
+				'purple' => 'violet',
+			];
+			$dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
+		@endphp
+		<div class="space-y-3 pt-2 animate-fadeIn">
+			{{-- 標題列：用 style 直接控制顏色，不受卡片主題影響 --}}
+			<h2 class="text-sm font-bold text-gray-500 tracking-wider flex items-center gap-2">
+				<span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
+				{{ $group['currency_name'] }}資產明細
+				<span class="text-xs text-gray-400">點擊卡片看明細</span>
+			</h2>
+			
+			{{-- 手機端卡片式 --}}
+			<div class="block md:hidden">
+				<div class="grid grid-cols-1 gap-4">
+					@foreach($group['accounts'] as $account)
+						@php
+							$accountTheme = $accountThemeMap[$account->type] ?? 'blue';
+							$typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
+							$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+						@endphp
 
-                        <div class="{{ $accountTheme }}">
-                            <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                                 class="account-card p-5 rounded-xl border shadow-sm cursor-pointer transition-all duration-200 active:scale-[0.98] relative overflow-hidden pl-5 flex flex-col justify-between h-28">
-                                
-                                <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5 opacity-80"></span>
-                                
-                                <div class="flex justify-between items-start">
-                                    <div class="flex items-center gap-2">
-                                        <x-dynamic-component :component="$icon" class="w-4 h-4 opacity-40 text-base-content" />
-                                        <span class="font-bold text-base-content text-md">{{ $account->name }}</span>
-                                    </div>
-                                    <span class="account-badge px-2 py-0.5 text-[10px] font-extrabold tracking-wider rounded-md">
-                                        {{ $typeConfig['name'] }}
-                                    </span>
-                                </div>
-                                
-                                <div class="flex justify-between items-end mt-2">
-                                    <span class="text-[11px] text-gray-400 font-medium">當前餘額</span>
-                                    <span class="font-mono text-xl font-extrabold text-base-content">
-                                        <span class="currency-symbol mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+						<div class="btn-{{ $accountTheme }}">
+							<div wire:click="viewAccountTransactions({{ $account->id }})" 
+								 class="account-card p-5 rounded-xl border shadow-sm cursor-pointer transition-all duration-200 active:scale-[0.98] relative overflow-hidden pl-5 flex flex-col justify-between h-28">
+								
+								<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5 opacity-80"></span>
+								
+								<div class="flex justify-between items-start">
+									<div class="flex items-center gap-2">
+										<x-dynamic-component :component="$icon" class="w-4 h-4 opacity-40 text-base-content" />
+										<span class="font-bold text-base-content text-md">{{ $account->name }}</span>
+									</div>
+									<span class="account-badge px-2 py-0.5 text-[10px] font-extrabold tracking-wider rounded-md">
+										{{ $typeConfig['name'] }}
+									</span>
+								</div>
+								
+								<div class="flex justify-between items-end mt-2">
+									<span class="text-[11px] text-gray-400 font-medium">當前餘額</span>
+									<span class="font-mono text-xl font-extrabold text-base-content">
+										<span class="currency-symbol mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
+									</span>
+								</div>
+							</div>
+						</div>
+					@endforeach
+				</div>
+			</div>
 
-            {{-- PC端網格 --}}
-            <div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($group['accounts'] as $account)
-                    @php
-                        $accountTheme = $accountThemeMap[$account->type] ?? 'blue';
-                        $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                        $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
-                    @endphp
+			{{-- PC端網格 --}}
+			<div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
+				@foreach($group['accounts'] as $account)
+					@php
+						$accountTheme = $accountThemeMap[$account->type] ?? 'blue';
+						$typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
+						$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+					@endphp
 
-                    <div class="{{ $accountTheme }}">
-                        <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                             class="account-card p-4 rounded-xl border shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col justify-between h-28 active:scale-[0.99] relative overflow-hidden pl-5">
-                            
-                            <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5 opacity-80"></span>
-                            
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-2">
-                                    <x-dynamic-component :component="$icon" class="w-4 h-4 opacity-40 text-base-content" />
-                                    <span class="font-bold text-base-content text-md">{{ $account->name }}</span>
-                                </div>
-                                <span class="account-badge px-2 py-0.5 text-[10px] font-extrabold tracking-wider rounded-md">
-                                    {{ $typeConfig['name'] }}
-                                </span>
-                            </div>
-                            
-                            <div class="flex justify-between items-end mt-2">
-                                <span class="text-[11px] text-gray-400 font-medium">當前餘額</span>
-                                <span class="font-mono text-xl font-extrabold text-base-content">
-                                    <span class="currency-symbol mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endforeach
+					<div class="btn-{{ $accountTheme }}">
+						<div wire:click="viewAccountTransactions({{ $account->id }})" 
+							 class="account-card p-4 rounded-xl border shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col justify-between h-28 active:scale-[0.99] relative overflow-hidden pl-5">
+							
+							<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5 opacity-80"></span>
+							
+							<div class="flex justify-between items-start">
+								<div class="flex items-center gap-2">
+									<x-dynamic-component :component="$icon" class="w-4 h-4 opacity-40 text-base-content" />
+									<span class="font-bold text-base-content text-md">{{ $account->name }}</span>
+								</div>
+								<span class="account-badge px-2 py-0.5 text-[10px] font-extrabold tracking-wider rounded-md">
+									{{ $typeConfig['name'] }}
+								</span>
+							</div>
+							
+							<div class="flex justify-between items-end mt-2">
+								<span class="text-[11px] text-gray-400 font-medium">當前餘額</span>
+								<span class="font-mono text-xl font-extrabold text-base-content">
+									<span class="currency-symbol mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
+								</span>
+							</div>
+						</div>
+					</div>
+				@endforeach
+			</div>
+		</div>
+	@endforeach
 
     {{-- 5. 新增/編輯帳戶 Modal --}}
     <x-modal 
@@ -253,7 +262,7 @@
                                     $btnClass = $btnThemeMap[$code] ?? 'blue';
                                 @endphp
                                 <button type="button" 
-                                    class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border transition-all duration-200 {{ $isSelected ? $btnClass . ' ring-1 ring-offset-1' : 'bg-stone-50' }}" 
+                                    class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border transition-all duration-200 {{ $isSelected ? 'btn-' . $btnClass . ' ring-1 ring-offset-1' : 'bg-stone-50' }}" 
                                     wire:click="$set('accountCurrency', '{{ $code }}')">
                                     <span class="text-xs font-black">{{ $info['name'] }}</span>
                                     <span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }} ({{ $info['symbol'] ?? '$' }})</span>
@@ -285,8 +294,8 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-end gap-3 p-4 border-t border-base-200 bg-stone-50 flex-shrink-0">
-                <x-button label="取消" @click="$wire.showAccountModal = false" class="light text-stone-700 btn-sm" />
-                <x-button label="確認儲存" type="submit" class="green btn-sm px-6" icon="o-check" wire:click="saveAccount" />
+                <x-button label="取消" @click="$wire.showAccountModal = false" class="btn-light text-stone-700 btn-sm" />
+                <x-button label="確認儲存" type="submit" class="btn-green btn-sm px-6" icon="o-check" wire:click="saveAccount" />
             </div>
         </div>
     </x-modal>
