@@ -39,7 +39,7 @@
 					<div class="w-full md:w-1/2 flex md:justify-end">
 						@if($accountId)
 							{{-- 帳戶模式：期初 → 收入 → 支出 → 期末 --}}
-							<div class="grid grid-cols-[60px_1fr] gap-x-4 text-right items-center mr-4">
+							<div class="grid grid-cols-[60px_1fr] gap-x-4 text-right items-center mr-4 ml-auto">
 								<span class="text-xs text-stone-400 text-left">期初</span>
 								<span class="font-mono font-bold text-stone-600 text-sm">
 									{{ $currencySymbol }}{{ number_format((float)($statsSummary['opening_balance'] ?? 0), 2) }}
@@ -66,7 +66,7 @@
 							</div>
 						@else
 							{{-- 期間模式：收入 → 支出（差額） --}}
-							<div class="grid grid-cols-[40px_1fr] gap-x-4 text-right items-center mr-4">
+							<div class="grid grid-cols-[60px_1fr] gap-x-4 text-right items-center mr-4 ml-auto">
 								<span class="text-xs text-emerald-400 text-left">收入</span>
 								<span class="font-mono font-bold text-emerald-500 text-sm">
 									+{{ $currencySymbol }}{{ number_format((float)($statsSummary['total_income'] ?? 0), 2) }}
