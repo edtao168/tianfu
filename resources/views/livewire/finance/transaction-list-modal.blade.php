@@ -15,7 +15,7 @@
 					{{-- 左欄：標題和類型標籤 --}}
 					<div class="w-full md:w-1/2">
 						<div class="flex items-center gap-3 min-w-0">
-							<div class="p-2 md:p-2.5 rounded-xl bg-base-200 text-stone-700 shadow-inner flex-shrink-0">
+							<div class="p-2 md:p-2.5 rounded-xl bg-base-200 bg-stone-200/60 text-stone-700 shadow-inner flex-shrink-0">
 								<x-heroicon-o-document-magnifying-glass class="w-5 h-5 md:w-6 md:h-6" />
 							</div>
 							<div class="min-w-0 flex-1">
@@ -185,7 +185,7 @@
 							<div class="relative flex items-center py-2 px-3 hover:bg-stone-50/80 rounded-lg transition-all duration-150 cursor-pointer group border border-gray-200 {{ $hoverBorderColor }}"
 								 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
 								
-								<div class="border-2 {{ $borderColor }} rounded-full p-1.5 md:p-2 flex-shrink-0">
+								<div class="rounded-xl p-1.5 md:p-2 flex-shrink-0 {{ $isTransfer ? 'bg-sky-200/60' : ($isIncome ? 'bg-emerald-200/60' : ($isExpense ? 'bg-rose-200/60' : 'bg-stone-200/60')) }}">
 									<x-dynamic-component 
 										:component="'heroicon-o-' . $categoryIcon" 
 										class="w-4 h-4 md:w-5 md:h-5 {{ $iconColor }}" />
