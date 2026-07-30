@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # 檔案名稱: backup.sh
-# 說明: OCI Ubuntu + Laravel 專用全自動備份腳本
+# 說明: OCI Ubuntu + Laravel 專用全自動備份腳本 (Tianfu 記帳系統)
 # 包含: MySQL 資料庫、.env、storage/app/public、Apache Vhost & 系統設定檔
 # ==============================================================================
 
@@ -20,7 +20,7 @@ BACKUP_ROOT="/var/backups/tianfu"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_NAME="tianfu_backup_${TIMESTAMP}"
 WORK_DIR="${BACKUP_ROOT}/${BACKUP_NAME}"
-RETENTION_DAYS=30
+RETENTION_DAYS=5
 
 # 建立備份目錄
 mkdir -p "${WORK_DIR}"
@@ -33,16 +33,16 @@ echo -e "${CYAN}==========================================${NC}"
 # 1. 備份 MySQL 資料庫
 echo -e "${YELLOW}[1/6] 正在備份 MySQL 資料庫...${NC}"
 if [ -f "${PROJECT_DIR}/.env" ]; then
-    DB_DATABASE=$(grep "^DB_DATABASE=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"'')
-    DB_USERNAME=$(grep "^DB_USERNAME=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"'')
-    DB_PASSWORD=$(grep "^DB_PASSWORD=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"'')
+    DB_DATABASE=$(grep "^DB_DATABASE=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"\r\'' || true)
+    DB_USERNAME=$(grep "^DB_USERNAME=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"\r\'' || true)
+    DB_PASSWORD=$(grep "^DB_PASSWORD=" "${PROJECT_DIR}/.env" | cut -d'=' -f2 | tr -d '"\r\'' || true)
     
     if [ -n "$DB_DATABASE" ]; then
-        MYSQL_PWD="${DB_PASSWORD}" mysqldump -u"${DB_USERNAME}" "${DB_DATABASE}" > "${WORK_DIR}/database.sql"
+        MYSQL_PWD="${DB_PASSWORD}" mysqldump -u"${DB_USERNAME}" "${DB_DATABASE}" > "${WORK_DIR}/database.sql" 2>/dev/null || true
         echo -e "${GREEN}✓ 資料庫已匯出: database.sql${NC}"
     else
         echo -e "${RED}✗ 無法從 .env 讀取資料庫設定，嘗試使用 default 備份...${NC}"
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --all-databases > "${WORK_DIR}/database_all.sql" || true
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --all-databases > "${WORK_DIR}/database_all.sql" 2>/dev/null || true
     fi
 else
     echo -e "${RED}✗ 找不到 .env 檔案，跳過資料庫備份！${NC}"
@@ -101,7 +101,7 @@ rm -rf "${WORK_DIR}"
 
 # 7. 自動清理過期備份
 echo -e "${YELLOW}清理 ${RETENTION_DAYS} 天前的舊備份...${NC}"
-find "${BACKUP_ROOT}" -name "tianfu_backup_*.tar.gz" -type f -mtime +${RETENTION_DAYS} -delete
+find "$BACKUP_ROOT" -type f -name "*.tar.gz" -mtime +${RETENTION_DAYS} -exec rm -f {} \;
 
 BACKUP_SIZE=$(du -sh "${BACKUP_ROOT}/${BACKUP_NAME}.tar.gz" | cut -f1)
 echo -e "${GREEN}==========================================${NC}"

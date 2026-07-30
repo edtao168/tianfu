@@ -1,4 +1,4 @@
-# Tianfu 系統備份與災難復原 (Disaster Recovery) 說明文件
+﻿# Tianfu 系統備份與災難復原 (Disaster Recovery) 說明文件
 
 本打包工具包含完整針對 OCI (Oracle Cloud Infrastructure) Ubuntu 伺服器運行的 Laravel 專案所設計的備份與回滾腳本。
 
@@ -55,3 +55,4 @@ sudo bash rollback.sh /var/backups/tianfu/tianfu_backup_20260330_120000.tar.gz
 1. **iptables 防火牆：** OCI Ubuntu 預設封鎖 80/443 port，`backup.sh` 與 `deploy.sh` 已包含自動修復規則。
 2. **權限問題：** 腳本執行完成後會自動將 `storage/` 及 `bootstrap/cache/` 設定為 `www-data:www-data` 並給予 `775` 權限，避免 500 錯誤。
 3. **.env 安全性：** 備份檔包含 `.env`（內含 DB 密碼與 APP_KEY），請妥善保管 `/var/backups/tianfu/` 目錄。
+4.已忽略對 deploy.sh 的上傳（oci與本地不一致，已鎖定git update-index --assume-unchanged deploy.sh，解鎖需git update-index --no-assume-unchanged deploy.sh）
