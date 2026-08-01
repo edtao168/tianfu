@@ -20,19 +20,14 @@
 <body class="min-h-screen pb-28 md:pb-32">
 
     <header class="sticky top-0 z-40 backdrop-blur-md bg-stone-50/80 border-b border-stone-200/40 px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-			<span class="w-3.5 h-3.5 rounded-full bg-teal-600 shadow-sm animate-pulse"></span>
-			<span class="font-black text-lg tracking-widest text-stone-700 font-mono uppercase">添富</span>
-			<!-- 新增：微小聚財金點，比左側綠點更小，象徵納財 -->
-			<span class="w-2 h-2 rounded-full bg-amber-400/70 shadow-sm shadow-amber-400/20 animate-pulse" style="animation-delay: 0.5s;"></span>
-			<span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
+		{{-- 替換原標題為圖形樣式 --}}
+		<img src="{{ asset('tianfu.png') }}" alt="添富記賬" class="h-10 w-auto object-contain">
+		
+		<div class="flex items-center gap-2">
+			<span class="text-xl font-black tracking-wider text-stone-800"></span>
 		</div>
-        
-        <div class="flex items-center gap-2">
-            <span class="text-xl font-black tracking-wider text-stone-800"></span>
-        </div>
 
-        <button x-data 
+		<button x-data 
 				@click="$dispatch('toggle-settings-drawer')" 
 				class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-stone-100">
 			{{-- 💡 動態綁定：若目前登入者有綁定 Partner 且上傳過照片，則吃 photo_path；否則自動降級回 me.jpg --}}
@@ -40,7 +35,7 @@
 				 alt="User Avatar" 
 				 class="w-full h-full object-cover">
 		</button>
-    </header>
+	</header>
 
     <main class="max-w-lg md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 pt-6 animate-fadeIn">
         {{ $slot }}
