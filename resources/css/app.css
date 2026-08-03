@@ -50,7 +50,8 @@ body {
 }
 
 .input, .select, .textarea {
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: var(--song-input-bg);
+    color: var(--song-text);
     border-color: var(--song-border);
 }
 

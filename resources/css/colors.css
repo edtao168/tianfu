@@ -10,6 +10,7 @@
     --song-border: rgba(231, 229, 228, 0.7);
     --song-card-bg: rgba(255, 255, 255, 0.75);
     --song-modal-bg: rgba(250, 249, 246, 0.98);
+	--song-input-bg: rgba(255, 255, 255, 0.95);
 }
 
 [data-theme="dark"] {
@@ -18,6 +19,7 @@
     --song-border: rgba(68, 64, 60, 0.5);
     --song-card-bg: rgba(28, 25, 23, 0.7);
     --song-modal-bg: rgba(20, 18, 18, 0.98);
+	--song-input-bg: rgba(41, 37, 36, 0.95);
 }
 
 /* ==========================================================================
@@ -169,23 +171,19 @@
 /* 只保留背景相關的樣式，移除所有文字顏色覆蓋 */
 .template-modal-blue .modal-box select,
 .template-modal-blue .modal-box .select select {
-    background-color: rgba(255, 255, 255, 0.7) !important;
+    background-color: var(--song-input-bg) !important;
     backdrop-filter: blur(4px);
 }
 
-.template-modal-blue .modal-box select:focus,
-.template-modal-blue .modal-box .select select:focus {
-    background-color: rgba(255, 255, 255, 0.85) !important;
-}
-
 .template-modal-blue .modal-box select option {
-    background-color: rgba(255, 255, 255, 0.9) !important;
+    background-color: var(--song-bg) !important; /* 使 option 背景跟隨宋風底色 */
+    color: var(--song-text) !important;
 }
 
 .template-modal-blue .input,
 .template-modal-blue .select,
 .template-modal-blue .textarea {
-    background-color: rgba(255, 255, 255, 0.7) !important;
+    background-color: var(--song-input-bg) !important;
     border-color: rgba(162, 189, 219, 0.25) !important;
 }
 

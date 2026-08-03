@@ -241,17 +241,19 @@
                     
                     <div class="grid grid-cols-4 gap-3 mb-4">
                         <div class="col-span-2">
-                            <select wire:model.live="fromAccountId" class="select select-bordered w-full h-11 text-sm rounded-xl dark:bg-stone-900 dark:text-stone-100">
-                                <option value="" class="bg-white dark:bg-stone-900"> 選擇帳戶 </option>
-                                @foreach($this->accounts as $account)
-                                    <option value="{{ $account['id'] }}" class="bg-white dark:bg-stone-900"> {{ $account['name'] }} </option>
-                                @endforeach
-                            </select>
+                            <x-select
+    wire:model.live="fromAccountId"
+    :options="$this->accounts"
+    option-label="name"
+    option-value="id"
+    placeholder="選擇帳戶"
+    
+/>
                             @error('fromAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-span-2 flex items-center justify-end gap-2">
-                            <span class="text-sm text-stone-500 dark:text-stone-400">餘額</span>
-                            <span class="text-sm font-bold text-stone-800 dark:text-stone-200" wire:key="balance-fromAccountId-{{ $this->fromAccountId ?? 'none' }}">
+                            <span class="text-sm text-stone-500 dark:text-stone-600">餘額</span>
+                            <span class="text-sm font-bold text-stone-800 dark:text-stone-500" wire:key="balance-fromAccountId-{{ $this->fromAccountId ?? 'none' }}">
                                 @php $selectedAccount = collect($this->accounts)->firstWhere('id', $this->fromAccountId ?? null); @endphp
                                 @if($selectedAccount) {{ $selectedAccount['currency'] }} {{ number_format($selectedAccount['balance'] ?? 0, 0) }} @else 0 @endif
                             </span>
@@ -433,11 +435,14 @@
                     @endforeach
                 </div>
 
-                <x-input label="範本名稱" 
-                         wire:model="templateName" 
-                         placeholder="例如：早餐、薪資" 
-                         class="input-bordered border-stone-300 dark:border-stone-700 focus:border-stone-500 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-stone-100 mb-4" 
-                         required />
+                <x-input 
+					label="範本名稱" 
+					wire:model="templateName" 
+					placeholder="例如：早餐、股息" 
+					icon="o-bookmark"
+					inline
+					required 
+				/>
 
                 <div class="grid grid-cols-6 gap-3 mb-4">
                     {{-- 範本類別方塊 --}}

@@ -1,6 +1,7 @@
 <!-- filepath: resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="bg-stone-50/60 text-stone-800 antialiased selection:bg-teal-100 selection:text-teal-900">
+<!-- filepath: resources/views/layouts/app.blade.php -->
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark bg-stone-900 text-stone-100 antialiased selection:bg-teal-800 selection:text-teal-100" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -16,6 +17,26 @@
             display: none !important; 
         }
     </style>
+	<script>
+		function updateTheme(isDark) {
+			if (isDark) {
+				document.documentElement.classList.add('dark');
+				document.documentElement.setAttribute('data-theme', 'dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+				document.documentElement.setAttribute('data-theme', 'light');
+			}
+		}
+
+		// 1. 初始化判斷 OS 模式
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		updateTheme(mediaQuery.matches);
+
+		// 2. 動態監聽 OS 切換
+		mediaQuery.addEventListener('change', (e) => {
+			updateTheme(e.matches);
+		});
+	</script>
 </head>
 <body class="min-h-screen pb-28 md:pb-32">
 
