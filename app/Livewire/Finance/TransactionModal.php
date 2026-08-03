@@ -260,6 +260,8 @@ class TransactionModal extends Component
             'templateCategoryId', 'templateMemo'
         ]);
         $this->templateType = 'expense';
+		$this->templateFromAccountId = 1;
+		$this->templateCategoryId = 2;
     }
 
     // ============ 計算屬性：帳戶與分類 ============

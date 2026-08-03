@@ -156,7 +156,7 @@
 }
 
 /* ==========================================================================
-   範本 Modal - 宋式汝窯天青主題
+   範本 Modal - 宋式汝窯天青主題 (僅背景區別)
    ========================================================================== */
 
 .template-modal-blue .modal-box {
@@ -166,6 +166,7 @@
     box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.12) !important;
 }
 
+/* 只保留背景相關的樣式，移除所有文字顏色覆蓋 */
 .template-modal-blue .modal-box select,
 .template-modal-blue .modal-box .select select {
     background-color: rgba(255, 255, 255, 0.7) !important;
@@ -179,19 +180,12 @@
 
 .template-modal-blue .modal-box select option {
     background-color: rgba(255, 255, 255, 0.9) !important;
-    color: #4a4a4a !important;
-}
-
-.template-modal-blue .modal-box,
-.template-modal-blue .modal-box *:not(.btn):not(.input):not(.select):not(.textarea) {
-    color: #4a4a4a !important;
 }
 
 .template-modal-blue .input,
 .template-modal-blue .select,
 .template-modal-blue .textarea {
     background-color: rgba(255, 255, 255, 0.7) !important;
-    color: #4a4a4a !important;
     border-color: rgba(162, 189, 219, 0.25) !important;
 }
 
@@ -202,54 +196,16 @@
     box-shadow: 0 0 0 3px rgba(162, 189, 219, 0.1) !important;
 }
 
-.template-modal-blue .input::placeholder {
-    color: #b0b8c5 !important;
-}
-
-.template-modal-blue .btn-ghost {
-    color: #6a7a8a !important;
-}
-
-.template-modal-blue .btn-ghost:hover {
-    background-color: rgba(162, 189, 219, 0.08) !important;
-    color: #4a5a6a !important;
-}
-
-.template-modal-blue .btn-ghost.active {
-    background-color: rgba(162, 189, 219, 0.12) !important;
-    color: #4a6a8a !important;
-}
-
 .template-modal-blue .border-t {
     border-color: rgba(162, 189, 219, 0.12) !important;
 }
 
-.template-modal-blue .text-stone-500,
-.template-modal-blue .text-stone-400 {
-    color: #8a9aaa !important;
-}
-
-.template-modal-blue .text-stone-700,
-.template-modal-blue .text-stone-800 {
-    color: #4a5a6a !important;
-}
-
 .template-modal-blue .btn.bg-stone-100 {
     background-color: rgba(162, 189, 219, 0.08) !important;
-    color: #5a6a7a !important;
 }
 
 .template-modal-blue .btn.bg-stone-100:hover {
     background-color: rgba(162, 189, 219, 0.15) !important;
-}
-
-.template-modal-blue .btn-ghost.text-stone-700 {
-    color: #5a6a7a !important;
-}
-
-.template-modal-blue .btn-ghost.text-stone-700:hover {
-    color: #3a4a5a !important;
-    background-color: rgba(162, 189, 219, 0.06) !important;
 }
 
 .template-modal-blue .bg-stone-50 {
@@ -260,14 +216,50 @@
     background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.template-modal-blue .text-emerald-600 {
-    color: #5b8c7a !important;
-}
+/* ==========================================================================
+   交易類型語意色彩 (Expense / Income / Transfer)
+   ========================================================================== */
 
-.template-modal-blue .text-rose-600 {
-    color: #b57a7a !important;
-}
+@layer utilities {
+    /* 支出 - 鈞窯海棠紅 */
+    .text-tx-expense {
+        @apply text-rose-600 dark:text-rose-400;
+    }
+    .bg-tx-expense {
+        @apply bg-rose-600 dark:bg-rose-500;
+    }
+    .border-tx-expense {
+        @apply border-rose-200 dark:border-rose-800/50;
+    }
+    .badge-tx-expense {
+        @apply bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50;
+    }
 
-.template-modal-blue .modal-title {
-    color: #3a4a5a !important;
+    /* 收入 - 龍泉青瓷 */
+    .text-tx-income {
+        @apply text-emerald-600 dark:text-emerald-400;
+    }
+    .bg-tx-income {
+        @apply bg-emerald-600 dark:bg-emerald-500;
+    }
+    .border-tx-income {
+        @apply border-emerald-200 dark:border-emerald-800/50;
+    }
+    .badge-tx-income {
+        @apply bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50;
+    }
+
+    /* 轉帳 - 汝窯天青 */
+    .text-tx-transfer {
+        @apply text-sky-600 dark:text-sky-400;
+    }
+    .bg-tx-transfer {
+        @apply bg-sky-600 dark:bg-sky-500;
+    }
+    .border-tx-transfer {
+        @apply border-sky-200 dark:border-sky-800/50;
+    }
+    .badge-tx-transfer {
+        @apply bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/50;
+    }
 }
