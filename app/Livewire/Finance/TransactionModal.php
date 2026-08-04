@@ -489,9 +489,9 @@ class TransactionModal extends Component
                 $account = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
 
                 if ($this->type === 'expense') {
-                    if (bccomp($account->balance, $this->amount, 4) < 0) {
-                        throw new \Exception('帳戶餘額不足！');
-                    }
+                    /* if (bccomp($account->balance, $this->amount, 4) < 0) {
+                        throw new \Exception('帳戶餘額不足！');取消賬戶負數限制
+                    } */
                     $account->balance = bcsub($account->balance, $this->amount, 4);
                     $account->save();
 

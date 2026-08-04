@@ -1,5 +1,4 @@
-<?php
-// app/Livewire/Finance/TransactionListModal.php
+<?php //app/Livewire/Finance/TransactionListModal.php
 
 namespace App\Livewire\Finance;
 
@@ -64,7 +63,6 @@ class TransactionListModal extends Component
 
 		switch ($mode) {
 			case 'day':
-				// 修正：使用 startOfDay 和 endOfDay
 				$this->startDate = $now->copy()->startOfDay()->format('Y-m-d');
 				$this->endDate = $now->copy()->endOfDay()->format('Y-m-d');
 				break;
@@ -250,61 +248,42 @@ class TransactionListModal extends Component
 			$isTransfer = ($tx->type === 'transfer');
 			$isIncome = false;
 			$isExpense = false;
-			$displayAmount = (string)$tx->amount;
+
+			// 明細清單：保留交易原本金額，不進行匯率換算
+			$rawAmount = (string)$tx->amount;
+
+			// 上方統計區：換算為本幣（Base Currency）進行精確加總
+			$convertedAmountForStats = $this->convertToBase($rawAmount, $tx->currency);
 
 			// 判斷收入/支出（依據是否有指定帳戶）
 			if ($this->accountId) {
 				// 帳戶模式：根據與指定帳戶的關係判斷
 				if ($tx->type === 'income' && $tx->to_account_id == $this->accountId) {
 					$isIncome = true;
-					$displayAmount = $this->convertToAccountCurrency(
-						(string)$tx->amount,
-						$tx->currency,
-						$this->targetCurrency
-					);
 				} elseif ($tx->type === 'expense' && $tx->from_account_id == $this->accountId) {
 					$isExpense = true;
-					$displayAmount = $this->convertToAccountCurrency(
-						(string)$tx->amount,
-						$tx->currency,
-						$this->targetCurrency
-					);
 				} elseif ($isTransfer) {
 					if ($tx->to_account_id == $this->accountId) {
 						$isIncome = true;
-						$displayAmount = $this->convertToAccountCurrency(
-							(string)$tx->amount,
-							$tx->currency,
-							$this->targetCurrency
-						);
 					} elseif ($tx->from_account_id == $this->accountId) {
 						$isExpense = true;
-						$displayAmount = $this->convertToAccountCurrency(
-							(string)$tx->amount,
-							$tx->currency,
-							$this->targetCurrency
-						);
 					}
 				}
 			} else {
 				// 期間模式：根據交易類型判斷
 				if ($tx->type === 'income') {
 					$isIncome = true;
-					// 轉換為基礎幣別
-					$displayAmount = $this->convertToBase((string)$tx->amount, $tx->currency);
 				}
 				if ($tx->type === 'expense') {
 					$isExpense = true;
-					// 轉換為基礎幣別
-					$displayAmount = $this->convertToBase((string)$tx->amount, $tx->currency);
 				}
 			}
 
-			// 累計收入/支出
+			// 累計頂部統計金額（使用換算後的本幣）
 			if ($isIncome) {
-				$totalIncome = bcadd($totalIncome, $displayAmount, 4);
+				$totalIncome = bcadd($totalIncome, $convertedAmountForStats, 4);
 			} elseif ($isExpense) {
-				$totalExpense = bcadd($totalExpense, $displayAmount, 4);
+				$totalExpense = bcadd($totalExpense, $convertedAmountForStats, 4);
 			}
 
 			// 分類圖示與名稱
@@ -346,10 +325,10 @@ class TransactionListModal extends Component
 				}
 			}
 
-			// 獲取該筆交易的幣別符號
+			// 獲取該筆交易原幣別符號
 			$txCurrencySymbol = $currencies[$tx->currency]['symbol'] ?? 'NT$';
 
-			// 組裝單筆交易資料
+			// 組裝單筆交易資料 (display_amount 直接帶入原始金額)
 			$formattedList[] = [
 				'id' => $tx->id,
 				'type' => $tx->type,
@@ -361,7 +340,7 @@ class TransactionListModal extends Component
 				'to_account_id' => $tx->to_account_id,
 				'currency' => $tx->currency,
 				'currency_symbol' => $txCurrencySymbol,
-				'display_amount' => $displayAmount,
+				'display_amount' => $rawAmount,
 				'is_income' => $isIncome,
 				'is_expense' => $isExpense,
 				'is_transfer' => $isTransfer,
@@ -382,9 +361,6 @@ class TransactionListModal extends Component
 		$isAccountMode = !is_null($this->accountId);
 
 		if ($isAccountMode && $this->currentAccount) {
-			// 帳戶模式：固定按月計算
-			// 期末餘額 = 帳戶當前餘額
-			// 期初餘額 = 期末 - 期間淨額
 			$currentBalance = (string)$this->currentAccount->balance;
 			$closingBalance = $currentBalance;
 			$openingBalance = bcsub($closingBalance, $netAmount, 4);
