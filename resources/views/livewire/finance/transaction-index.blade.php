@@ -103,7 +103,8 @@
                     @foreach($dayTransactions as $tx)
                         @php
                             $acc = $tx->fromAccount ?? $tx->toAccount;
-                            $curStyle = config("business.currencies.{$acc->currency}") ?? config("business.currencies.TWD");
+                            $currencyCode = $acc->currency ?? 'TWD';
+							$currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
                             $typeStyle = config("business.account_types.{$acc->type}") ?? config("business.account_types.cash");
                             
                             $accountThemeMap = [
@@ -190,7 +191,7 @@
                                                ($tx->type === 'transfer' ? 'text-sky-600 dark:text-sky-400' : 'text-emerald-600 dark:text-emerald-400') }}">
                                             {{ $tx->type === 'expense' ? '-' : 
                                                ($tx->type === 'transfer' ? '↕' : '+') }} 
-                                            <span class="currency-symbol text-xs font-bold mr-0.5">{{ $curStyle['symbol'] }}</span>{{ number_format($tx->amount, 2) }}
+                                            <span class="currency-symbol text-xs font-bold mr-0.5">{{ $currencySymbol }}</span>{{ number_format($tx->amount, 2) }}
                                         </span>
                                         {{-- 時間：修復暗色模式可讀性 --}}
                                         <div class="text-[10px] text-stone-400 dark:text-stone-400 font-mono mt-0.5 opacity-90">{{ date('H:i', strtotime($tx->recorded_at)) }}</div>
@@ -212,7 +213,7 @@
         @empty
             <div class="bg-base-100 rounded-2xl p-16 border border-dashed border-stone-200 dark:border-stone-800 text-center text-stone-400 dark:text-stone-500 text-sm">
                 <x-heroicon-o-document-magnifying-glass class="w-10 h-10 mx-auto mb-3 opacity-40 text-stone-400 dark:text-stone-500" />
-                <p class="font-medium">{{ $monthDisplay }} 沒有符合篩選條件的大宋美學記帳紀錄</p>
+                <p class="font-medium">{{ $monthDisplay }} 沒有符合篩選條件的紀錄</p>
                 <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">試試調整篩選條件或切換其他月份</p>
             </div>
         @endforelse

@@ -6,11 +6,10 @@ namespace App\Livewire\Finance;
 use App\Models\Category;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Services\CurrencyService;
+use App\Services\MoneyCalculator;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\On;
 use Livewire\Component;
-
 use Mary\Traits\Toast;
 
 class TransactionIndex extends Component
@@ -31,6 +30,13 @@ class TransactionIndex extends Component
 
     // 預留多店店別，預設為 1
     public int $shopId = 1;
+	
+	protected CurrencyService $currencyService;
+
+    public function boot(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
 
     public function mount()
     {
@@ -177,6 +183,15 @@ class TransactionIndex extends Component
 
         // 取得所有交易（無分頁）
         $transactions = $query->get();
+		
+		 // ✅ 為每個交易附加幣別符號
+		$transactions->each(function ($tx) {
+			$acc = $tx->fromAccount ?? $tx->toAccount;
+			$currencyCode = $acc->currency ?? 'TWD';
+			$currency = $this->currencyService->getCurrency($currencyCode);
+			$tx->currency_symbol = $currency?->symbol ?? 'NT$';
+			$tx->currency_code = $currencyCode;
+		});
 
         // 依日期分組
         $groupedTransactions = $transactions->groupBy(function ($item) {
@@ -186,22 +201,18 @@ class TransactionIndex extends Component
         // 計算本月收支統計
         $totalIncome = '0.0000';
         $totalExpense = '0.0000';
-        $baseCurrency = config('business.base_currency', 'TWD');
-        $currencies = config('business.currencies', []);
-        $baseSymbol = $currencies[$baseCurrency]['symbol'] ?? 'NT$';
-
+		
         foreach ($transactions as $tx) {
-            $currency = $tx->currency ?? $baseCurrency;
+            $currency = $tx->currency ?? $this->currencyService->getBaseCurrencyCode();
             $amount = $tx->amount;
-
-            // 轉換為基礎貨幣
-            $rate = $currencies[$currency]['rate'] ?? 1;
-            $amountInBase = bcmul($amount, (string)$rate, 4);
+            $amountInBase = $this->currencyService->convertToBase((string)$amount, $currency);
 
             if ($tx->type === 'income') {
-                $totalIncome = bcadd($totalIncome, $amountInBase, 4);
+                // 使用 MoneyCalculator
+                $totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
             } elseif ($tx->type === 'expense') {
-                $totalExpense = bcadd($totalExpense, $amountInBase, 4);
+                // 使用 MoneyCalculator
+                $totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
             }
         }
 
@@ -213,11 +224,17 @@ class TransactionIndex extends Component
         // 計算當前月份顯示文字
         $monthDisplay = Carbon::createFromFormat('Y-m', $this->transactionMonth)->format('Y 年 m 月');
         $isCurrentMonth = Carbon::createFromFormat('Y-m', $this->transactionMonth)->isSameMonth(now());
+		
+		// 從資料庫取得所有幣別
+        $currencies = $this->currencyService->getAllCurrencies();
+		// 獲取基準貨幣符號
+		$baseSymbol = $this->currencyService->getBaseCurrencySymbol();
+
 
         return view('livewire.finance.transaction-index', [
             'groupedTransactions' => $groupedTransactions,
             'transactions' => $transactions,
-            'currencies' => $currencies,
+            'currencies' => $currencies->toArray(),
             'accounts' => $filteredAccounts,
             'categories' => $categories,
             'totalIncome' => number_format((float)$totalIncome, 2),

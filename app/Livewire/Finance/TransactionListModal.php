@@ -5,6 +5,7 @@ namespace App\Livewire\Finance;
 use App\Models\Category;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Services\CurrencyService;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -46,6 +47,13 @@ class TransactionListModal extends Component
 
     // 關聯實體快照
     public ?FinancialAccount $currentAccount = null;
+	
+	protected CurrencyService $currencyService;
+	
+	public function boot(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
 
     public function mount()
     {
@@ -114,32 +122,29 @@ class TransactionListModal extends Component
         $baseDate = $params['baseDate'] ?? null;
         $this->setDateRange($dateMode, $baseDate);
 
-        // 設定標題與幣別邏輯
-        if ($this->accountId) {
-            $account = FinancialAccount::find($this->accountId);
-            if (!$account) {
-                $this->toast(type: 'error', title: '找不到該帳戶');
-                return;
-            }
-            $this->currentAccount = $account;
-            $this->title = $account->name;
-            $this->subtitle = '帳戶歷史交易';
-            $this->targetCurrency = $account->currency;
+        // 1. 先設定標題與目標幣別
+		if ($this->accountId) {
+			$account = FinancialAccount::find($this->accountId);
+			if (!$account) {
+				$this->toast(type: 'error', title: '找不到該帳戶');
+				return;
+			}
+			$this->currentAccount = $account;
+			$this->title = $account->name;
+			$this->subtitle = '帳戶歷史交易';
+			// 有帳戶：目標幣別 = 帳戶的幣別
+			$this->targetCurrency = $account->currency;
+		} else {
+			$this->title = $params['title'] ?? '交易明細列表';
+			$this->subtitle = '流水記錄';
+			// 沒有帳戶：目標幣別 = 基準貨幣
+			$this->targetCurrency = $this->getBaseCurrency(); // 這句需要！
+		}
 
-            $currencies = config('business.currencies', []);
-            $this->currencySymbol = $currencies[$account->currency]['symbol'] ?? 'NT$';
-        } elseif ($this->categoryId) {
-            $category = Category::find($this->categoryId);
-            $this->title = $params['title'] ?? ($category ? $category->name : '分類交易');
-            $this->subtitle = '大類與關聯子類明細';
-            $this->targetCurrency = $this->getBaseCurrency();
-            $this->currencySymbol = $this->getBaseCurrencySymbol();
-        } else {
-            $this->title = $params['title'] ?? '交易明細列表';
-            $this->subtitle = '流水記錄';
-            $this->targetCurrency = $this->getBaseCurrency();
-            $this->currencySymbol = $this->getBaseCurrencySymbol();
-        }
+		// 2. 根據目標幣別取得幣別資訊（含符號）
+		// 無論是否有帳戶，都需要這句來取得符號
+		$currencyData = $this->currencyService->getCurrency($this->targetCurrency);
+		$this->currencySymbol = $currencyData ? $currencyData->symbol : 'NT$';
 
         $this->loadTransactions();
         $this->showModal = true;
@@ -515,57 +520,42 @@ class TransactionListModal extends Component
 
     private function getBaseCurrency(): string
     {
-        return config('business.base_currency', 'TWD');
+        return $this->currencyService->getBaseCurrencyCode();
     }
 
     private function getBaseCurrencySymbol(): string
     {
-        $base = $this->getBaseCurrency();
-        $currencies = config('business.currencies', []);
-        return $currencies[$base]['symbol'] ?? 'NT$';
+        return $this->currencyService->getBaseCurrencySymbol();
     }
 
-    /**
-	 * 獲取匯率
-	 */
-	private function getExchangeRate(string $currency): float
+    private function getExchangeRate(string $currency): float
     {
-        $currencies = config('business.currencies', []);
-        return (float)($currencies[$currency]['rate'] ?? 1);
+        return $this->currencyService->getRate($currency);
     }
 
-    /**
-	 * 轉換為基礎幣別
-	 */
-	private function convertToBase(string $amount, string $currency): string
+    private function convertToBase(string $amount, string $currency): string
     {
-        if (!is_numeric($amount) || $amount === '') return '0.0000';
-        $rate = $this->getExchangeRate($currency);
-        return bcmul($amount, (string)$rate, 4) ?: '0.0000';
+        return $this->currencyService->convertToBase($amount, $currency);
     }
 
-    /**
-	 * 從基礎幣別轉換為目標幣別
-	 */
-	private function convertFromBase(string $amount, string $currency): string
+    private function convertFromBase(string $amount, string $currency): string
     {
-        if (!is_numeric($amount) || $amount === '') return '0.0000';
-        $rate = $this->getExchangeRate($currency);
-        if ($rate == 0) return '0.0000';
-        return bcdiv($amount, (string)$rate, 4) ?: '0.0000';
+        return $this->currencyService->convertFromBase($amount, $currency);
     }
 
-    /**
-	 * 轉換為目標帳戶幣別
-	 */
-	private function convertToAccountCurrency(string $amount, string $fromCurrency, string $toCurrency): string
+    private function convertToAccountCurrency(string $amount, string $fromCurrency, string $toCurrency): string
     {
-        if (!is_numeric($amount) || $amount === '') return '0.0000';
-        if ($fromCurrency === $toCurrency) return bcadd($amount, '0.0000', 4);
+        if (!is_numeric($amount) || $amount === '') {
+            return '0.0000';
+        }
+        if ($fromCurrency === $toCurrency) {
+            return bcadd($amount, '0.0000', 4);
+        }
 
         $amountInBase = $this->convertToBase($amount, $fromCurrency);
         return $this->convertFromBase($amountInBase, $toCurrency);
     }
+
 
     public function render()
     {

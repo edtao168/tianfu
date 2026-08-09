@@ -1,4 +1,8 @@
 <?php // app/Models/Transaction.php
+// user_id = 租戶 (Tenant)
+// shop_id = 帳本 (Ledger/Shop)
+// 一個使用者可以擁有多個帳本，多個使用者可以共用一個帳本
+// 所有財務資料 都透過 shop_id 隔離
 
 namespace App\Models;
 

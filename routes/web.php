@@ -10,6 +10,7 @@ use App\Livewire\Finance\AboutIndex;
 use App\Livewire\Finance\AccountIndex;
 use App\Livewire\Finance\BackupIndex;
 use App\Livewire\Finance\ContactIndex;
+use App\Livewire\Finance\CurrencyIndex;
 use App\Livewire\Finance\PartnerIndex;
 use App\Livewire\Finance\ReportStats;
 use App\Livewire\Finance\TransactionIndex;
@@ -56,4 +57,5 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('/finance/about', AboutIndex::class)->name('finance.about');
     Route::get('/finance/contact', ContactIndex::class)->name('finance.contact');
 	Route::get('/finance/partners', PartnerIndex::class)->name('finance.partners');
+	Route::get('/finance/currencies', CurrencyIndex::class)->name('finance.currencies');
 });

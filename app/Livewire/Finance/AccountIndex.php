@@ -5,6 +5,8 @@ namespace App\Livewire\Finance;
 
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Services\CurrencyService;
+use App\Services\MoneyCalculator;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -15,7 +17,6 @@ class AccountIndex extends Component
     use Toast;
     
     // ============ Modal 控制 ============
-    // public bool $showPeriodDetailModal = false;
     public bool $showAccountModal = false;
     
     // ============ 基本設定 ============
@@ -32,9 +33,16 @@ class AccountIndex extends Component
 
     // ============ 生命週期與事件 ============
     
+    protected CurrencyService $currencyService;
+
+    public function boot(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     public function mount()
     {
-        $this->accountCurrency = $this->getBaseCurrency();
+        $this->accountCurrency = $this->currencyService->getBaseCurrencyCode();
     }
     
     #[On('refresh-data')]
@@ -67,30 +75,23 @@ class AccountIndex extends Component
     
     private function getBaseCurrency(): string
     {
-        return config('business.base_currency', 'TWD');
+        return $this->currencyService->getBaseCurrencyCode();
     }
     
     private function getBaseCurrencySymbol(): string
     {
-        $base = $this->getBaseCurrency();
-        $currencies = config('business.currencies', []);
-        return $currencies[$base]['symbol'] ?? 'NT$';
+        return $this->currencyService->getBaseCurrencySymbol();
     }
     
     private function getExchangeRate(string $currency): float
     {
-        $currencies = config('business.currencies', []);
-        return (float)($currencies[$currency]['rate'] ?? 1);
+        return $this->currencyService->getRate($currency);
     }
     
     private function convertToBase(string $amount, string $currency): string
     {
-        if (!is_numeric($amount) || $amount === '') {
-            return '0.0000';
-        }
-        
-        $rate = $this->getExchangeRate($currency);
-        return bcmul($amount, (string)$rate, 4) ?: '0.0000';
+        // 使用 CurrencyService 處理匯率轉換
+        return $this->currencyService->convertToBase($amount, $currency);
     }
 
     // ============ 頂部統計數據計算 ============
@@ -110,7 +111,7 @@ class AccountIndex extends Component
             'year'  => ['income' => '0.00', 'expense' => '0.00', 'details' => []],
         ];
 
-        $currencies = config('business.currencies', []);
+        $currencies = $this->currencyService->getAllCurrencies();
         $baseCurrency = $this->getBaseCurrency();
         $baseSymbol = $this->getBaseCurrencySymbol();
 
@@ -131,23 +132,26 @@ class AccountIndex extends Component
                     $amountInBase = $this->convertToBase($amount, $currency);
 
                     if ($tx->type === 'income') {
-                        $incomeTotal = bcadd($incomeTotal, $amountInBase, 4);
-                    } elseif ($tx->type === 'expense') {
-                        $expenseTotal = bcadd($expenseTotal, $amountInBase, 4);
-                    }
+						// 使用 MoneyCalculator
+						$incomeTotal = MoneyCalculator::add($incomeTotal, $amountInBase, 4);
+					} elseif ($tx->type === 'expense') {
+						// 使用 MoneyCalculator
+						$expenseTotal = MoneyCalculator::add($expenseTotal, $amountInBase, 4);
+					}
 
                     if (!isset($currencyDetails[$currency])) {
-                        $currencyDetails[$currency] = [
-                            'income' => '0.0000',
-                            'expense' => '0.0000',
-                            'currency_symbol' => $currencies[$currency]['symbol'] ?? '',
-                            'currency_name' => $currencies[$currency]['name'] ?? $currency,
-                            'rate' => $currencies[$currency]['rate'] ?? 1,
-                            'bg' => $currencies[$currency]['bg'] ?? '',
-                            'symbol_color' => $currencies[$currency]['symbol_color'] ?? '',
-                            'tag' => $currencies[$currency]['tag'] ?? '',
-                        ];
-                    }
+						$currencyData = $currencies[$currency] ?? null;
+						$currencyDetails[$currency] = [
+							'income' => '0.0000',
+							'expense' => '0.0000',
+							'currency_symbol' => $currencyData->symbol ?? '$',
+							'currency_name' => $currencyData->name ?? $currency,
+							'rate' => $currencyData->rate ?? 1,
+							'bg' => '',
+							'symbol_color' => '',
+							'tag' => '',
+						];
+					}
 
                     if ($tx->type === 'income') {
                         $currencyDetails[$currency]['income'] = bcadd($currencyDetails[$currency]['income'], $amount, 4);
@@ -272,24 +276,21 @@ class AccountIndex extends Component
     public function render()
     {
         $accounts = FinancialAccount::where('is_active', true)->get();
-        $currencyConfig = config('business.currencies', []);
-
+		$currencies = $this->currencyService->getAllCurrencies();
         $currencyGroups = [];
-        foreach ($currencyConfig as $code => $info) {
+        foreach ($currencies as $code => $currency) {
             $groupAccounts = $accounts->where('currency', $code);
+            // 使用 MoneyCalculator 計算總餘額
             $totalBalance = $groupAccounts->reduce(function ($carry, $account) {
-                return bcadd($carry, (string)$account->balance, 4);
+                return MoneyCalculator::add($carry, (string)$account->balance, 4);
             }, '0.0000');
 
             $currencyGroups[] = [
                 'currency' => $code,
-                'currency_name' => $info['name'],
-                'currency_symbol' => $info['symbol'],
+                'currency_name' => $currency->name,
+                'currency_symbol' => $currency->symbol,
                 'total_balance' => (float)$totalBalance,
                 'accounts' => $groupAccounts,
-                'bg' => $info['bg'] ?? '',
-                'symbol_color' => $info['symbol_color'] ?? '',
-                'tag' => $info['tag'] ?? '',
             ];
         }
 
@@ -300,7 +301,7 @@ class AccountIndex extends Component
 
         return view('livewire.finance.account-index', [
             'currencyGroups' => $currencyGroups,
-            'availableCurrencies' => $currencyConfig,
+            'availableCurrencies' => $currencies->toArray(),
             'accountTypeOptions' => $accountTypeOptions,
             'accountCurrency' => $this->accountCurrency,
         ])->layout('components.layouts.app');

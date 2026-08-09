@@ -38,4 +38,11 @@ class User extends Authenticatable
     {
         return $this->hasOne(Partner::class);
     }
+	
+	public function shops()
+	{
+		return $this->belongsToMany(Shop::class, 'shop_user')
+					->withPivot('role', 'joined_at')
+					->withTimestamps();
+	}
 }
