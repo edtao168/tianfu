@@ -3,307 +3,377 @@
 
 namespace App\Livewire\Finance;
 
+use Livewire\Component;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
+use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
-use App\Services\CurrencyService;
-use App\Services\MoneyCalculator;
-use Carbon\Carbon;
-use Livewire\Attributes\On;
-use Livewire\Component;
-use Mary\Traits\Toast;
+use App\Models\Shop;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AccountIndex extends Component
 {
-    use Toast;
+    // ============================================================
+    // 表單屬性
+    // ============================================================
+    public $showAccountModal = false;
+    public $editingAccountId = null;
+    public $accountName = '';
+    public $accountType = 'cash';
+    public $accountCurrency = 'TWD';
+    public $accountBalance = 0;
+    public $accountMemo = '';
+    public $currentShopId;
+    public $autoRefresh = true;
     
-    // ============ Modal 控制 ============
-    public bool $showAccountModal = false;
+    // 統計資料
+    public $periodStats = [];
     
-    // ============ 基本設定 ============
-    public $shopId = 1;
-    public ?int $editingAccountId = null;
-    
-    // ============ 帳戶管理表單 ============
-    public string $accountName = '';
-    public string $accountType = 'cash';
-    public string $accountBalance = '0.00';
-    public string $accountCurrency = '';
-    public string $creditLimit = '0.00';
-    public string $accountMemo = ''; 
-
-    // ============ 生命週期與事件 ============
-    
-    protected CurrencyService $currencyService;
-
-    public function boot(CurrencyService $currencyService)
-    {
-        $this->currencyService = $currencyService;
-    }
-
+    // ============================================================
+    // 初始化
+    // ============================================================
     public function mount()
     {
-        $this->accountCurrency = $this->currencyService->getBaseCurrencyCode();
+        $this->currentShopId = session('current_shop_id', Shop::first()?->id);
+        $this->loadPeriodStats();
     }
     
-    #[On('refresh-data')]
-    public function onDataChanged()
-    {
-        // 重新渲染畫面
-    }
-
-    /**
-     * 開啟通用交易流水 Modal (呼叫獨立組件)
-     */
-    public function viewAccountTransactions(int $accountId)
-    {
-        $this->dispatch('open-transaction-list-modal', params: [
-            'accountId' => $accountId,
-			'dateMode' => 'month',
-        ]);
-    }
-
-    /**
-     * 從 TransactionListModal 觸發編輯帳戶
-     */
-    #[On('edit-account-from-transactions')]
-    public function handleEditAccountFromTransactions(int $accountId)
-    {
-        $this->editAccountFromList($accountId);
-    }
-
-    // ============ 匯率與 BCMath 工具 ============
+    // ============================================================
+    // 計算屬性
+    // ============================================================
     
-    private function getBaseCurrency(): string
+    #[Computed]
+    public function shops()
     {
-        return $this->currencyService->getBaseCurrencyCode();
+        return Shop::all();
     }
     
-    private function getBaseCurrencySymbol(): string
+    #[Computed]
+    public function currencyGroups()
     {
-        return $this->currencyService->getBaseCurrencySymbol();
-    }
-    
-    private function getExchangeRate(string $currency): float
-    {
-        return $this->currencyService->getRate($currency);
-    }
-    
-    private function convertToBase(string $amount, string $currency): string
-    {
-        // 使用 CurrencyService 處理匯率轉換
-        return $this->currencyService->convertToBase($amount, $currency);
-    }
-
-    // ============ 頂部統計數據計算 ============
-    
-    public function getPeriodStatsProperty()
-    {
-        $now = Carbon::now();
-        $periods = [
-            'today' => ['start' => $now->copy()->startOfDay(), 'end' => $now->copy()->endOfDay()],
-            'month' => ['start' => $now->copy()->startOfMonth(), 'end' => $now->copy()->endOfMonth()],
-            'year'  => ['start' => $now->copy()->startOfYear(), 'end' => $now->copy()->endOfYear()],
-        ];
-
-        $stats = [
-            'today' => ['income' => '0.00', 'expense' => '0.00', 'details' => []],
-            'month' => ['income' => '0.00', 'expense' => '0.00', 'details' => []],
-            'year'  => ['income' => '0.00', 'expense' => '0.00', 'details' => []],
-        ];
-
-        $currencies = $this->currencyService->getAllCurrencies();
-        $baseCurrency = $this->getBaseCurrency();
-        $baseSymbol = $this->getBaseCurrencySymbol();
-
-        foreach ($periods as $key => $range) {
-            try {
-                $transactions = Transaction::query()
-                    ->where('shop_id', $this->shopId)
-                    ->whereBetween('recorded_at', [$range['start'], $range['end']])
-                    ->get();
-
-                $incomeTotal = '0.0000';
-                $expenseTotal = '0.0000';
-                $currencyDetails = [];
-
-                foreach ($transactions as $tx) {
-                    $currency = $tx->currency;
-                    $amount = (string)$tx->amount;
-                    $amountInBase = $this->convertToBase($amount, $currency);
-
-                    if ($tx->type === 'income') {
-						// 使用 MoneyCalculator
-						$incomeTotal = MoneyCalculator::add($incomeTotal, $amountInBase, 4);
-					} elseif ($tx->type === 'expense') {
-						// 使用 MoneyCalculator
-						$expenseTotal = MoneyCalculator::add($expenseTotal, $amountInBase, 4);
-					}
-
-                    if (!isset($currencyDetails[$currency])) {
-						$currencyData = $currencies[$currency] ?? null;
-						$currencyDetails[$currency] = [
-							'income' => '0.0000',
-							'expense' => '0.0000',
-							'currency_symbol' => $currencyData->symbol ?? '$',
-							'currency_name' => $currencyData->name ?? $currency,
-							'rate' => $currencyData->rate ?? 1,
-							'bg' => '',
-							'symbol_color' => '',
-							'tag' => '',
-						];
-					}
-
-                    if ($tx->type === 'income') {
-                        $currencyDetails[$currency]['income'] = bcadd($currencyDetails[$currency]['income'], $amount, 4);
-                    } elseif ($tx->type === 'expense') {
-                        $currencyDetails[$currency]['expense'] = bcadd($currencyDetails[$currency]['expense'], $amount, 4);
-                    }
-                }
-
-                $stats[$key] = [
-                    'income' => number_format((float)$incomeTotal, 2),
-                    'expense' => number_format((float)$expenseTotal, 2),
-                    'details' => $currencyDetails,
-                    'base_currency' => $baseCurrency,
-                    'base_symbol' => $baseSymbol,
+        $groups = [];
+        $currencies = Currency::where('is_active', true)
+            ->where('shop_id', $this->currentShopId)
+            ->get();
+        
+        foreach ($currencies as $currency) {
+            $accounts = FinancialAccount::where('shop_id', $this->currentShopId)
+                ->where('currency', $currency->code)
+                ->where('is_active', true)
+                ->get();
+            
+            if ($accounts->isNotEmpty()) {
+                $groups[] = [
+                    'currency' => $currency->code,
+                    'currency_name' => $currency->name,
+                    'currency_symbol' => $currency->symbol,
+                    'total_balance' => $accounts->sum('balance'),
+                    'accounts' => $accounts,
+                    'theme' => config('business.currency_theme_map.' . $currency->code, 'blue'),
                 ];
-            } catch (\Exception $e) {
-                \Log::error('Period stats error: ' . $e->getMessage());
-                continue;
             }
         }
         
-        return $stats;
+        return $groups;
     }
-
+    
+    #[Computed]
+    public function totalAssets()
+    {
+        $baseCurrency = Currency::where('shop_id', $this->currentShopId)
+            ->where('is_base', true)
+            ->first();
+        
+        if (!$baseCurrency) {
+            return [
+                'total' => 0,
+                'base_symbol' => '$',
+                'base_code' => 'N/A',
+                'breakdown' => [],
+                'has_assets' => false,
+            ];
+        }
+        
+        $total = 0;
+        $breakdown = [];
+        $currencies = Currency::where('shop_id', $this->currentShopId)
+            ->where('is_active', true)
+            ->get();
+        
+        foreach ($currencies as $currency) {
+            $balance = FinancialAccount::where('shop_id', $this->currentShopId)
+                ->where('currency', $currency->code)
+                ->where('is_active', true)
+                ->sum('balance');
+            
+            // 顯示本幣（即使餘額為0）和有餘額的其他幣別
+            if ($balance != 0 || $currency->is_base) {
+                $convertedValue = $currency->is_base 
+                    ? $balance 
+                    : $balance * $currency->rate;
+                
+                $total += $convertedValue;
+                
+                $breakdown[] = [
+                    'code' => $currency->code,
+                    'name' => $currency->name,
+                    'symbol' => $currency->symbol,
+                    'balance' => $balance,
+                    'rate' => $currency->rate,
+                    'converted' => $convertedValue,
+                    'is_base' => $currency->is_base,
+                    'theme' => config('business.currency_theme_map.' . $currency->code, 'blue'),
+                ];
+            }
+        }
+        
+        // 按餘額排序（大的在前面）
+        usort($breakdown, function ($a, $b) {
+            return $b['balance'] <=> $a['balance'];
+        });
+        
+        return [
+            'total' => $total,
+            'base_symbol' => $baseCurrency->symbol,
+            'base_code' => $baseCurrency->code,
+            'breakdown' => $breakdown,
+            'has_assets' => $total > 0,
+        ];
+    }
+    
+    // ============================================================
+    // 期間統計
+    // ============================================================
+    
+    public function loadPeriodStats()
+    {
+        $baseCurrency = Currency::where('shop_id', $this->currentShopId)
+            ->where('is_base', true)
+            ->first();
+        
+        if (!$baseCurrency) {
+            $this->periodStats = [];
+            return;
+        }
+        
+        $periods = ['today', 'month', 'year'];
+        foreach ($periods as $period) {
+            $this->periodStats[$period] = $this->calculatePeriodStats($period, $baseCurrency);
+        }
+    }
+    
+    private function calculatePeriodStats($period, $baseCurrency)
+    {
+        $now = now();
+        $startDate = match($period) {
+            'today' => $now->copy()->startOfDay(),
+            'month' => $now->copy()->startOfMonth(),
+            'year' => $now->copy()->startOfYear(),
+            default => $now->copy()->startOfDay(),
+        };
+        
+        // 取得該期間的所有交易
+        $transactions = Transaction::where('shop_id', $this->currentShopId)
+            ->where('recorded_at', '>=', $startDate)
+            ->where('recorded_at', '<=', $now)
+            ->get();
+        
+        $income = 0;
+        $expense = 0;
+        $details = [];
+        
+        foreach ($transactions as $transaction) {
+            // 取得交易的幣別
+            $currencyCode = $transaction->currency;
+            $currency = Currency::where('code', $currencyCode)
+                ->where('shop_id', $this->currentShopId)
+                ->first();
+            
+            if (!$currency) {
+                continue;
+            }
+            
+            // 換算成本幣
+            $amountInBase = $currency->is_base 
+                ? $transaction->amount 
+                : $transaction->amount * $currency->rate;
+            
+            if ($transaction->type === 'income') {
+                $income += $amountInBase;
+            } elseif ($transaction->type === 'expense') {
+                $expense += $amountInBase;
+            }
+            
+            // 記錄各幣別明細
+            if (!isset($details[$currencyCode])) {
+                $details[$currencyCode] = [
+                    'code' => $currencyCode,
+                    'symbol' => $currency->symbol,
+                    'income' => 0,
+                    'expense' => 0,
+                ];
+            }
+            
+            if ($transaction->type === 'income') {
+                $details[$currencyCode]['income'] += $transaction->amount;
+            } elseif ($transaction->type === 'expense') {
+                $details[$currencyCode]['expense'] += $transaction->amount;
+            }
+        }
+        
+        return [
+            'income' => number_format($income, 2),
+            'expense' => number_format($expense, 2),
+            'base_symbol' => $baseCurrency->symbol,
+            'base_code' => $baseCurrency->code,
+            'details' => $details,
+        ];
+    }
+    
     public function showPeriodDetail($period)
     {
-        $periodTitles = [
-            'today' => '日',
-            'month' => '月',
-            'year'  => '年'
-        ];
-        
-		$dateMode = $period === 'today' ? 'day' : $period;
-		
-        $this->dispatch('open-transaction-list-modal', params: [
-			'dateMode' => $dateMode, // 'today', 'month', 'year'
-			'baseDate' => now()->format('Y-m-d'),
-			'title' => $periodTitles[$period] ?? '交易明細',
-			'type' => null, // 顯示全部交易
-		]);
+        $this->dispatch('show-period-detail', period: $period);
     }
-
-    // ============ 帳戶新增 / 編輯管理 ============
+    
+    // ============================================================
+    // 總資產刷新
+    // ============================================================
+    
+    #[On('refresh-total-assets')]
+    public function refreshTotalAssets()
+    {
+        // 清除計算屬性快取
+        unset($this->totalAssets);
+        unset($this->currencyGroups);
+        $this->loadPeriodStats();
+    }
+    
+    // ============================================================
+    // 帳戶 CRUD
+    // ============================================================
     
     public function openCreateModal()
     {
-        $this->reset([
-            'editingAccountId',
-            'accountName',
-            'accountType',
-            'accountBalance',
-            'accountCurrency',
-            'creditLimit',
-            'accountMemo'
-        ]);
-        $this->accountCurrency = $this->getBaseCurrency();
+        $this->resetForm();
         $this->showAccountModal = true;
     }
-
-    public function editAccountFromList(int $id)
+    
+    public function editAccount($id)
     {
         $account = FinancialAccount::findOrFail($id);
-        $this->editingAccountId = $account->id;
+        $this->editingAccountId = $id;
         $this->accountName = $account->name;
         $this->accountType = $account->type;
-        $this->accountBalance = number_format((float)$account->balance, 2, '.', '');
         $this->accountCurrency = $account->currency;
+        $this->accountBalance = $account->balance;
         $this->accountMemo = $account->memo ?? '';
         $this->showAccountModal = true;
     }
-
+    
     public function saveAccount()
     {
-        $validTypes = implode(',', array_keys(config('business.account_types')));
-        $validCurrencies = implode(',', array_keys(config('business.currencies')));
-
         $this->validate([
-            'accountName' => 'required|string|max:50',
-            'accountType' => "required|in:{$validTypes}",
-            'accountCurrency' => "required|in:{$validCurrencies}",
+            'accountName' => 'required|string|max:255',
+            'accountType' => 'required|string|in:cash,bank,e-wallet,securities',
+            'accountCurrency' => 'required|string|exists:currencies,code',
             'accountBalance' => 'required|numeric|min:0',
+            'accountMemo' => 'nullable|string|max:500',
         ]);
-
-        $formattedBalance = bcadd($this->accountBalance, '0.0000', 4);
-
+        
+        $currency = Currency::where('code', $this->accountCurrency)
+            ->where('shop_id', $this->currentShopId)
+            ->firstOrFail();
+        
         if ($this->editingAccountId) {
             $account = FinancialAccount::findOrFail($this->editingAccountId);
             $account->update([
-                'name'     => $this->accountName,
-                'type'     => $this->accountType,
-                'balance'  => $formattedBalance,
-                'currency' => $this->accountCurrency,
-                'memo'     => $this->accountMemo ?? '',
+                'name' => $this->accountName,
+                'type' => $this->accountType,
+                'currency' => $currency->code,
+                'balance' => $this->accountBalance,
+                'memo' => $this->accountMemo,
+                'shop_id' => $this->currentShopId,
             ]);
-            $this->toast(type: 'success', title: '帳戶更新成功！');
+            $message = '帳戶已更新！';
         } else {
             FinancialAccount::create([
-                'name'      => $this->accountName,
-                'type'      => $this->accountType,
-                'balance'   => $formattedBalance,
-                'currency'  => $this->accountCurrency,
-                'memo'      => $this->accountMemo ?? '',
+                'name' => $this->accountName,
+                'type' => $this->accountType,
+                'currency' => $currency->code,
+                'balance' => $this->accountBalance,
+                'memo' => $this->accountMemo,
+                'shop_id' => $this->currentShopId,
+                'user_id' => auth()->id(),
                 'is_active' => true,
             ]);
-            $this->toast(type: 'success', title: '帳戶建立成功！');
+            $message = '帳戶已新增！';
         }
-
-        $this->reset([
-            'editingAccountId',
-            'accountName',
-            'accountType',
-            'accountBalance',
-            'accountCurrency',
-            'creditLimit'
-        ]);
+        
         $this->showAccountModal = false;
-        $this->dispatch('refresh-data');
+        $this->resetForm();
+        $this->refreshTotalAssets();
+        $this->dispatch('notify', message: $message);
     }
-
-    // ============ Render ============
+    
+    public function deleteAccount($id)
+    {
+        $account = FinancialAccount::findOrFail($id);
+        
+        // 檢查是否有交易記錄
+        $hasTransactions = Transaction::where('from_account_id', $id)
+            ->orWhere('to_account_id', $id)
+            ->exists();
+        
+        if ($hasTransactions) {
+            $this->dispatch('notify', message: '此帳戶已有交易記錄，無法刪除！');
+            return;
+        }
+        
+        $account->delete();
+        $this->refreshTotalAssets();
+        $this->dispatch('notify', message: '帳戶已刪除！');
+    }
+    
+    private function resetForm()
+    {
+        $this->editingAccountId = null;
+        $this->accountName = '';
+        $this->accountType = 'cash';
+        $this->accountCurrency = 'TWD';
+        $this->accountBalance = 0;
+        $this->accountMemo = '';
+    }
+    
+    // ============================================================
+    // 其他功能
+    // ============================================================
+    
+    public function viewAccountTransactions($accountId)
+    {
+        $this->dispatch('open-transaction-modal', accountId: $accountId);
+    }
+    
+    public function switchShop($shopId)
+    {
+        $this->currentShopId = $shopId;
+        session(['current_shop_id' => $shopId]);
+        $this->refreshTotalAssets();
+    }
+    
+    // ============================================================
+    // 渲染
+    // ============================================================
     
     public function render()
     {
-        $accounts = FinancialAccount::where('is_active', true)->get();
-		$currencies = $this->currencyService->getAllCurrencies();
-        $currencyGroups = [];
-        foreach ($currencies as $code => $currency) {
-            $groupAccounts = $accounts->where('currency', $code);
-            // 使用 MoneyCalculator 計算總餘額
-            $totalBalance = $groupAccounts->reduce(function ($carry, $account) {
-                return MoneyCalculator::add($carry, (string)$account->balance, 4);
-            }, '0.0000');
-
-            $currencyGroups[] = [
-                'currency' => $code,
-                'currency_name' => $currency->name,
-                'currency_symbol' => $currency->symbol,
-                'total_balance' => (float)$totalBalance,
-                'accounts' => $groupAccounts,
-            ];
-        }
-
-        $accountTypeOptions = [];
-        foreach (config('business.account_types', []) as $key => $value) {
-            $accountTypeOptions[] = ['id' => $key, 'name' => $value['name']];
-        }
-
         return view('livewire.finance.account-index', [
-            'currencyGroups' => $currencyGroups,
-            'availableCurrencies' => $currencies->toArray(),
-            'accountTypeOptions' => $accountTypeOptions,
-            'accountCurrency' => $this->accountCurrency,
-        ])->layout('components.layouts.app');
+            'accountTypeOptions' => config('business.account_types', []),
+            'availableCurrencies' => Currency::where('shop_id', $this->currentShopId)
+                ->where('is_active', true)
+                ->pluck('name', 'code')
+                ->toArray(),
+        ])->layout('layouts.app');
     }
 }

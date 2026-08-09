@@ -227,12 +227,7 @@
                     @if(!$currency->is_base)
                         @php
                             // 幣別 → btn-{theme} 映射（與 account-index 一致）
-                            $currencyThemeMap = [
-                                'TWD' => 'blue',
-                                'CNY' => 'red',
-                                'HKD' => 'green',
-                                'USD' => 'purple',
-                            ];
+                            $theme = config('business.currency_theme_map.' . $currency->code, 'blue');
                             $theme = $currencyThemeMap[$currency->code] ?? 'blue';
                             
                             // 取得帳戶類型配置（用於 icon）
