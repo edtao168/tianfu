@@ -40,7 +40,7 @@ class Partner extends Model
     /**
      * 💡 輔助方法：獲取成員頭像，若未上傳則自動退回系統預設頭像
      */
-    public function getAvatarUrl(): string
+    public function getAvatarUrl(): ?string
     {
         if ($this->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->photo_path)) {
             return \Illuminate\Support\Facades\Storage::url($this->photo_path);
