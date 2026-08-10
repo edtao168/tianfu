@@ -42,12 +42,10 @@ class Partner extends Model
      */
     public function getAvatarUrl(): string
     {
-        // 1. 將 $this->avatar_path 修正為正確欄位 $this->photo_path
         if ($this->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->photo_path)) {
             return \Illuminate\Support\Facades\Storage::url($this->photo_path);
         }
         
-        // 2. 將回傳型別宣告標註改為可空型別 `?string`
         return null;
     }
 	
