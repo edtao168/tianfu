@@ -108,12 +108,7 @@
                             $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
                             $typeStyle = config("business.account_types.{$accType}") ?? config("business.account_types.cash");
                             
-                            $accountThemeMap = [
-                                'cash' => 'orange',
-                                'bank' => 'blue',
-                                'e-wallet' => 'green',
-                                'securities' => 'purple',
-                            ];
+                            $accountThemeMap = config('business.account_theme_map', []);
                             $accountTheme = $accountThemeMap[$accType] ?? 'blue';
                             
                             $displayTitle = '未分類';

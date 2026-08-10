@@ -207,12 +207,7 @@
     {{-- 5. 帳戶列表 --}}
     {{-- ============================================================ --}}
     @php
-        $accountThemeMap = [
-            'cash' => 'orange',
-            'bank' => 'blue',
-            'e-wallet' => 'green',
-            'securities' => 'purple',
-        ];
+        $accountThemeMap = config('business.account_theme_map', []);
     @endphp
     
     @foreach($this->currencyGroups as $group)
