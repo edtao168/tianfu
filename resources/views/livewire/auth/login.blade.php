@@ -3,9 +3,8 @@
     <div class="login-card rounded-3xl shadow-2xl p-8 md:p-10">
         <!-- Logo -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center gap-3 mb-2">
-                <span class="w-4 h-4 rounded-full bg-teal-600 shadow-sm"></span>
-                <span class="font-black text-2xl tracking-widest text-stone-700 font-mono uppercase">添富</span>
+            <div class="inline-flex items-center gap-3 mb-2">                
+				<img src="{{ asset('tianfu.png') }}" alt="添富記賬" class="h-10 w-auto object-contain">
                 <span class="text-xs bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-md font-bold tracking-wider">記賬</span>
             </div>
             <p class="text-stone-500 text-sm">登入您的帳戶</p>

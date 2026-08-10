@@ -280,15 +280,23 @@ class AccountIndex extends Component
         $this->showAccountModal = true;
     }
     
-    public function editAccount($id)
+    /**
+     * 監聽來自 TransactionListModal 的編輯帳戶請求
+     */
+    #[On('edit-account-from-transactions')]
+    public function editAccount($accountId = null)
     {
-        $account = FinancialAccount::findOrFail($id);
-        $this->editingAccountId = $id;
-        $this->accountName = $account->name;
-        $this->accountType = $account->type;
-        $this->accountCurrency = $account->currency;
-        $this->accountBalance = $account->balance;
-        $this->accountMemo = $account->memo ?? '';
+		if (!$accountId) {
+            return;
+        }
+
+        $account = FinancialAccount::findOrFail($accountId);
+		$this->editingAccountId = $accountId;
+		$this->accountName = $account->name;
+		$this->accountType = $account->type;
+		$this->accountCurrency = $account->currency;
+		$this->accountBalance = $account->balance;
+		$this->accountMemo = $account->memo ?? '';
         $this->showAccountModal = true;
     }
     
