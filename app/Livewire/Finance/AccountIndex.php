@@ -237,7 +237,24 @@ class AccountIndex extends Component
     
     public function showPeriodDetail($period)
     {
-        $this->dispatch('show-period-detail', period: $period);
+        // 將 period 對應至 TransactionListModal 的 dateMode
+		$dateMode = match($period) {
+			'today' => 'day',
+			'month' => 'month',
+			'year'  => 'year',
+			default => 'month',
+		};
+
+		$titleMap = [
+			'today' => '本日交易明細',
+			'month' => '本月交易明細',
+			'year'  => '本年交易明細',
+		];
+
+		$this->dispatch('open-transaction-list-modal', [
+			'dateMode' => $dateMode,
+			'title'    => $titleMap[$period] ?? '交易明細列表',
+		]);
     }
     
     // ============================================================
@@ -355,7 +372,10 @@ class AccountIndex extends Component
     
     public function viewAccountTransactions($accountId)
     {
-        $this->dispatch('open-transaction-modal', accountId: $accountId);
+        $this->dispatch('open-transaction-list-modal', [
+			'accountId' => $accountId,
+			'dateMode'  => 'month',
+		]);
     }
     
     public function switchShop($shopId)

@@ -111,18 +111,22 @@ class TransactionListModal extends Component
     #[On('open-transaction-list-modal')]
     public function openModal(array $params = [])
     {
-        $this->resetFilter();
+		if (!is_array($params)) {
+			$params = [];
+		}
 
-        $this->accountId = $params['accountId'] ?? null;
-        $this->categoryId = $params['categoryId'] ?? null;
-        $this->transactionType = $params['type'] ?? null;
-        
-        // 設定日期範圍模式（從參數傳入）
-        $dateMode = $params['dateMode'] ?? 'month';
-        $baseDate = $params['baseDate'] ?? null;
-        $this->setDateRange($dateMode, $baseDate);
+		$this->resetFilter();
 
-        // 1. 先設定標題與目標幣別
+		$this->accountId = $params['accountId'] ?? null;
+		$this->categoryId = $params['categoryId'] ?? null;
+		$this->transactionType = $params['type'] ?? null;
+		
+		// 設定日期範圍模式（從參數傳入）
+		$dateMode = $params['dateMode'] ?? 'month';
+		$baseDate = $params['baseDate'] ?? null;
+		$this->setDateRange($dateMode, $baseDate);
+
+		// 1. 設定標題與目標幣別
 		if ($this->accountId) {
 			$account = FinancialAccount::find($this->accountId);
 			if (!$account) {
@@ -132,22 +136,19 @@ class TransactionListModal extends Component
 			$this->currentAccount = $account;
 			$this->title = $account->name;
 			$this->subtitle = '帳戶歷史交易';
-			// 有帳戶：目標幣別 = 帳戶的幣別
 			$this->targetCurrency = $account->currency;
 		} else {
 			$this->title = $params['title'] ?? '交易明細列表';
 			$this->subtitle = '流水記錄';
-			// 沒有帳戶：目標幣別 = 基準貨幣
-			$this->targetCurrency = $this->getBaseCurrency(); // 這句需要！
+			$this->targetCurrency = $this->getBaseCurrency();
 		}
 
-		// 2. 根據目標幣別取得幣別資訊（含符號）
-		// 無論是否有帳戶，都需要這句來取得符號
+		// 2. 取得幣別符號
 		$currencyData = $this->currencyService->getCurrency($this->targetCurrency);
 		$this->currencySymbol = $currencyData ? $currencyData->symbol : 'NT$';
 
-        $this->loadTransactions();
-        $this->showModal = true;
+		$this->loadTransactions();
+		$this->showModal = true;
     }
 
     #[On('refresh-transaction-list')]
