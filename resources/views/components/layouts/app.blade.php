@@ -50,11 +50,28 @@
 
 		<button x-data 
 				@click="$dispatch('toggle-settings-drawer')" 
-				class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-stone-100">
-			{{-- 💡 動態綁定：若目前登入者有綁定 Partner 且上傳過照片，則吃 photo_path；否則自動降級回 me.jpg --}}
-			<img src="{{ auth()->user()->partner?->photo_path ? asset('storage/' . auth()->user()->partner->photo_path) : asset('me.jpg') }}"
-				 alt="User Avatar" 
-				 class="w-full h-full object-cover">
+				class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-stone-100 flex items-center justify-center">
+			
+			@php
+				$avatarUrl = auth()->user()?->partner?->getAvatarUrl();
+			@endphp
+
+			@if($avatarUrl)
+				{{-- 有正確上傳並存在專屬頭像 --}}
+				<img src="{{ $avatarUrl }}"
+					 alt="{{ auth()->user()->name ?? 'User Avatar' }}" 
+					 class="w-full h-full object-cover">
+			@else
+				{{-- 新使用者/無頭像：顯示姓名首字或通用預設 Icon --}}
+				<div class="w-full h-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold text-sm">
+					@if(auth()->check() && auth()->user()->name)
+						{{ mb_substr(auth()->user()->name, 0, 1) }}
+					@else
+						<x-icon name="o-user" class="w-5 h-5 text-stone-400" />
+					@endif
+				</div>
+			@endif
+
 		</button>
 	</header>
 

@@ -60,6 +60,7 @@ class AccountIndex extends Component
         
         foreach ($currencies as $currency) {
             $accounts = FinancialAccount::where('shop_id', $this->currentShopId)
+				->where('user_id', auth()->id())
                 ->where('currency', $currency->code)
                 ->where('is_active', true)
                 ->get();
@@ -104,7 +105,8 @@ class AccountIndex extends Component
         
         foreach ($currencies as $currency) {
             $balance = FinancialAccount::where('shop_id', $this->currentShopId)
-                ->where('currency', $currency->code)
+                ->where('user_id', auth()->id())
+				->where('currency', $currency->code)
                 ->where('is_active', true)
                 ->sum('balance');
             
@@ -176,7 +178,8 @@ class AccountIndex extends Component
         
         // 取得該期間的所有交易
         $transactions = Transaction::where('shop_id', $this->currentShopId)
-            ->where('recorded_at', '>=', $startDate)
+            ->where('user_id', auth()->id())
+			->where('recorded_at', '>=', $startDate)
             ->where('recorded_at', '<=', $now)
             ->get();
         

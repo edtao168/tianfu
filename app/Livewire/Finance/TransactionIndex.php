@@ -50,6 +50,7 @@ class TransactionIndex extends Component
     public function updatedSearchAccountId() { $this->loadTransactions(); }
     public function updatedSearchCategoryId() { $this->loadTransactions(); }
     public function updatedSearchType() { $this->loadTransactions(); }
+	public function updatedTransactionMonth() { $this->loadTransactions(); }
 
     /**
      * 監聽數據刷新事件
@@ -84,25 +85,23 @@ class TransactionIndex extends Component
     /**
      * 上一個月
      */
-    public function previousMonth()
-    {
-        $date = Carbon::createFromFormat('Y-m', $this->transactionMonth)->subMonth();
-        $this->transactionMonth = $date->format('Y-m');
-        $this->loadTransactions();
-    }
+	public function previousMonth()
+	{
+		$date = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->subMonth();
+		$this->transactionMonth = $date->format('Y-m');
+	}
 
-    /**
-     * 下一個月
-     */
-    public function nextMonth()
-    {
-        $date = Carbon::createFromFormat('Y-m', $this->transactionMonth)->addMonth();
-        if ($date->isFuture()) {
-            $date = now();
-        }
-        $this->transactionMonth = $date->format('Y-m');
-        $this->loadTransactions();
-    }
+	public function nextMonth()
+	{
+		$date = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->addMonth();
+		
+		// 不允許切換到比目前月份更晚的未來月份
+		if ($date->startOfMonth()->gt(now()->startOfMonth())) {
+			$date = now();
+		}
+		
+		$this->transactionMonth = $date->format('Y-m');
+	}
 
     /**
      * 載入交易數據（無分頁）
@@ -150,14 +149,15 @@ class TransactionIndex extends Component
      */
     public function render()
     {
-        // 解析月份範圍
-        $startDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->startOfMonth();
-        $endDate = Carbon::createFromFormat('Y-m', $this->transactionMonth)->endOfMonth();
+        // render() 內的日期解析
+		$startDate = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->startOfMonth()->startOfDay();
+		$endDate = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->endOfMonth()->endOfDay();
 
         // 建立基本查詢器
         $query = Transaction::query()
             ->with(['category', 'category.parent', 'fromAccount', 'toAccount'])
             ->where('shop_id', $this->shopId)
+			->where('user_id', auth()->id())
             ->whereBetween('recorded_at', [$startDate, $endDate])
             ->orderBy('recorded_at', 'desc');
 

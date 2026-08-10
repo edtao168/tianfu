@@ -103,9 +103,10 @@
                     @foreach($dayTransactions as $tx)
                         @php
                             $acc = $tx->fromAccount ?? $tx->toAccount;
-                            $currencyCode = $acc->currency ?? 'TWD';
-							$currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
-                            $typeStyle = config("business.account_types.{$acc->type}") ?? config("business.account_types.cash");
+                            $accType = $acc?->type ?? 'cash';
+                            $currencyCode = $acc?->currency ?? 'TWD';
+                            $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
+                            $typeStyle = config("business.account_types.{$accType}") ?? config("business.account_types.cash");
                             
                             $accountThemeMap = [
                                 'cash' => 'orange',
@@ -113,7 +114,7 @@
                                 'e-wallet' => 'green',
                                 'securities' => 'purple',
                             ];
-                            $accountTheme = $accountThemeMap[$acc->type] ?? 'blue';
+                            $accountTheme = $accountThemeMap[$accType] ?? 'blue';
                             
                             $displayTitle = '未分類';
                             $iconName = 'o-hashtag';
@@ -131,7 +132,7 @@
                                 }
                                 $iconName = $tx->category->icon ?? 'o-hashtag';
                             } else {
-                                $displayTitle = $acc->name ?? '未分類';
+                                $displayTitle = $acc?->name ?? '未分類';
                                 $iconName = $tx->type === 'expense' ? 'o-credit-card' : 'o-wallet';
                             }
                             
@@ -160,7 +161,7 @@
                                             <span class="font-bold text-sm text-base-content truncate">
                                                 {{ $displayTitle }}
                                             </span>
-                                            {{-- 備註欄位：大幅調亮 Dark 模式色彩 --}}
+                                            {{-- 備註欄位 --}}
                                             @if($tx->memo)
                                                 <span class="text-xs text-stone-500 dark:text-stone-300 max-w-[180px] sm:max-w-xs truncate font-medium">({{ $tx->memo }})</span>
                                             @endif
@@ -171,14 +172,14 @@
                                             @endif
                                         </div>
                                         
-                                        {{-- 帳戶名稱 + Badge：修正 text-gray-400 偏暗問題 --}}
+                                        {{-- 帳戶名稱 + Badge --}}
                                         <div class="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5">
-                                            <span class="font-bold truncate text-stone-700 dark:text-stone-300">{{ $acc->name }}</span>
+                                            <span class="font-bold truncate text-stone-700 dark:text-stone-300">{{ $acc?->name ?? '未知帳戶' }}</span>
                                             <span class="account-badge px-1.5 py-0.5 text-[9px] font-extrabold rounded-md flex-shrink-0">
-                                                {{ $typeStyle['name'] }}
+                                                {{ $typeStyle['name'] ?? '現金' }}
                                             </span>
                                             <span class="text-[10px] font-mono text-stone-400 dark:text-stone-500 flex-shrink-0">
-                                                {{ $acc->currency }}
+                                                {{ $acc?->currency ?? 'TWD' }}
                                             </span>
                                         </div>
                                     </div>
@@ -193,7 +194,7 @@
                                                ($tx->type === 'transfer' ? '↕' : '+') }} 
                                             <span class="currency-symbol text-xs font-bold mr-0.5">{{ $currencySymbol }}</span>{{ number_format($tx->amount, 2) }}
                                         </span>
-                                        {{-- 時間：修復暗色模式可讀性 --}}
+                                        {{-- 時間 --}}
                                         <div class="text-[10px] text-stone-400 dark:text-stone-400 font-mono mt-0.5 opacity-90">{{ date('H:i', strtotime($tx->recorded_at)) }}</div>
                                     </div>
 

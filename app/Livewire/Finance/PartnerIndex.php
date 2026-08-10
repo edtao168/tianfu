@@ -31,6 +31,7 @@ class PartnerIndex extends Component
     public function render()
     {
         $partners = Partner::with('user')
+			->where('user_id', auth()->id())
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('role', 'like', '%' . $this->search . '%');
@@ -54,7 +55,12 @@ class PartnerIndex extends Component
 
     public function openEdit(Partner $partner)
     {
-        $this->resetForm();
+        if ($partner->user_id !== auth()->id()) {
+            $this->error('無權限操作此成員');
+            return;
+        }
+		
+		$this->resetForm();
         $this->editingPartner = $partner;
         
         $this->name = $partner->name;
@@ -79,6 +85,7 @@ class PartnerIndex extends Component
         ]);
 
         $data = [
+			'user_id' => auth()->id(),
             'name' => $this->name,
             'user_id' => $this->user_id,
             'phone' => $this->phone,
