@@ -60,7 +60,7 @@
                                 <span class="text-lg font-bold text-rose-600">-{{ $baseSymbol }} {{ $expense }}</span>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-base-200">
-                                <span class="text-sm font-medium text-stone-500">結餘</span>
+                                <span class="text-sm font-medium text-stone-500">差額</span>
                                 <span class="text-lg font-extrabold {{ $isProfitNegative ? 'text-stone-600' : 'text-base-content' }}">
                                     {{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
                                 </span>
@@ -206,9 +206,6 @@
     {{-- ============================================================ --}}
     {{-- 5. 帳戶列表 --}}
     {{-- ============================================================ --}}
-    @php
-        $accountThemeMap = config('business.account_theme_map', []);
-    @endphp
     
     @foreach($this->currencyGroups as $group)
         @php
@@ -236,9 +233,9 @@
                 <div class="grid grid-cols-1 gap-4">
                     @foreach($group['accounts'] as $account)
                         @php
-                            $accountTheme = $accountThemeMap[$account->type] ?? 'blue';
                             $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                            $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+							$accountTheme = $typeConfig['theme'] ?? 'blue';
+							$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
                         @endphp
 
                         <div class="btn-{{ $accountTheme }}">
@@ -273,9 +270,9 @@
             <div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($group['accounts'] as $account)
                     @php
-                        $accountTheme = $accountThemeMap[$account->type] ?? 'blue';
                         $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                        $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+						$accountTheme = $typeConfig['theme'] ?? 'blue';
+						$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
                     @endphp
 
                     <div class="btn-{{ $accountTheme }}">

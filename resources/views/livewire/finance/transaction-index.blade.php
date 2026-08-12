@@ -107,9 +107,7 @@
                             $currencyCode = $acc?->currency ?? 'TWD';
                             $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
                             $typeStyle = config("business.account_types.{$accType}") ?? config("business.account_types.cash");
-                            
-                            $accountThemeMap = config('business.account_theme_map', []);
-                            $accountTheme = $accountThemeMap[$accType] ?? 'blue';
+    $accountTheme = $typeStyle['theme'] ?? 'blue';
                             
                             $displayTitle = '未分類';
                             $iconName = 'o-hashtag';

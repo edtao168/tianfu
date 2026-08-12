@@ -1,50 +1,44 @@
 <?php
-// config/business.php
 
 return [
-	/*
+    /*
     |--------------------------------------------------------------------------
-    | 貨幣主題色
+    | 幣別主題色
     |--------------------------------------------------------------------------
     */
-	'currency_theme_map' => [
+    'currency_theme_map' => [
         'TWD' => 'blue',
         'CNY' => 'red', 
         'HKD' => 'green',
         'USD' => 'purple',
     ],
-	/*
-    |--------------------------------------------------------------------------
-    | 帳戶類型主題色映射 (也可單獨抽離)
-    |--------------------------------------------------------------------------
-    */
-    'account_theme_map' => [
-        'cash'       => 'orange',
-        'bank'       => 'blue',
-        'e-wallet'   => 'green',
-        'securities' => 'purple',
-    ],
+
     /*
     |--------------------------------------------------------------------------
     | 帳戶類型 (Account Types)
     |--------------------------------------------------------------------------
+    | 每個類型包含：顯示名稱、圖示、主題色
     */
     'account_types' => [
         'cash' => [
-            'name' => '現金',
-            'icon' => 'heroicon-o-currency-dollar',
+            'name'  => '現金',
+            'icon'  => 'heroicon-o-currency-dollar',
+            'theme' => 'orange',
         ],
         'bank' => [
-            'name' => '銀行',
-            'icon' => 'heroicon-o-building-library',
+            'name'  => '銀行',
+            'icon'  => 'heroicon-o-building-library',
+            'theme' => 'blue',
         ],
         'e-wallet' => [
-            'name' => '網絡支付',
-            'icon' => 'heroicon-o-device-phone-mobile',
+            'name'  => '網絡支付',
+            'icon'  => 'heroicon-o-device-phone-mobile',
+            'theme' => 'green',
         ],
         'securities' => [
-            'name' => '證券帳戶',
-            'icon' => 'heroicon-o-arrow-trending-up',
+            'name'  => '證券帳戶',
+            'icon'  => 'heroicon-o-arrow-trending-up',
+            'theme' => 'purple',
         ],
     ],
 
