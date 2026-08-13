@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+  <!-- 主肉墊 (Main Pad) -->
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 12.5c-2.4 0-4.4 1.6-4.9 3.9-.3 1.6.5 3.1 2 3.8.9.4 1.9.5 2.9.5s2-.1 2.9-.5c1.5-.7 2.3-2.2 2-3.8-.5-2.3-2.5-3.9-4.9-3.9z" />
+  
+  <!-- 外側左趾 (Outer Left Toe) -->
+  <ellipse cx="4.7" cy="11.2" rx="1.6" ry="2.4" transform="rotate(-28 4.7 11.2)" />
+  
+  <!-- 內側左趾 (Inner Left Toe) -->
+  <ellipse cx="9.2" cy="6.8" rx="1.6" ry="2.6" transform="rotate(-10 9.2 6.8)" />
+  
+  <!-- 內側右趾 (Inner Right Toe) -->
+  <ellipse cx="14.8" cy="6.8" rx="1.6" ry="2.6" transform="rotate(10 14.8 6.8)" />
+  
+  <!-- 外側右趾 (Outer Right Toe) -->
+  <ellipse cx="19.3" cy="11.2" rx="1.6" ry="2.4" transform="rotate(28 19.3 11.2)" />
+</svg>

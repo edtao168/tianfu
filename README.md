@@ -56,3 +56,24 @@ sudo bash rollback.sh /var/backups/tianfu/tianfu_backup_20260330_120000.tar.gz
 2. **權限問題：** 腳本執行完成後會自動將 `storage/` 及 `bootstrap/cache/` 設定為 `www-data:www-data` 並給予 `775` 權限，避免 500 錯誤。
 3. **.env 安全性：** 備份檔包含 `.env`（內含 DB 密碼與 APP_KEY），請妥善保管 `/var/backups/tianfu/` 目錄。
 4.已忽略對 deploy.sh 的上傳（oci與本地不一致，已鎖定git update-index --assume-unchanged deploy.sh，解鎖需git update-index --no-assume-unchanged deploy.sh）
+
+#檢查備份執行狀況：
+	## 查看進銷存備份日誌cat /var/log/taotique_backup.log
+	## 查看記帳系統備份日誌cat /var/log/tianfu_backup.log
+如果日誌最後出現 Backup completed successfully 之類的成功提示，且備份目錄 /var/backups/taotique 與 /var/backups/tianfu 都有產生新的 .tar.gz 壓縮檔，就代表整個災難復原（DR）備份機制已經完全穩定運作了！
+
+# 備份檔將自動儲存於 /var/backups/tianfu/， /var/backups/taotique/，OCI端查詢
+	## ls /var/backups/tianfu/
+	## ls  /var/backups/taotique/
+
+# 備份複製到本地，
+	## 先查找OCI備份文件目錄
+		### ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167
+		### OCI cd /var/www/html
+		ls /var/backups/taotique/ *.tar.gz
+		exit
+	## 下載到本地（本地命令）
+		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*.tar.gz D:\Users\Administrator\Downloads
+		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*.tar.gz D:\Users\Administrator\Downloads
+		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*0812*.tar.gz D:\Users\Administrator\Downloads
+		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*0812*.tar.gz D:\Users\Administrator\Downloads

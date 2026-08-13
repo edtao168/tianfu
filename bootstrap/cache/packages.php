@@ -34,17 +34,6 @@
       0 => 'Laravel\\Tinker\\TinkerServiceProvider',
     ),
   ),
-  'livewire/flux' => 
-  array (
-    'aliases' => 
-    array (
-      'Flux' => 'Flux\\Flux',
-    ),
-    'providers' => 
-    array (
-      0 => 'Flux\\FluxServiceProvider',
-    ),
-  ),
   'livewire/livewire' => 
   array (
     'aliases' => 
