@@ -107,7 +107,7 @@
                             $currencyCode = $acc?->currency ?? 'TWD';
                             $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
                             $typeStyle = config("business.account_types.{$accType}") ?? config("business.account_types.cash");
-    $accountTheme = $typeStyle['theme'] ?? 'blue';
+                            $accountTheme = $typeStyle['theme'] ?? 'blue';
                             
                             $displayTitle = '未分類';
                             $iconName = 'o-hashtag';
@@ -135,7 +135,7 @@
                         @endphp
                         
                         <div class="btn-{{ $accountTheme }}">
-                            <div wire:click="$dispatch('edit-transaction', { transactionId: {{ $tx->id }} })" 
+                            <div wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })" 
                                  class="p-4 flex items-center justify-between hover:bg-stone-50/40 dark:hover:bg-stone-800/40 transition-all duration-200 group relative pl-6 cursor-pointer">
                                 
                                 {{-- 左側色條 --}}
