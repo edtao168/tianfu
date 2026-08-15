@@ -13,6 +13,8 @@
 /.vscode
 /.zed
 /auth.json
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
 /node_modules
 /public/build
 /public/fonts-manifest.dev.json
@@ -27,4 +29,5 @@ Homestead.yaml
 Thumbs.db
 "*.sql" 
 "*.bak" 
-"*.backup" 
+"*.backup"
+

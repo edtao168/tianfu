@@ -14,7 +14,7 @@
                     <x-heroicon-o-users class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">成員管理</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">成員管理</div>
                     <div class="text-xs text-stone-400">設定家庭使用者與個人載具</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -27,7 +27,7 @@
                     <x-heroicon-o-tag class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">分類管理</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">分類管理</div>
                     <div class="text-xs text-stone-400">編輯收支類別與圖標</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -41,7 +41,7 @@
                     <x-heroicon-o-currency-dollar class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">匯率設定</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">匯率設定</div>
                     <div class="text-xs text-stone-400">管理多幣別與換算基準</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -55,7 +55,7 @@
                     <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">數據備份</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">數據備份</div>
                     <div class="text-xs text-stone-400">匯出 / 匯入資料</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -69,7 +69,7 @@
                     <x-heroicon-o-information-circle class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">關於</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">關於</div>
                     <div class="text-xs text-stone-400">版本資訊與使用條款</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -83,7 +83,7 @@
                     <x-heroicon-o-envelope class="w-5 h-5 text-white" />
                 </div>
                 <div class="flex-1 text-left">
-                    <div class="font-semibold text-stone-700 group-hover:text-stone-900">聯絡我</div>
+                    <div class="font-semibold text-stone-700 dark:text-stone-200 group-hover:text-stone-900">聯絡我</div>
                     <div class="text-xs text-stone-400">問題回報與建議</div>
                 </div>
                 <x-heroicon-o-chevron-right class="w-4 h-4 text-stone-300 group-hover:text-stone-500 transition-colors" />
@@ -95,7 +95,7 @@
         <x-slot:actions>
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
-                <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-200/50 hover:bg-red-50 hover:text-red-600 text-stone-600 font-medium transition-all duration-200 active:scale-[0.99]">
+                <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-200/50 hover:bg-red-50 hover:text-red-600 text-stone-700 dark:text-stone-200 font-medium transition-all duration-200 active:scale-[0.99]">
                     <x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5" />
                     <span>安全登出</span>
                 </button>

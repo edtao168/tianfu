@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Services\CurrencyService;
 use App\Services\MoneyCalculator;
 use Carbon\Carbon;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
@@ -184,7 +185,7 @@ class TransactionIndex extends Component
         // 取得所有交易（無分頁）
         $transactions = $query->get();
 		
-		 // ✅ 為每個交易附加幣別符號
+		 // 為每個交易附加幣別符號
 		$transactions->each(function ($tx) {
 			$acc = $tx->fromAccount ?? $tx->toAccount;
 			$currencyCode = $acc->currency ?? 'TWD';

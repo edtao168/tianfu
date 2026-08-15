@@ -1,5 +1,5 @@
 <?php
-// app/Livewire/Finance/TransactionModal.php
+// filepath: app/Livewire/Finance/TransactionModal.php
 
 namespace App\Livewire\Finance;
 
@@ -54,8 +54,7 @@ class TransactionModal extends Component
 
     public function mount()
     {
-        $this->recordedAt = now()->format('Y-m-d\TH:i');
-		$this->recordedAt = Carbon::now('Asia/Taipei')->format('Y-m-d\TH:i');
+        $this->recordedAt = Carbon::now('Asia/Taipei')->format('Y-m-d\TH:i');
         $this->categoryId = 2;
         $this->fromAccountId = 1;
         
@@ -63,57 +62,56 @@ class TransactionModal extends Component
         $this->updatedType('expense');
     }
 
-	// 修改 openModal 方法，明確指定參數名稱
-	#[On('open-transaction-modal')]
-	public function openModal($transactionId = null)
-	{
-		$this->resetForm();
-		$this->recordedAt = now()->format('Y-m-d\TH:i');
-		$this->showTemplateList = false;
+    #[On('open-transaction-modal')]
+    public function openModal($transactionId = null)
+    {
+        $this->resetForm();
+        $this->recordedAt = now()->format('Y-m-d\TH:i');
+        $this->showTemplateList = false;
 
-		if ($transactionId) {
-			$transaction = Transaction::where('shop_id', $this->shop_id)
-				->find($transactionId);
-				
-			if (!$transaction) {
-				$this->dispatch('toast', type: 'error', text: '交易記錄不存在');
-				$this->showTransactionModal = false;
-				return;
-			}
+        if ($transactionId) {
+            $transaction = Transaction::where('shop_id', $this->shop_id)
+                ->find($transactionId);
+                
+            if (!$transaction) {
+                $this->dispatch('toast', type: 'error', text: '交易記錄不存在');
+                $this->showTransactionModal = false;
+                return;
+            }
 
-			$this->transactionId = $transaction->id;
-			$this->type = $transaction->type;
+            $this->transactionId = $transaction->id;
+            $this->type = $transaction->type;
 
-			if ($transaction->type === 'income') {
-				$this->fromAccountId = $transaction->to_account_id;
-				$this->toAccountId = null;
-			} elseif ($transaction->type === 'expense') {
-				$this->fromAccountId = $transaction->from_account_id;
-				$this->toAccountId = null;
-			} else {
-				$this->fromAccountId = $transaction->from_account_id;
-				$this->toAccountId = $transaction->to_account_id;
-			}
+            if ($transaction->type === 'income') {
+                $this->fromAccountId = $transaction->to_account_id;
+                $this->toAccountId = null;
+            } elseif ($transaction->type === 'expense') {
+                $this->fromAccountId = $transaction->from_account_id;
+                $this->toAccountId = null;
+            } else {
+                $this->fromAccountId = $transaction->from_account_id;
+                $this->toAccountId = $transaction->to_account_id;
+            }
 
-			$this->categoryId = $transaction->category_id;
-			$this->amount = number_format((float)$transaction->amount, 2, '.', '');
-			$this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
-			$this->memo = $transaction->memo ?? '';
-			$this->existingPhotoPath = $transaction->photo_path;
-		} else {
-			// 新增模式
-			$this->type = 'expense';
-			$this->fromAccountId = 2;
-			$this->toAccountId = null;
-			$this->categoryId = 2;
-			$this->amount = '';
-			$this->memo = '';
-			$this->existingPhotoPath = null;
-		}
+            $this->categoryId = $transaction->category_id;
+            $this->amount = number_format((float)$transaction->amount, 2, '.', '');
+            $this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
+            $this->memo = $transaction->memo ?? '';
+            $this->existingPhotoPath = $transaction->photo_path;
+        } else {
+            // 新增模式
+            $this->type = 'expense';
+            $this->fromAccountId = 1;
+            $this->toAccountId = null;
+            $this->categoryId = 2;
+            $this->amount = '';
+            $this->memo = '';
+            $this->existingPhotoPath = null;
+        }
 
-		$this->showTransactionModal = true;
-		$this->dispatch('focus-amount-input');
-	}
+        $this->showTransactionModal = true;
+        $this->dispatch('focus-amount-input');
+    }
 
     public function updatedFromAccountId($value)
     {
@@ -125,39 +123,39 @@ class TransactionModal extends Component
         unset($this->accounts);
     }
 
-	public function updatedType($value)
-	{
-		if ($value === 'expense') {
-			$this->fromAccountId = 2; // 預設支出帳戶
-			$this->toAccountId = null;
-			$this->categoryId = 2;    // 預設支出分類 ID
-		} elseif ($value === 'income') {
-			$this->fromAccountId = 1;  // 預設收入進哪個帳戶 (例如: 1)
-			$this->toAccountId = null;
-			$this->categoryId = 70;   // ✅ 正確設置收入預設分類 ID = 70
-		} elseif ($value === 'transfer') {
-			$this->fromAccountId = 2;
-			$this->toAccountId = null;
-			$this->categoryId = null;
-		}
-	}
+    public function updatedType($value)
+    {
+        if ($value === 'expense') {
+            $this->fromAccountId = 1;
+            $this->toAccountId = null;
+            $this->categoryId = 2;
+        } elseif ($value === 'income') {
+            $this->fromAccountId = 1;
+            $this->toAccountId = null;
+            $this->categoryId = 70;
+        } elseif ($value === 'transfer') {
+            $this->fromAccountId = 2;
+            $this->toAccountId = null;
+            $this->categoryId = null;
+        }
+    }
 
-	public function updatedTemplateType($value)
-	{
-		if ($value === 'expense') {
-			$this->templateFromAccountId = 2;
-			$this->templateToAccountId = null;
-			$this->templateCategoryId = 2;
-		} elseif ($value === 'income') {
-			$this->templateFromAccountId = 1;
-			$this->templateToAccountId = null;
-			$this->templateCategoryId = 70; // ✅ 範本切換收入時也同步帶入 ID = 70
-		} elseif ($value === 'transfer') {
-			$this->templateFromAccountId = 2;
-			$this->templateToAccountId = null;
-			$this->templateCategoryId = null;
-		}
-	}
+    public function updatedTemplateType($value)
+    {
+        if ($value === 'expense') {
+            $this->templateFromAccountId = 1;
+            $this->templateToAccountId = null;
+            $this->templateCategoryId = 2;
+        } elseif ($value === 'income') {
+            $this->templateFromAccountId = 1;
+            $this->templateToAccountId = null;
+            $this->templateCategoryId = 70;
+        } elseif ($value === 'transfer') {
+            $this->templateFromAccountId = 2;
+            $this->templateToAccountId = null;
+            $this->templateCategoryId = null;
+        }
+    }
 
     public function updatedTemplateFromAccountId($value)
     {
@@ -167,7 +165,6 @@ class TransactionModal extends Component
         unset($this->accounts);
     }
 
-    // ============ 金額增減方法 ============
     public function incrementAmount()
     {
         $current = (float) $this->amount;
@@ -183,7 +180,6 @@ class TransactionModal extends Component
         }
     }
 
-    // ============ 日期變更方法 ============
     public function changeDate($direction)
     {
         $currentDate = Carbon::parse($this->recordedAt);
@@ -195,7 +191,6 @@ class TransactionModal extends Component
         $this->recordedAt = $currentDate->format('Y-m-d\TH:i');
     }
 
-    // ============ 共用類別選擇器 ============
     public function openCategoryPicker($forTemplate = false)
     {
         $this->isTemplateCategoryPicker = $forTemplate;
@@ -248,8 +243,8 @@ class TransactionModal extends Component
     {
         $this->transactionId = null;
         $this->amount = '';
-        $this->photo = null;                // 重設圖片上傳欄位
-        $this->existingPhotoPath = null;    // 重設歷史照片路徑
+        $this->photo = null;
+        $this->existingPhotoPath = null;
     }
 
     public function resetTemplateForm()
@@ -260,11 +255,10 @@ class TransactionModal extends Component
             'templateCategoryId', 'templateMemo'
         ]);
         $this->templateType = 'expense';
-		$this->templateFromAccountId = 1;
-		$this->templateCategoryId = 2;
+        $this->templateFromAccountId = 1;
+        $this->templateCategoryId = 2;
     }
 
-    // ============ 計算屬性：帳戶與分類 ============
     public function getAccountsProperty()
     {
         return FinancialAccount::where('is_active', true)
@@ -296,7 +290,6 @@ class TransactionModal extends Component
             ->get();
     }
 
-    // ============ 範本功能 ============
     public function getTemplatesProperty()
     {
         $query = TransactionTemplate::where('shop_id', $this->shop_id);
@@ -404,7 +397,6 @@ class TransactionModal extends Component
         $this->showTransactionModal = true;
     }
 
-    // ============ 主要儲存與修改程序 ============
     public function executeSaveProcedure()
     {
         $userId = Auth::id();
@@ -414,7 +406,7 @@ class TransactionModal extends Component
             'fromAccountId' => 'required|exists:financial_accounts,id',
             'amount' => 'required|numeric|gt:0',
             'recordedAt' => 'required|date',
-            'photo' => 'nullable|image|max:5120', // 4. 驗證上傳圖片限制 (最大 5MB)
+            'photo' => 'nullable|image|max:5120',
         ];
 
         if ($this->type === 'transfer') {
@@ -425,14 +417,11 @@ class TransactionModal extends Component
 
         $this->validate($rules);
 
-        // 5. 處理圖片上傳儲存
         $finalPhotoPath = $this->existingPhotoPath;
         if ($this->photo) {
-            // 刪除舊圖片
             if ($this->existingPhotoPath) {
                 Storage::disk('public')->delete($this->existingPhotoPath);
             }
-            // 儲存新圖片並取得相對路徑
             $finalPhotoPath = $this->photo->store('transactions', 'public');
         }
 
@@ -482,16 +471,13 @@ class TransactionModal extends Component
                         'amount' => $this->amount,
                         'recorded_at' => $this->recordedAt,
                         'memo' => $this->memo,
-                        'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
+                        'photo_path' => $finalPhotoPath,
                     ]
                 );
             } else {
                 $account = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
 
                 if ($this->type === 'expense') {
-                    /* if (bccomp($account->balance, $this->amount, 4) < 0) {
-                        throw new \Exception('帳戶餘額不足！');取消賬戶負數限制
-                    } */
                     $account->balance = bcsub($account->balance, $this->amount, 4);
                     $account->save();
 
@@ -506,7 +492,7 @@ class TransactionModal extends Component
                             'amount' => $this->amount,
                             'recorded_at' => $this->recordedAt,
                             'memo' => $this->memo,
-                            'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
+                            'photo_path' => $finalPhotoPath,
                         ]
                     );
                 } else {
@@ -524,7 +510,7 @@ class TransactionModal extends Component
                             'amount' => $this->amount,
                             'recorded_at' => $this->recordedAt,
                             'memo' => $this->memo,
-                            'photo_path' => $finalPhotoPath, // 6. 寫入圖片路徑
+                            'photo_path' => $finalPhotoPath,
                         ]
                     );
                 }
@@ -536,7 +522,11 @@ class TransactionModal extends Component
     {
         $this->executeSaveProcedure();
         $this->showTransactionModal = false;
-        $this->dispatch('page-reload');
+
+        // 同時通知主頁面與 Modal 列表刷新
+        $this->dispatch('refresh-data');
+        $this->dispatch('refresh-transaction-list');
+        $this->dispatch('toast', type: 'success', text: '交易已成功儲存！');
     }
 
     public function saveAndKeepOpen()
@@ -555,14 +545,15 @@ class TransactionModal extends Component
         
         $this->transactionId = null;
         $this->amount = '';
-        $this->photo = null;               // 連續記帳時清空上傳暫存圖片
-        $this->existingPhotoPath = null;   // 連續記帳時清空歷史圖片
+        $this->photo = null;
+        $this->existingPhotoPath = null;
         
         foreach ($saved as $key => $value) {
             $this->$key = $value;
         }
         
         $this->dispatch('refresh-data');
+        $this->dispatch('refresh-transaction-list');
         $this->dispatch('toast', type: 'success', text: '儲存成功，請繼續操作！');
     }
 
@@ -600,99 +591,88 @@ class TransactionModal extends Component
         $this->showTemplateListModal = false;
         $this->showTemplateModal = true;
     }
-	
-	public function swapAccounts()
-	{
-		$temp = $this->fromAccountId;
-		$this->fromAccountId = $this->toAccountId;
-		$this->toAccountId = $temp;
-	}
+    
+    public function swapAccounts()
+    {
+        $temp = $this->fromAccountId;
+        $this->fromAccountId = $this->toAccountId;
+        $this->toAccountId = $temp;
+    }
 
-	/**
-	 * 刪除交易記錄
-	 */
-	public function deleteTransaction()
-	{
-		$userId = Auth::id();
-		if (!$userId) {
-			$this->dispatch('toast', type: 'error', text: '請先登入才能刪除記錄');
-			return;
-		}
+    public function deleteTransaction()
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            $this->dispatch('toast', type: 'error', text: '請先登入才能刪除記錄');
+            return;
+        }
 
-		if (!$this->transactionId) {
-			$this->dispatch('toast', type: 'error', text: '找不到要刪除的記錄');
-			return;
-		}
+        if (!$this->transactionId) {
+            $this->dispatch('toast', type: 'error', text: '找不到要刪除的記錄');
+            return;
+        }
 
-		try {
-			DB::transaction(function () use ($userId) {
-				// 1. 鎖定並取得要刪除的交易記錄
-				$transaction = Transaction::where('shop_id', $this->shop_id)
-					->where('id', $this->transactionId)
-					->lockForUpdate()
-					->firstOrFail();
+        try {
+            DB::transaction(function () use ($userId) {
+                $transaction = Transaction::where('shop_id', $this->shop_id)
+                    ->where('id', $this->transactionId)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-				// 2. 根據交易類型回滾帳戶餘額
-				if ($transaction->type === 'transfer') {
-					// 轉帳：轉出帳戶加回金額，轉入帳戶扣回金額
-					$fromAccount = FinancialAccount::where('id', $transaction->from_account_id)
-						->where('shop_id', $this->shop_id)
-						->lockForUpdate()
-						->first();
-					$toAccount = FinancialAccount::where('id', $transaction->to_account_id)
-						->where('shop_id', $this->shop_id)
-						->lockForUpdate()
-						->first();
+                if ($transaction->type === 'transfer') {
+                    $fromAccount = FinancialAccount::where('id', $transaction->from_account_id)
+                        ->where('shop_id', $this->shop_id)
+                        ->lockForUpdate()
+                        ->first();
+                    $toAccount = FinancialAccount::where('id', $transaction->to_account_id)
+                        ->where('shop_id', $this->shop_id)
+                        ->lockForUpdate()
+                        ->first();
 
-					if ($fromAccount) {
-						$fromAccount->balance = bcadd($fromAccount->balance, $transaction->amount, 4);
-						$fromAccount->save();
-					}
-					if ($toAccount) {
-						$toAccount->balance = bcsub($toAccount->balance, $transaction->amount, 4);
-						$toAccount->save();
-					}
-				} elseif ($transaction->type === 'expense') {
-					// 支出：帳戶加回金額
-					$account = FinancialAccount::where('id', $transaction->from_account_id)
-						->where('shop_id', $this->shop_id)
-						->lockForUpdate()
-						->first();
-					if ($account) {
-						$account->balance = bcadd($account->balance, $transaction->amount, 4);
-						$account->save();
-					}
-				} elseif ($transaction->type === 'income') {
-					// 收入：帳戶扣回金額
-					$account = FinancialAccount::where('id', $transaction->to_account_id)
-						->where('shop_id', $this->shop_id)
-						->lockForUpdate()
-						->first();
-					if ($account) {
-						$account->balance = bcsub($account->balance, $transaction->amount, 4);
-						$account->save();
-					}
-				}
+                    if ($fromAccount) {
+                        $fromAccount->balance = bcadd($fromAccount->balance, $transaction->amount, 4);
+                        $fromAccount->save();
+                    }
+                    if ($toAccount) {
+                        $toAccount->balance = bcsub($toAccount->balance, $transaction->amount, 4);
+                        $toAccount->save();
+                    }
+                } elseif ($transaction->type === 'expense') {
+                    $account = FinancialAccount::where('id', $transaction->from_account_id)
+                        ->where('shop_id', $this->shop_id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($account) {
+                        $account->balance = bcadd($account->balance, $transaction->amount, 4);
+                        $account->save();
+                    }
+                } elseif ($transaction->type === 'income') {
+                    $account = FinancialAccount::where('id', $transaction->to_account_id)
+                        ->where('shop_id', $this->shop_id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($account) {
+                        $account->balance = bcsub($account->balance, $transaction->amount, 4);
+                        $account->save();
+                    }
+                }
 
-				// 3. 刪除關聯的圖片檔案（如果有）
-				if ($transaction->photo_path) {
-					Storage::disk('public')->delete($transaction->photo_path);
-				}
+                if ($transaction->photo_path) {
+                    Storage::disk('public')->delete($transaction->photo_path);
+                }
 
-				// 4. 刪除交易記錄
-				$transaction->delete();
-			});
+                $transaction->delete();
+            });
 
-			// 5. 關閉 Modal 並刷新頁面
-			$this->showTransactionModal = false;
-			$this->dispatch('refresh-transaction-list'); // 刷新 Modal
-			$this->dispatch('refresh-data');             // 刷新主列表
-			$this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
+            $this->showTransactionModal = false;
+            $this->dispatch('refresh-transaction-list');
+            $this->dispatch('refresh-data');
+            $this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
 
-		} catch (\Exception $e) {
-			$this->dispatch('toast', type: 'error', text: '刪除失敗：' . $e->getMessage());
-		}
-	}
+        } catch (\Exception $e) {
+            $this->dispatch('toast', type: 'error', text: '刪除失敗：' . $e->getMessage());
+        }
+    }
 
     public function render()
     {
