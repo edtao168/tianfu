@@ -6,6 +6,62 @@
         {{-- Menu List --}}
         <div class="space-y-3 py-2">
             
+			<!-- 介面主題選擇區塊 -->
+            <div class="px-2 py-3 bg-stone-100/80 dark:bg-stone-800/50 rounded-2xl border border-stone-200/50 dark:border-stone-700/50">
+                <div class="text-xs font-bold text-stone-500 dark:text-stone-400 mb-2.5 px-2 flex items-center gap-1.5">
+                    <x-heroicon-o-swatch class="w-4 h-4" />
+                    <span>介面主題</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 bg-stone-200/60 dark:bg-stone-900/60 p-1 rounded-xl">
+                    <button type="button" 
+                            @click="setTheme('system')"
+                            :class="theme === 'system' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        跟隨系統
+                    </button>
+                    <button type="button" 
+                            @click="setTheme('dark')"
+                            :class="theme === 'dark' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        玄英黑
+                    </button>
+                    <button type="button" 
+                            @click="setTheme('light')"
+                            :class="theme === 'light' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        霜華白
+                    </button>
+                </div>
+            </div>
+
+            <!-- 字體大小選擇區塊 -->
+            <div class="px-2 py-3 bg-stone-100/80 dark:bg-stone-800/50 rounded-2xl border border-stone-200/50 dark:border-stone-700/50">
+                <div class="text-xs font-bold text-stone-500 dark:text-stone-400 mb-2.5 px-2 flex items-center gap-1.5">
+                    <x-heroicon-o-adjustments-vertical class="w-4 h-4" />
+                    <span>字體大小</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 bg-stone-200/60 dark:bg-stone-900/60 p-1 rounded-xl">
+                    <button type="button" 
+                            @click="setFontSize('sm')"
+                            :class="fontSize === 'sm' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        精簡 (小)
+                    </button>
+                    <button type="button" 
+                            @click="setFontSize('base')"
+                            :class="fontSize === 'base' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        標準 (中)
+                    </button>
+                    <button type="button" 
+                            @click="setFontSize('lg')"
+                            :class="fontSize === 'lg' ? 'bg-white dark:bg-stone-700 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'"
+                            class="py-1.5 text-xs rounded-lg transition-all duration-200">
+                        清晰 (大)
+                    </button>
+                </div>
+            </div>
+			
             {{-- 成員管理 --}}
             <a href="{{ route('finance.partners') }}" 
                wire:click="close"

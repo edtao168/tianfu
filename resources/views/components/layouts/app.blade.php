@@ -1,42 +1,112 @@
 <!-- filepath: resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
-<!-- filepath: resources/views/layouts/app.blade.php -->
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark bg-stone-900 text-stone-100 antialiased selection:bg-teal-800 selection:text-teal-100" data-theme="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
+      x-data="appSettings"
+      x-bind:class="currentTheme === 'dark' ? 'dark' : ''"
+      x-bind:data-theme="currentTheme"
+      x-bind:data-font-size="fontSize"
+      class="bg-stone-900 text-stone-100 antialiased selection:bg-teal-800 selection:text-teal-100">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', '添富記賬') }}</title>
+
+    <!-- 1. 立即執行的原生 JS：在 DOM 渲染完前搶先寫入屬性，避免閃爍並確保 CSS 抓得到 -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('app_theme') || 'system';
+            const fontSize = localStorage.getItem('app_font_size') || 'base';
+            
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            
+            // 🔥 設定初始字體大小
+            const sizeMap = {
+                'sm': '14px',
+                'base': '16px',
+                'lg': '18px'
+            };
+            document.documentElement.style.fontSize = sizeMap[fontSize] || '16px';
+            document.documentElement.setAttribute('data-font-size', fontSize);
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-	<!-- Chart.js -->
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <style>
-		/* 隱藏 Alpine 未完成初始化前的元素 */
-        [x-cloak] { 
-            display: none !important; 
-        }
+        [x-cloak] { display: none !important; }
     </style>
-	<script>
-		function updateTheme(isDark) {
-			if (isDark) {
-				document.documentElement.classList.add('dark');
-				document.documentElement.setAttribute('data-theme', 'dark');
-			} else {
-				document.documentElement.classList.remove('dark');
-				document.documentElement.setAttribute('data-theme', 'light');
-			}
-		}
 
-		// 1. 初始化判斷 OS 模式
-		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-		updateTheme(mediaQuery.matches);
+    <!-- 2. Alpine 組件狀態綁定 - 合併所有定義 -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            // 🔥 appSettings - 主要設定
+            Alpine.data('appSettings', () => ({
+                theme: localStorage.getItem('app_theme') || 'system',
+                fontSize: localStorage.getItem('app_font_size') || 'base',
+                systemIsDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
 
-		// 2. 動態監聽 OS 切換
-		mediaQuery.addEventListener('change', (e) => {
-			updateTheme(e.matches);
-		});
-	</script>
+                init() {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                        this.systemIsDark = e.matches;
+                    });
+                },
+
+                get currentTheme() {
+                    if (this.theme === 'system') {
+                        return this.systemIsDark ? 'dark' : 'light';
+                    }
+                    return this.theme;
+                },
+
+                setTheme(mode) {
+                    this.theme = mode;
+                    localStorage.setItem('app_theme', mode);
+                    if (mode === 'dark' || (mode === 'system' && this.systemIsDark)) {
+                        document.documentElement.classList.add('dark');
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.setAttribute('data-theme', 'light');
+                    }
+                },
+
+                // 🔥 修正：同時設定 data-font-size 和 style.fontSize
+                setFontSize(size) {
+                    this.fontSize = size;
+                    localStorage.setItem('app_font_size', size);
+                    
+                    const sizeMap = {
+                        'sm': '14px',
+                        'base': '16px',
+                        'lg': '18px'
+                    };
+                    document.documentElement.style.fontSize = sizeMap[size] || '16px';
+                    document.documentElement.setAttribute('data-font-size', size);
+                }
+            }));
+
+            // dropdown 組件
+            Alpine.data('dropdown', () => ({
+                open: false
+            }));
+        });
+
+        // 監聽 toggle-settings-drawer 事件（放在外面也可以）
+        document.addEventListener('toggle-settings-drawer', () => {
+            Livewire.dispatch('toggle-settings-drawer');
+        });
+    </script>
 </head>
 <body class="min-h-screen pb-28 md:pb-32">
 
