@@ -21,7 +21,24 @@
     --song-modal-bg: rgba(20, 18, 18, 0.98);
 	--song-input-bg: rgba(41, 37, 36, 0.95);
 }
+/* ==========================================================================
+   帳戶主題色容器 - 僅控制子元素顏色，不設背景
+   ========================================================================== */
 
+.bg-blue .account-left-bar   { @apply bg-sky-400/60 dark:bg-sky-500/40; }
+.bg-blue .account-badge      { @apply bg-sky-100/50 text-sky-700/80 dark:bg-sky-900/30 dark:text-sky-300/70; }
+
+.bg-green .account-left-bar  { @apply bg-emerald-400/60 dark:bg-emerald-500/40; }
+.bg-green .account-badge     { @apply bg-emerald-100/50 text-emerald-700/80 dark:bg-emerald-900/30 dark:text-emerald-300/70; }
+
+.bg-orange .account-left-bar { @apply bg-amber-400/60 dark:bg-amber-500/40; }
+.bg-orange .account-badge    { @apply bg-amber-100/50 text-amber-700/80 dark:bg-amber-900/30 dark:text-amber-300/70; }
+
+.bg-purple .account-left-bar { @apply bg-violet-400/60 dark:bg-violet-500/40; }
+.bg-purple .account-badge    { @apply bg-violet-100/50 text-violet-700/80 dark:bg-violet-900/30 dark:text-violet-300/70; }
+
+.bg-red .account-left-bar    { @apply bg-rose-400/60 dark:bg-rose-500/40; }
+.bg-red .account-badge       { @apply bg-rose-100/50 text-rose-700/80 dark:bg-rose-900/30 dark:text-rose-300/70; }
 /* ==========================================================================
    字體大小控制
    ========================================================================== */
