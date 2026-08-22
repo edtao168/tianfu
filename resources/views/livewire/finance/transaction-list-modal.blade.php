@@ -118,7 +118,7 @@
 						</div>
 					</div>
 
-					{{-- 交易明細列表 - 按日期分組 (使用原有的 list 資料) --}}
+					{{-- 交易明細列表 - 按日期分組 --}}
 					@php
 						// 在 Blade 中將 list 按日期分組
 						$groupedList = [];
@@ -148,13 +148,12 @@
 								<div class="bg-base-100 rounded-2xl border border-stone-200/50 dark:border-stone-800 shadow-sm divide-y divide-stone-100 dark:divide-stone-800/60 overflow-hidden">
 									@foreach($dayTransactions as $tx)
 										@php
+											$typeTheme = $tx['account_type_theme'] ?? 'orange';
 											$isIncome = $tx['is_income'] ?? false;
 											$isExpense = $tx['is_expense'] ?? false;
 											$isTransfer = $tx['is_transfer'] ?? false;
-											
 											$categoryIcon = $tx['category_icon'] ?? 'folder';
 											$categoryName = $tx['category_name'] ?? null;
-											
 											if ($isTransfer) {
 												$amountClass = 'text-sky-600 dark:text-sky-400';
 												$iconColor = 'text-sky-500 dark:text-sky-400';
@@ -204,8 +203,12 @@
 											}
 										@endphp
 										
-										<div class="relative flex items-center py-3 px-4 hover:bg-stone-50/40 dark:hover:bg-stone-800/40 transition-all duration-150 cursor-pointer group border-l-4 border-transparent hover:border-stone-300 dark:hover:border-stone-600"
+										<!-- 單筆交易卡片 - 使用 btn-{theme} 結構 -->
+										<div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group"
 											 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
+											
+											{{-- 左側主題側邊條 - 與 account-index 相同結構 --}}
+											<span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
 											
 											{{-- 圖標 --}}
 											<div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">

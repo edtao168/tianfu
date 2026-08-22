@@ -240,8 +240,21 @@ class TransactionListModal extends Component
 			if ($tx->to_account_id) {
 				$accountIds[] = $tx->to_account_id;
 			}
+			// ✅ 獲取帳戶顏色（從關聯帳戶獲取）
+			$account = null;
+			if ($this->accountId && $this->currentAccount) {
+				// 帳戶模式：使用當前帳戶
+				$account = $this->currentAccount;
+			} else {
+				// 期間模式：嘗試獲取關聯帳戶
+				$account = $tx->fromAccount ?? $tx->toAccount;
+			}
 		}
 		$accounts = FinancialAccount::whereIn('id', array_unique($accountIds))->get()->keyBy('id');
+    
+		// 使用帳戶類型配置來決定主題色
+		$typeConfig = config("business.account_types.{$account?->type}") ?? config("business.account_types.cash");
+		$accountTypeTheme = $typeConfig['theme'] ?? 'orange';
 
 		// 獲取幣別配置
 		$currencies = config('business.currencies', []);
@@ -260,7 +273,19 @@ class TransactionListModal extends Component
 
 			// 上方統計區：換算為本幣（Base Currency）進行精確加總
 			$convertedAmountForStats = $this->convertToBase($rawAmount, $tx->currency);
-
+			
+			// ✅ 獲取帳戶並決定主題色（移到循環內）
+			$account = null;
+			if ($this->accountId && $this->currentAccount) {
+				$account = $this->currentAccount;
+			} else {
+				$account = $tx->fromAccount ?? $tx->toAccount;
+			}
+				
+			// ✅ 在循環內計算每個交易的主題色
+			$typeConfig = config("business.account_types.{$account?->type}") ?? config("business.account_types.cash");
+			$accountTypeTheme = $typeConfig['theme'] ?? 'orange';
+	
 			// 判斷收入/支出（依據是否有指定帳戶）
 			if ($this->accountId) {
 				// 帳戶模式：根據與指定帳戶的關係判斷
@@ -355,6 +380,7 @@ class TransactionListModal extends Component
 				'from_account_name' => $fromAccountName,
 				'to_account_name' => $toAccountName,
 				'account_name' => $accountName,
+				'account_type_theme' => $accountTypeTheme,	
 			];
 		}
 

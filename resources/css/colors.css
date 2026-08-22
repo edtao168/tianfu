@@ -21,24 +21,115 @@
     --song-modal-bg: rgba(20, 18, 18, 0.98);
 	--song-input-bg: rgba(41, 37, 36, 0.95);
 }
+
 /* ==========================================================================
-   帳戶主題色容器 - 僅控制子元素顏色，不設背景
+   卡片主題色 - 按帳戶類型變化 (修正背景色顯示問題)
    ========================================================================== */
 
-.bg-blue .account-left-bar   { @apply bg-sky-400/60 dark:bg-sky-500/40; }
-.bg-blue .account-badge      { @apply bg-sky-100/50 text-sky-700/80 dark:bg-sky-900/30 dark:text-sky-300/70; }
+/* 卡片背景色 - 亮色模式 */
+.card-orange {
+    background-color: rgba(251, 191, 36, 0.12) !important;
+}
+.card-green {
+    background-color: rgba(52, 211, 153, 0.12) !important;
+}
+.card-blue {
+    background-color: rgba(56, 189, 248, 0.12) !important;
+}
+.card-purple {
+    background-color: rgba(139, 92, 246, 0.12) !important;
+}
+.card-red {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+}
 
-.bg-green .account-left-bar  { @apply bg-emerald-400/60 dark:bg-emerald-500/40; }
-.bg-green .account-badge     { @apply bg-emerald-100/50 text-emerald-700/80 dark:bg-emerald-900/30 dark:text-emerald-300/70; }
+/* 卡片背景色 - 暗色模式 */
+[data-theme="dark"] .card-orange {
+    background-color: rgba(251, 191, 36, 0.18) !important;
+}
+[data-theme="dark"] .card-green {
+    background-color: rgba(52, 211, 153, 0.18) !important;
+}
+[data-theme="dark"] .card-blue {
+    background-color: rgba(56, 189, 248, 0.18) !important;
+}
+[data-theme="dark"] .card-purple {
+    background-color: rgba(139, 92, 246, 0.18) !important;
+}
+[data-theme="dark"] .card-red {
+    background-color: rgba(244, 63, 94, 0.18) !important;
+}
 
-.bg-orange .account-left-bar { @apply bg-amber-400/60 dark:bg-amber-500/40; }
-.bg-orange .account-badge    { @apply bg-amber-100/50 text-amber-700/80 dark:bg-amber-900/30 dark:text-amber-300/70; }
+/* 卡片 hover 效果 */
+.card-orange:hover {
+    background-color: rgba(251, 191, 36, 0.22) !important;
+}
+.card-green:hover {
+    background-color: rgba(52, 211, 153, 0.22) !important;
+}
+.card-blue:hover {
+    background-color: rgba(56, 189, 248, 0.22) !important;
+}
+.card-purple:hover {
+    background-color: rgba(139, 92, 246, 0.22) !important;
+}
+.card-red:hover {
+    background-color: rgba(244, 63, 94, 0.22) !important;
+}
 
-.bg-purple .account-left-bar { @apply bg-violet-400/60 dark:bg-violet-500/40; }
-.bg-purple .account-badge    { @apply bg-violet-100/50 text-violet-700/80 dark:bg-violet-900/30 dark:text-violet-300/70; }
+[data-theme="dark"] .card-orange:hover {
+    background-color: rgba(251, 191, 36, 0.28) !important;
+}
+[data-theme="dark"] .card-green:hover {
+    background-color: rgba(52, 211, 153, 0.28) !important;
+}
+[data-theme="dark"] .card-blue:hover {
+    background-color: rgba(56, 189, 248, 0.28) !important;
+}
+[data-theme="dark"] .card-purple:hover {
+    background-color: rgba(139, 92, 246, 0.28) !important;
+}
+[data-theme="dark"] .card-red:hover {
+    background-color: rgba(244, 63, 94, 0.28) !important;
+}
 
-.bg-red .account-left-bar    { @apply bg-rose-400/60 dark:bg-rose-500/40; }
-.bg-red .account-badge       { @apply bg-rose-100/50 text-rose-700/80 dark:bg-rose-900/30 dark:text-rose-300/70; }
+/* ==========================================================================
+   側邊條顏色 - 使用 card-{theme} 作為父容器
+   ========================================================================== */
+
+.card-orange .account-left-bar {
+    background-color: rgba(251, 191, 36, 0.6);
+}
+.card-green .account-left-bar {
+    background-color: rgba(52, 211, 153, 0.6);
+}
+.card-blue .account-left-bar {
+    background-color: rgba(56, 189, 248, 0.6);
+}
+.card-purple .account-left-bar {
+    background-color: rgba(139, 92, 246, 0.6);
+}
+.card-red .account-left-bar {
+    background-color: rgba(244, 63, 94, 0.6);
+}
+
+/* 暗色模式側邊條 */
+[data-theme="dark"] .card-orange .account-left-bar {
+    background-color: rgba(251, 191, 36, 0.4);
+}
+[data-theme="dark"] .card-green .account-left-bar {
+    background-color: rgba(52, 211, 153, 0.4);
+}
+[data-theme="dark"] .card-blue .account-left-bar {
+    background-color: rgba(56, 189, 248, 0.4);
+}
+[data-theme="dark"] .card-purple .account-left-bar {
+    background-color: rgba(139, 92, 246, 0.4);
+}
+[data-theme="dark"] .card-red .account-left-bar {
+    background-color: rgba(244, 63, 94, 0.4);
+}
+
 /* ==========================================================================
    字體大小控制
    ========================================================================== */

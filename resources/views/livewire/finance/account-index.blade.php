@@ -200,108 +200,70 @@
         @endforeach
     </div>
 
-    <!-- filepath: resources/views/livewire/finance/account-index.blade.php -->
+    {{-- ============================================================ --}}
+    {{-- 5. 帳戶列表 --}}
+    {{-- ============================================================ --}}
 
-{{-- ============================================================ --}}
-{{-- 5. 帳戶列表 --}}
-{{-- ============================================================ --}}
-
-@foreach($this->currencyGroups as $group)
-    @php
-        $currencyTheme = $group['theme'] ?? 'blue';
-        $currencyColorMap = [
-            'blue'   => 'sky',
-            'red'    => 'rose',
-            'green'  => 'emerald',
-            'purple' => 'violet',
-            'orange' => 'orange',
-        ];
-        $dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
-    @endphp
-    
-    <div class="space-y-3 pt-2 animate-fadeIn">
-        {{-- 標題列 --}}
-        <h2 class="text-sm font-bold text-stone-500 dark:text-stone-400 tracking-wider flex items-center gap-2">
-            <span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
-            {{ $group['currency_name'] }}資產明細
-            <span class="text-xs text-stone-400 dark:text-stone-500">點擊卡片看明細</span>
-        </h2>
+    @foreach($this->currencyGroups as $group)
+        @php
+            $currencyTheme = $group['theme'] ?? 'blue';
+            $currencyColorMap = [
+                'blue'   => 'sky',
+                'red'    => 'rose',
+                'green'  => 'emerald',
+                'purple' => 'violet',
+                'orange' => 'orange',
+            ];
+            $dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
+        @endphp
         
-        {{-- 手機端卡片式 --}}
-        <div class="block md:hidden">
-            <div class="grid grid-cols-1 gap-4">
-                @foreach($group['accounts'] as $account)
-                    @php
-                        $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                        $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
-                        $typeTheme = $typeConfig['theme'] ?? 'orange';
-                    @endphp
+        <div class="space-y-3 pt-2 animate-fadeIn">
+            {{-- 標題列 --}}
+            <h2 class="text-sm font-bold text-stone-500 dark:text-stone-400 tracking-wider flex items-center gap-2">
+                <span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
+                {{ $group['currency_name'] }}資產明細
+                <span class="text-xs text-stone-400 dark:text-stone-500">點擊卡片看明細</span>
+            </h2>
+            
+            {{-- 統一的網格卡片 --}}
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				@foreach($group['accounts'] as $account)
+					@php
+						$typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
+						$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+						$typeTheme = $typeConfig['theme'] ?? 'orange';
+					@endphp
 
-                    {{-- 最外層套用 btn-{theme} 讓內部元件吃 css 規則 --}}
-                    <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="btn-{{ $typeTheme }} account-card p-5 pl-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 shadow-sm cursor-pointer transition-all duration-200 active:scale-[0.98] hover:border-stone-300 dark:hover:border-stone-700 flex flex-col justify-between h-28 relative overflow-hidden">
-                        
-                        {{-- 直接使用 colors.css 定義的 .account-left-bar --}}
-                        <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
+					<div wire:click="viewAccountTransactions({{ $account->id }})" 
+						 class="card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-stone-200/60 dark:border-stone-800 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-stone-300 dark:hover:border-stone-700 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
+						
+						{{-- 側邊條 --}}
+						<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-2">
-                                <x-dynamic-component :component="$icon" class="w-5 h-5 text-stone-400 dark:text-stone-500" />
-                                <span class="font-bold text-stone-800 dark:text-stone-200 text-base">{{ $account->name }}</span>
-                            </div>
-                            <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-mono">
-                                {{ $typeConfig['name'] }}
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between items-end mt-2">
-                            <span class="text-xs text-stone-400 dark:text-stone-500 font-medium">當前餘額</span>
-                            <span class="font-mono text-xl font-extrabold text-stone-800 dark:text-stone-100">
-                                <span class="text-stone-400 dark:text-stone-500 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
-                            </span>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+						{{-- 帳戶類型主題背景色 (淡色) --}}
+						<div class="absolute inset-0 opacity-5 dark:opacity-10 rounded-2xl bg-{{ $typeTheme }}-500"></div>
+
+						<div class="flex justify-between items-start relative z-10">
+							<div class="flex items-center gap-2 min-w-0">
+								<x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 text-stone-400 dark:text-stone-500" />
+								<span class="font-bold text-stone-800 dark:text-stone-200 text-base truncate">{{ $account->name }}</span>
+							</div>
+							<span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-mono flex-shrink-0 ml-2">
+								{{ $typeConfig['name'] }}
+							</span>
+						</div>
+						
+						<div class="flex justify-between items-end mt-2 relative z-10">
+							<span class="text-xs text-stone-400 dark:text-stone-500 font-medium">當前餘額</span>
+							<span class="font-mono text-xl font-extrabold text-stone-800 dark:text-stone-100 truncate ml-2">
+								<span class="text-stone-400 dark:text-stone-500 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
+							</span>
+						</div>
+					</div>
+				@endforeach
+			</div>
         </div>
-
-        {{-- PC端網格 --}}
-        <div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($group['accounts'] as $account)
-                @php
-                    $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                    $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
-                    $typeTheme = $typeConfig['theme'] ?? 'orange';
-                @endphp
-
-                {{-- 最外層套用 btn-{theme} 讓內部元件吃 css 規則 --}}
-                <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                     class="btn-{{ $typeTheme }} account-card p-4 pl-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-stone-300 dark:hover:border-stone-700 flex flex-col justify-between h-28 active:scale-[0.99] relative overflow-hidden">
-                    
-                    {{-- 直接使用 colors.css 定義的 .account-left-bar --}}
-                    <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
-
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-2">
-                            <x-dynamic-component :component="$icon" class="w-5 h-5 text-stone-400 dark:text-stone-500" />
-                            <span class="font-bold text-stone-800 dark:text-stone-200 text-base">{{ $account->name }}</span>
-                        </div>
-                        <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-mono">
-                            {{ $typeConfig['name'] }}
-                        </span>
-                    </div>
-                    
-                    <div class="flex justify-between items-end mt-2">
-                        <span class="text-xs text-stone-400 dark:text-stone-500 font-medium">當前餘額</span>
-                        <span class="font-mono text-xl font-extrabold text-stone-800 dark:text-stone-100">
-                            <span class="text-stone-400 dark:text-stone-500 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
-                        </span>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-@endforeach
+    @endforeach
 
     {{-- ============================================================ --}}
     {{-- 6. 新增/編輯帳戶 Modal --}}
