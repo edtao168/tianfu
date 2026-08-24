@@ -92,6 +92,58 @@
 [data-theme="dark"] .card-red:hover .account-left-bar {
     background-color: rgba(244, 63, 94, 0.6);
 }
+/* ==========================================================================
+   帳戶類型 Badge 背景色與文字色彩 (比照側邊條配色)
+   ========================================================================== */
+
+/* 預設 Badge 基礎樣式微調 (若有需要) */
+.account-badge {
+    transition: all 0.2s ease-in-out;
+}
+
+/* --- 亮色模式 Badge 配色 --- */
+.card-orange .account-badge {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: #b45309; /* amber-700 */
+}
+.card-green .account-badge {
+    background-color: rgba(52, 211, 153, 0.15);
+    color: #047857; /* emerald-700 */
+}
+.card-blue .account-badge {
+    background-color: rgba(56, 189, 248, 0.15);
+    color: #0369a1; /* sky-700 */
+}
+.card-purple .account-badge {
+    background-color: rgba(139, 92, 246, 0.15);
+    color: #6d28d9; /* violet-700 */
+}
+.card-red .account-badge {
+    background-color: rgba(244, 63, 94, 0.15);
+    color: #be123c; /* rose-700 */
+}
+
+/* --- 暗色模式 Badge 配色 --- */
+[data-theme="dark"] .card-orange .account-badge {
+    background-color: rgba(251, 191, 36, 0.2);
+    color: #fcd34d; /* amber-300 */
+}
+[data-theme="dark"] .card-green .account-badge {
+    background-color: rgba(52, 211, 153, 0.2);
+    color: #6ee7b7; /* emerald-300 */
+}
+[data-theme="dark"] .card-blue .account-badge {
+    background-color: rgba(56, 189, 248, 0.2);
+    color: #7dd3fc; /* sky-300 */
+}
+[data-theme="dark"] .card-purple .account-badge {
+    background-color: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd; /* violet-300 */
+}
+[data-theme="dark"] .card-red .account-badge {
+    background-color: rgba(244, 63, 94, 0.2);
+    color: #fda4af; /* rose-300 */
+}
 
 /* ==========================================================================
    字體大小控制

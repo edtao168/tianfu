@@ -6,10 +6,10 @@
     {{-- ============================================================ --}}
     <div class="space-y-3">
         <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2">
+            <h2 class="text-sm font-bold opacity-80 tracking-wider flex items-center gap-2">
                 <span class="w-1.5 h-4.5 rounded-full bg-sky-500"></span>
                 期間資產統計
-                <span class="text-xs opacity-50">點擊卡片看明細</span>
+                <span class="text-xs opacity-60">點擊卡片看明細</span>
             </h2>
         </div>
 
@@ -41,13 +41,13 @@
                 <div class="stats shadow-sm bg-base-100 border border-base-300 rounded-2xl hover:border-base-content/20 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden" 
                      wire:click="showPeriodDetail('{{ $period }}')">
                     <div class="stat p-5">
-                        <div class="stat-title flex items-center justify-between opacity-70 font-medium">
+                        <div class="stat-title flex items-center justify-between opacity-80 font-medium">
                             <span class="flex items-center gap-1.5">
                                 <span class="flex h-2 w-2 rounded-full bg-teal-500/70"></span>
                                 {{ $title }}
                             </span>
                             @if($currencyCount > 1)
-                                <span class="text-xs opacity-50 flex items-center gap-0.5 font-mono">
+                                <span class="text-xs opacity-60 flex items-center gap-0.5 font-mono">
                                     ({{ $currencyCount }}種幣別)
                                 </span>
                             @endif
@@ -62,7 +62,7 @@
                                 <span class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">-{{ $baseSymbol }} {{ $expense }}</span>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-base-200">
-                                <span class="text-sm font-bold opacity-70">差額</span>
+                                <span class="text-sm font-bold opacity-80">差額</span>
                                 <span class="text-lg font-black font-mono {{ $isProfitNegative ? 'text-rose-600 dark:text-rose-400' : 'text-base-content' }}">
                                     {{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
                                 </span>
@@ -243,9 +243,9 @@
                                 <x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 opacity-50" />
                                 <span class="font-bold text-base-content text-base truncate">{{ $account->name }}</span>
                             </div>
-                            <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md bg-base-200 text-base-content font-mono flex-shrink-0 ml-2">
-                                {{ $typeConfig['name'] }}
-                            </span>
+                            <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md font-mono flex-shrink-0 ml-2">
+								{{ $typeConfig['name'] }}
+							</span>
                         </div>
                         
                         <div class="flex justify-between items-end mt-2 relative z-10">

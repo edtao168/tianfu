@@ -1,11 +1,10 @@
-<!-- filepath: resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
       x-data="appSettings"
       x-bind:class="currentTheme === 'dark' ? 'dark' : ''"
       x-bind:data-theme="currentTheme"
       x-bind:data-font-size="fontSize"
-      class="bg-stone-900 text-stone-100 antialiased selection:bg-teal-800 selection:text-teal-100">
+      class="bg-base-200 text-base-content antialiased selection:bg-teal-800 selection:text-teal-100">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -108,19 +107,19 @@
         });
     </script>
 </head>
-<body class="min-h-screen pb-28 md:pb-32">
+<body class="min-h-screen pb-28 md:pb-32 bg-base-200 text-base-content">
 
-    <header class="sticky top-0 z-40 backdrop-blur-md bg-stone-50/80 border-b border-stone-200/40 px-6 py-4 flex items-center justify-between">
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-base-100/80 px-6 py-4 flex items-center justify-between border-b border-base-200">
 		{{-- 替換原標題為圖形樣式 --}}
 		<img src="{{ asset('tianfu.png') }}" alt="添富記賬" class="h-10 w-auto object-contain">
 		
 		<div class="flex items-center gap-2">
-			<span class="text-xl font-black tracking-wider text-stone-800"></span>
+			<span class="text-xl font-black tracking-wider text-base-content"></span>
 		</div>
 
 		<button x-data 
 				@click="$dispatch('toggle-settings-drawer')" 
-				class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-stone-100 flex items-center justify-center">
+				class="w-10 h-10 rounded-full overflow-hidden border border-base-300 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-teal-500/50 bg-base-200 flex items-center justify-center">
 			
 			@php
 				$avatarUrl = auth()->user()?->partner?->getAvatarUrl();
@@ -133,11 +132,11 @@
 					 class="w-full h-full object-cover">
 			@else
 				{{-- 新使用者/無頭像：顯示姓名首字或通用預設 Icon --}}
-				<div class="w-full h-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold text-sm">
+				<div class="w-full h-full bg-base-300 text-base-content flex items-center justify-center font-bold text-sm">
 					@if(auth()->check() && auth()->user()->name)
 						{{ mb_substr(auth()->user()->name, 0, 1) }}
 					@else
-						<x-icon name="o-user" class="w-5 h-5 text-stone-400" />
+						<x-icon name="o-user" class="w-5 h-5 opacity-60" />
 					@endif
 				</div>
 			@endif
@@ -149,7 +148,7 @@
         {{ $slot }}
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 z-50 px-6 pb-6 pt-2 bg-gradient-to-t from-stone-100/90 via-stone-50/90 to-transparent backdrop-blur-lg">
+<nav class="fixed bottom-0 left-0 right-0 z-50 px-6 pb-6 pt-2 bg-gradient-to-t from-stone-100/90 via-stone-50/90 to-transparent backdrop-blur-lg">
         <div class="max-w-lg mx-auto bg-stone-900/90 text-stone-200 rounded-3xl py-2.5 px-3 shadow-2xl border border-stone-800/80 flex items-center justify-between relative">
             
             <a href="{{ route('finance.accounts') }}" class="flex flex-col items-center gap-1 flex-1 py-1 transition-all duration-300 {{ request()->routeIs('finance.accounts') ? 'text-teal-400 scale-105' : 'text-stone-400 hover:text-stone-200' }}">
