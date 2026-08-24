@@ -8,7 +8,7 @@
     <div class="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between border-b border-base-200 pb-4 sm:pb-5">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-base-content">💱 匯率設定</h1>
-            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">管理多幣別與換算本幣，所有統計報表將以本幣貨幣顯示</p>
+            <p class="text-xs sm:text-sm text-base-content/70 mt-0.5 sm:mt-1">管理多幣別與換算本幣，所有統計報表將以本幣貨幣顯示</p>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
             <x-button 
@@ -24,8 +24,8 @@
     {{-- 2. 帳本切換器（多帳本時顯示） --}}
     {{-- ============================================================ --}}
     @if($shops->count() > 1)
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-stone-50/80 dark:bg-stone-800/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60">
-            <span class="text-xs sm:text-sm font-medium text-stone-500 dark:text-stone-400 whitespace-nowrap">📒 當前帳本：</span>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-base-200/80 rounded-xl border border-base-200">
+            <span class="text-xs sm:text-sm font-medium text-base-content/70 whitespace-nowrap">📒 當前帳本：</span>
             <div class="flex flex-wrap gap-1.5 w-full sm:w-auto">
                 @foreach($shops as $shop)
                     <button 
@@ -60,9 +60,9 @@
     {{-- 4. 新增/編輯表單 --}}
     {{-- ============================================================ --}}
     @if($showForm)
-        <div class="card bg-base-200 dark:bg-base-300 shadow-lg border border-stone-200/60 dark:border-stone-700/60 rounded-xl sm:rounded-2xl">
+        <div class="card bg-base-200 shadow-lg border border-base-200 rounded-xl sm:rounded-2xl">
             <div class="card-body p-4 sm:p-6">
-                <h3 class="card-title text-base sm:text-lg font-bold text-stone-700 dark:text-stone-200">
+                <h3 class="card-title text-base sm:text-lg font-bold text-base-content">
                     {{ $editingId ? '✏️ 編輯幣別' : '➕ 新增幣別' }}
                 </h3>
                 
@@ -100,12 +100,12 @@
                 <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-6 mt-4">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" wire:model="is_base" class="checkbox checkbox-primary checkbox-sm sm:checkbox-md" />
-                        <span class="text-xs sm:text-sm text-stone-600 dark:text-stone-300">👑 設為本幣貨幣</span>
+                        <span class="text-xs sm:text-sm text-base-content">👑 設為本幣貨幣</span>
                     </label>
                     
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" wire:model="is_active" class="checkbox checkbox-success checkbox-sm sm:checkbox-md" />
-                        <span class="text-xs sm:text-sm text-stone-600 dark:text-stone-300">✅ 啟用</span>
+                        <span class="text-xs sm:text-sm text-base-content">✅ 啟用</span>
                     </label>
                     
                     <div class="flex gap-2 w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
@@ -137,14 +137,14 @@
                 icon="o-magnifying-glass"
             />
             
-            <select wire:model.live="filterActive" class="select select-sm select-bordered bg-white/80 dark:bg-stone-800/80 flex-1 sm:flex-none">
+            <select wire:model.live="filterActive" class="select select-sm select-bordered bg-base-100 text-base-content flex-1 sm:flex-none">
                 <option value="all">📋 全部</option>
                 <option value="active">✅ 啟用</option>
                 <option value="inactive">⛔ 停用</option>
             </select>
         </div>
         
-        <div class="text-xs sm:text-sm text-stone-400 dark:text-stone-500 whitespace-nowrap">
+        <div class="text-xs sm:text-sm text-base-content/60 whitespace-nowrap">
             共 {{ $currencies->total() }} 個幣別
         </div>
     </div>
@@ -155,7 +155,7 @@
 
     @if($currencies->count() > 0)
         
-        {{-- 6.1 本幣貨幣卡（醒目展示） --}}
+        {{-- 6.1 本幣貨幣卡（醒目展示，樣式保持不變） --}}
         @if($baseCurrency)
             <div class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 dark:from-indigo-700 dark:via-indigo-600 dark:to-purple-700 rounded-2xl p-5 sm:p-8 text-white shadow-xl">
                 {{-- 背景裝飾 --}}
@@ -216,10 +216,10 @@
         {{-- 6.2 外幣卡片牆（使用 btn-{theme} 系統） --}}
         <div>
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 tracking-wider">
+                <h3 class="text-sm font-semibold text-base-content/70 tracking-wider">
                     💱 外幣列表
                 </h3>
-                <span class="text-xs text-stone-400 dark:text-stone-500">{{ $foreignCurrencies->count() }} 種外幣</span>
+                <span class="text-xs text-base-content/60">{{ $foreignCurrencies->count() }} 種外幣</span>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
@@ -237,15 +237,15 @@
                         
                         <div class="btn-{{ $theme }}">
                             <div 
-                                class="currency-card p-4 sm:p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer {{ $currency->is_active ? 'opacity-100' : 'opacity-60' }}"
+                                class="currency-card p-4 sm:p-5 rounded-xl border border-base-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer {{ $currency->is_active ? 'opacity-100' : 'opacity-60' }}"
                                 wire:click="edit({{ $currency->id }})"
                             >
                                 {{-- 幣別標題列：圓形符號 + 代碼 + 狀態 --}}
                                 <div class="flex items-start justify-between">
                                     <div class="flex items-center gap-3">
-                                        {{-- 小圓形貨幣符號（使用 currency-symbol 樣式） --}}
-                                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/70 dark:bg-stone-800/70 backdrop-blur-sm flex items-center justify-center text-base sm:text-lg font-bold border shadow-sm">
-                                            <span class="currency-symbol">{{ $currency->symbol }}</span>
+                                        {{-- 小圓形貨幣符號 --}}
+                                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-base-200 backdrop-blur-sm flex items-center justify-center text-base sm:text-lg font-bold border border-base-200 shadow-sm">
+                                            <span class="currency-symbol text-base-content">{{ $currency->symbol }}</span>
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-2">
@@ -254,22 +254,22 @@
                                                     <span class="badge badge-error badge-sm text-[10px]">停用</span>
                                                 @endif
                                             </div>
-                                            <p class="text-xs sm:text-sm text-stone-500 dark:text-stone-200">{{ $currency->name }}</p>
+                                            <p class="text-xs sm:text-sm text-base-content/70">{{ $currency->name }}</p>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 {{-- 匯率資訊 --}}
-                                <div class="mt-3 pt-3 border-t border-stone-200/60 dark:border-stone-700/60">
+                                <div class="mt-3 pt-3 border-t border-base-200">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-xs text-stone-400 dark:text-stone-800">兌換匯率</span>
-                                        <span class="text-xs text-stone-400 dark:text-stone-800">1 {{ $currency->code }} =</span>
+                                        <span class="text-xs text-base-content/60">兌換匯率</span>
+                                        <span class="text-xs text-base-content/60">1 {{ $currency->code }} =</span>
                                     </div>
                                     <div class="flex items-end justify-between mt-0.5">
                                         <span class="text-lg font-mono font-bold text-base-content">
                                             {{ number_format($currency->rate, 6) }}
                                         </span>
-                                        <span class="text-sm font-medium text-stone-500 dark:text-stone-200">
+                                        <span class="text-sm font-medium text-base-content/70">
                                             {{ $baseCurrency->code ?? '本幣' }}
                                         </span>
                                     </div>
@@ -309,10 +309,10 @@
 
     @else
         {{-- 完全沒有幣別時 --}}
-        <div class="bg-white/70 dark:bg-stone-800/50 backdrop-blur-sm rounded-xl border border-stone-200/60 dark:border-stone-700/60 p-8 sm:p-12 text-center">
+        <div class="bg-base-200/50 backdrop-blur-sm rounded-xl border border-base-200 p-8 sm:p-12 text-center">
             <div class="text-6xl mb-4">💱</div>
-            <p class="text-lg font-medium text-stone-600 dark:text-stone-300">還沒有設定任何幣別</p>
-            <p class="text-sm text-stone-400 dark:text-stone-500 mt-1">請先新增一個幣別，並設為本幣貨幣</p>
+            <p class="text-lg font-medium text-base-content">還沒有設定任何幣別</p>
+            <p class="text-sm text-base-content/60 mt-1">請先新增一個幣別，並設為本幣貨幣</p>
             <x-button label="➕ 新增第一個幣別" wire:click="create" class="btn-green mt-4" />
         </div>
     @endif

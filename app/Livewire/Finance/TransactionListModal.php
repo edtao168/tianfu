@@ -251,10 +251,6 @@ class TransactionListModal extends Component
 			}
 		}
 		$accounts = FinancialAccount::whereIn('id', array_unique($accountIds))->get()->keyBy('id');
-    
-		// 使用帳戶類型配置來決定主題色
-		$typeConfig = config("business.account_types.{$account?->type}") ?? config("business.account_types.cash");
-		$accountTypeTheme = $typeConfig['theme'] ?? 'orange';
 
 		// 獲取幣別配置
 		$currencies = config('business.currencies', []);

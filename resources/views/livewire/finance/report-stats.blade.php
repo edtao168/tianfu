@@ -1,33 +1,33 @@
 <!-- resources/views/livewire/finance/report-stats.blade.php -->
-<div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 text-base-content">
     
     {{-- ============================================================ --}}
     {{-- 頂部篩選與第一層分頁 --}}
     {{-- ============================================================ --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--song-border)] pb-4">
-        <div class="inline-flex p-1 rounded-xl bg-[var(--song-card-bg)] border border-[var(--song-border)] backdrop-blur-sm self-start flex-wrap gap-1">
-            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-[rgba(162,189,219,0.25)] text-[var(--song-text)] shadow-sm' : 'text-[var(--song-text)]/60 hover:text-[var(--song-text)]' }}" 
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-4">
+        <div class="inline-flex p-1 rounded-xl bg-base-200 border border-base-200 backdrop-blur-sm self-start flex-wrap gap-1">
+            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'category')">📊 分類報表</button>
-            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-[rgba(162,189,219,0.25)] text-[var(--song-text)] shadow-sm' : 'text-[var(--song-text)]/60 hover:text-[var(--song-text)]' }}" 
+            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'trend')">📈 收支趨勢</button>
-            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $showAssetTrend ? 'bg-[rgba(129,140,248,0.25)] text-[#818cf8] shadow-sm' : 'text-[var(--song-text)]/60 hover:text-[var(--song-text)]' }}" 
+            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $showAssetTrend ? 'bg-primary/20 text-primary shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'asset')">🏦 總資產趨勢</button>
         </div>
 
         <div class="flex items-center gap-2">
             <select wire:model.live="selectedYear" wire:change="changeDate" 
-                    class="select select-sm pl-3 pr-10 bg-[var(--song-bg)] border-[var(--song-border)] text-[var(--song-text)] focus:border-[#a2bddb] focus:ring-1 focus:ring-[#a2bddb] rounded-lg opacity-100 font-medium">
+                    class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
                 @foreach(range(date('Y') - 3, date('Y') + 1) as $y)
-                    <option value="{{ $y }}" class="bg-[var(--song-bg)] text-[var(--song-text)]">{{ $y }} 年</option>
+                    <option value="{{ $y }}" class="bg-base-100 text-base-content">{{ $y }} 年</option>
                 @endforeach
             </select>
             
             {{-- 月份選擇器：只在非「年」視角且非總資產模式顯示 --}}
             @if(!($tab1 === 'category' && $tab3 === 'year') && !($tab1 === 'trend' && $tab3 === 'month') && !$showAssetTrend)
                 <select wire:model.live="selectedMonth" wire:change="changeDate" 
-                        class="select select-sm pl-3 pr-10 bg-[var(--song-bg)] border-[var(--song-border)] text-[var(--song-text)] focus:border-[#a2bddb] focus:ring-1 focus:ring-[#a2bddb] rounded-lg opacity-100 font-medium">
+                        class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
                     @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}" class="bg-[var(--song-bg)] text-[var(--song-text)]">{{ $m }} 月</option>
+                        <option value="{{ $m }}" class="bg-base-100 text-base-content">{{ $m }} 月</option>
                     @endforeach
                 </select>
             @endif
@@ -35,9 +35,9 @@
             {{-- 總資產模式顯示月份（僅每日視角需要） --}}
             @if($showAssetTrend && $assetTab === 'day')
                 <select wire:model.live="selectedMonth" wire:change="changeDate" 
-                        class="select select-sm pl-3 pr-10 bg-[var(--song-bg)] border-[var(--song-border)] text-[var(--song-text)] focus:border-[#a2bddb] focus:ring-1 focus:ring-[#a2bddb] rounded-lg opacity-100 font-medium">
+                        class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
                     @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}" class="bg-[var(--song-bg)] text-[var(--song-text)]">{{ $m }} 月</option>
+                        <option value="{{ $m }}" class="bg-base-100 text-base-content">{{ $m }} 月</option>
                     @endforeach
                 </select>
             @endif
@@ -49,41 +49,41 @@
     {{-- ============================================================ --}}
     <div class="flex flex-wrap gap-4 items-center justify-between">
         {{-- 第二層分頁：支出/收入/結餘 --}}
-        <div class="flex gap-1.5 p-1 bg-[var(--song-card-bg)] rounded-xl border border-[var(--song-border)] backdrop-blur-sm">
+        <div class="flex gap-1.5 p-1 bg-base-200 rounded-xl border border-base-200 backdrop-blur-sm">
             @if(!$showAssetTrend)
-                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'expense' ? 'bg-[#b57a7a]/20 text-[#b57a7a] hover:bg-[#b57a7a]/30' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'expense' ? 'bg-error/20 text-error hover:bg-error/30' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab2', 'expense')">支出</button>
-                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'income' ? 'bg-[#5b8c7a]/20 text-[#5b8c7a] hover:bg-[#5b8c7a]/30' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'income' ? 'bg-success/20 text-success hover:bg-success/30' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab2', 'income')">收入</button>
                 @if($tab1 === 'trend')
-                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'balance' ? 'bg-[rgba(162,189,219,0.25)] text-[#5a6a7a] hover:bg-[rgba(162,189,219,0.35)]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'balance' ? 'bg-base-100 text-base-content hover:bg-base-300' : 'btn-ghost text-base-content/50' }}" 
                             wire:click="$set('tab2', 'balance')">結餘</button>
                 @endif
             @else
                 {{-- 總資產模式：顯示本位幣資訊 --}}
-                <span class="px-3 py-1 text-xs font-bold text-[#818cf8] bg-[#818cf8]/10 rounded-lg">
+                <span class="px-3 py-1 text-xs font-bold text-primary bg-primary/10 rounded-lg">
                     本位幣：{{ $baseCurrency->symbol ?? 'NT$' }} {{ $baseCurrency->code ?? 'TWD' }}
                 </span>
             @endif
         </div>
 
         {{-- 第三層分頁：年/月/日 --}}
-        <div class="join border border-[var(--song-border)] rounded-lg overflow-hidden bg-[var(--song-card-bg)] backdrop-blur-sm">
+        <div class="join border border-base-200 rounded-lg overflow-hidden bg-base-200 backdrop-blur-sm">
             @if($showAssetTrend)
                 {{-- 總資產模式專用 --}}
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'month' ? 'bg-[rgba(129,140,248,0.15)] text-[#818cf8]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'month' ? 'bg-base-100 text-primary' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('assetTab', 'month')">月度</button>
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'day' ? 'bg-[rgba(129,140,248,0.15)] text-[#818cf8]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'day' ? 'bg-base-100 text-primary' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('assetTab', 'day')">每日</button>
             @elseif($tab1 === 'category')
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'year' ? 'bg-[rgba(162,189,219,0.15)] text-[var(--song-text)]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'year' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'year')">年{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-[rgba(162,189,219,0.15)] text-[var(--song-text)]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
             @else
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-[rgba(162,189,219,0.15)] text-[var(--song-text)]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
-                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'day' ? 'bg-[rgba(162,189,219,0.15)] text-[var(--song-text)]' : 'btn-ghost text-[var(--song-text)]/50' }}" 
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'day' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'day')">日{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
             @endif
         </div>
@@ -95,17 +95,17 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {{-- 左側圖表區 --}}
-        <div class="lg:col-span-5 bg-[var(--song-card-bg)] border border-[var(--song-border)] p-5 rounded-2xl backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.03)] flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
+        <div class="lg:col-span-5 bg-base-100 border border-base-200 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
             <div class="w-full max-w-[320px] relative" style="min-height: 300px;">
                 <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
                 @if($tab1 === 'category' && !$showAssetTrend)
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-                        <span class="text-xs text-[var(--song-text)]/50 font-bold tracking-widest">總額</span>
-                        <span class="text-lg font-black text-[var(--song-text)] font-mono" id="chartCenterTotal">${{ $this->categoryData['total'] ?? '0.00' }}</span>
+                        <span class="text-xs text-base-content/50 font-bold tracking-widest">總額</span>
+                        <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">${{ $this->categoryData['total'] ?? '0.00' }}</span>
                     </div>
                 @endif
                 @if($showAssetTrend)
-                    <div class="absolute top-2 right-2 text-[10px] text-[var(--song-text)]/30 font-mono">
+                    <div class="absolute top-2 right-2 text-[10px] text-base-content/30 font-mono">
                         {{ $baseCurrency->code ?? 'TWD' }}
                     </div>
                 @endif
@@ -119,10 +119,10 @@
                 {{-- ============================================================ --}}
                 {{-- 總資產趨勢列表 --}}
                 {{-- ============================================================ --}}
-                <div class="bg-[var(--song-card-bg)] border border-[var(--song-border)] rounded-2xl backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.03)] overflow-hidden">
-                    <div class="p-4 bg-[rgba(129,140,248,0.08)] border-b border-[var(--song-border)] font-bold text-xs tracking-widest text-[var(--song-text)]/70 flex justify-between items-center">
+                <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
+                    <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
                         <span>📈 總資產趨勢明細</span>
-                        <span class="text-[10px] font-normal text-[var(--song-text)]/40">
+                        <span class="text-[10px] font-normal text-base-content/40">
                             {{ $selectedYear }} 年 @if($assetTab === 'day') {{ $selectedMonth }} 月 @endif
                         </span>
                     </div>
@@ -130,26 +130,26 @@
                     <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
                         <table class="table table-pin-rows w-full text-sm">
                             <thead>
-                                <tr class="border-b border-[var(--song-border)] text-[var(--song-text)]/40">
-                                    <th class="bg-[var(--song-card-bg)] font-bold">時間</th>
-                                    <th class="bg-[var(--song-card-bg)] text-right font-bold">總資產</th>
-                                    <th class="bg-[var(--song-card-bg)] text-right font-bold">變動</th>
+                                <tr class="border-b border-base-200 text-base-content/40">
+                                    <th class="bg-base-100 font-bold">時間</th>
+                                    <th class="bg-base-100 text-right font-bold">總資產</th>
+                                    <th class="bg-base-100 text-right font-bold">變動</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[var(--song-border)]/50">
+                            <tbody class="divide-y divide-base-200">
                                 @php
                                     $prevAmount = null;
                                 @endphp
                                 @foreach($this->assetTrendData as $item)
                                     @php
                                         $change = $prevAmount !== null ? $item['amount'] - $prevAmount : 0;
-                                        $changeClass = $change > 0 ? 'text-emerald-500' : ($change < 0 ? 'text-rose-500' : 'text-[var(--song-text)]/30');
+                                        $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
                                         $changeSymbol = $change > 0 ? '↑' : ($change < 0 ? '↓' : '—');
                                         $prevAmount = $item['amount'];
                                     @endphp
-                                    <tr class="hover:bg-[rgba(129,140,248,0.05)] transition-colors border-0">
-                                        <td class="font-medium text-[var(--song-text)]/70 bg-transparent">{{ $item['label'] }}</td>
-                                        <td class="text-right font-mono font-bold text-[#818cf8] bg-transparent">
+                                    <tr class="hover:bg-base-200 transition-colors border-0">
+                                        <td class="font-medium text-base-content/70 bg-transparent">{{ $item['label'] }}</td>
+                                        <td class="text-right font-mono font-bold text-primary bg-transparent">
                                             {{ $item['symbol'] }}{{ number_format($item['amount'], 2) }}
                                         </td>
                                         <td class="text-right font-mono text-sm {{ $changeClass }} bg-transparent">
@@ -165,25 +165,25 @@
                         </table>
                     </div>
 
-                    <div class="block md:hidden divide-y divide-[var(--song-border)]/50 max-h-[400px] overflow-y-auto">
+                    <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
                         @php
                             $prevAmount = null;
                         @endphp
                         @foreach($this->assetTrendData as $item)
                             @php
                                 $change = $prevAmount !== null ? $item['amount'] - $prevAmount : 0;
-                                $changeClass = $change > 0 ? 'text-emerald-500' : ($change < 0 ? 'text-rose-500' : 'text-[var(--song-text)]/30');
+                                $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
                                 $changeSymbol = $change > 0 ? '↑' : ($change < 0 ? '↓' : '—');
                                 $prevAmount = $item['amount'];
                             @endphp
                             <div class="p-3.5 flex justify-between items-center bg-transparent">
                                 <div>
-                                    <span class="text-sm font-medium text-[var(--song-text)]/70">{{ $item['label'] }}</span>
+                                    <span class="text-sm font-medium text-base-content/70">{{ $item['label'] }}</span>
                                     @if($change != 0)
                                         <span class="text-xs ml-2 {{ $changeClass }}">{{ $changeSymbol }} {{ number_format(abs($change), 2) }}</span>
                                     @endif
                                 </div>
-                                <span class="font-mono font-bold text-sm text-[#818cf8]">
+                                <span class="font-mono font-bold text-sm text-primary">
                                     {{ $item['symbol'] }}{{ number_format($item['amount'], 2) }}
                                 </span>
                             </div>
@@ -193,10 +193,10 @@
 
             @elseif($tab1 === 'category')
                 {{-- ============================================================ --}}
-                {{-- 分類報表列表（原有） --}}
+                {{-- 分類報表列表 --}}
                 {{-- ============================================================ --}}
-                <div class="bg-[var(--song-card-bg)] border border-[var(--song-border)] rounded-2xl backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.03)] overflow-hidden">
-                    <div class="p-4 bg-[rgba(162,189,219,0.1)] border-b border-[var(--song-border)] font-bold text-xs tracking-widest text-[var(--song-text)]/70 flex justify-between items-center">
+                <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
+                    <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
                         <span>📋 分類數據明細 (點擊大類查看明細流水)</span>
                     </div>
                     
@@ -204,83 +204,83 @@
                     <div class="hidden md:block overflow-x-auto">
                         <table class="table w-full text-sm">
                             <thead>
-                                <tr class="border-b border-[var(--song-border)] text-[var(--song-text)]/40">
+                                <tr class="border-b border-base-200 text-base-content/40">
                                     <th class="bg-transparent font-bold">分類大類</th>
                                     <th class="bg-transparent text-right font-bold">總計金額</th>
                                     <th class="bg-transparent text-right font-bold">佔比</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[var(--song-border)]/50">
+                            <tbody class="divide-y divide-base-200">
                                 @forelse($this->categoryData['list'] as $item)
-                                    <tr class="hover:bg-[rgba(162,189,219,0.15)] cursor-pointer transition-colors border-0"
+                                    <tr class="hover:bg-base-200 cursor-pointer transition-colors border-0"
                                         wire:click="openCategoryTransactions({{ $item['id'] }}, '{{ addslashes($item['name']) }}')">
-                                        <td class="font-bold text-[var(--song-text)] bg-transparent flex items-center gap-2">
+                                        <td class="font-bold text-base-content bg-transparent flex items-center gap-2">
                                             <span>{{ $item['name'] }}</span>
-                                            <x-heroicon-m-chevron-right class="w-4 h-4 text-stone-400 opacity-60" />
+                                            <x-heroicon-m-chevron-right class="w-4 h-4 text-base-content/40" />
                                         </td>
-                                        <td class="text-right font-mono font-bold text-[var(--song-text)] bg-transparent">${{ $item['amount_display'] }}</td>
-                                        <td class="text-right font-mono text-[var(--song-text)]/50 bg-transparent">{{ $item['percentage'] }}%</td>
+                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">${{ $item['amount_display'] }}</td>
+                                        <td class="text-right font-mono text-base-content/50 bg-transparent">{{ $item['percentage'] }}%</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="3" class="text-center py-8 text-[var(--song-text)]/40 bg-transparent">暫無相關財務交易數據</td></tr>
+                                    <tr><td colspan="3" class="text-center py-8 text-base-content/40 bg-transparent">暫無相關財務交易數據</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
 
                     {{-- 手機端卡片 --}}
-                    <div class="block md:hidden divide-y divide-[var(--song-border)]/50">
+                    <div class="block md:hidden divide-y divide-base-200">
                         @forelse($this->categoryData['list'] as $item)
-                            <div class="p-4 flex justify-between items-center bg-transparent hover:bg-[rgba(162,189,219,0.1)] active:bg-[rgba(162,189,219,0.2)] cursor-pointer transition-all"
+                            <div class="p-4 flex justify-between items-center bg-transparent hover:bg-base-200 active:bg-base-300 cursor-pointer transition-all"
                                  wire:click="openCategoryTransactions({{ $item['id'] }}, '{{ addslashes($item['name']) }}')">
                                 <div>
-                                    <div class="font-bold text-[var(--song-text)] text-sm flex items-center gap-1">
+                                    <div class="font-bold text-base-content text-sm flex items-center gap-1">
                                         {{ $item['name'] }}
-                                        <x-heroicon-m-chevron-right class="w-3.5 h-3.5 text-stone-400 opacity-60" />
+                                        <x-heroicon-m-chevron-right class="w-3.5 h-3.5 text-base-content/40" />
                                     </div>
-                                    <div class="text-xs text-[var(--song-text)]/50 mt-0.5">佔比 {{ $item['percentage'] }}%</div>
+                                    <div class="text-xs text-base-content/50 mt-0.5">佔比 {{ $item['percentage'] }}%</div>
                                 </div>
-                                <div class="font-mono font-extrabold text-md text-[var(--song-text)]">${{ $item['amount_display'] }}</div>
+                                <div class="font-mono font-extrabold text-md text-base-content">${{ $item['amount_display'] }}</div>
                             </div>
                         @empty
-                            <div class="p-8 text-center text-sm text-[var(--song-text)]/40">暫無相關財務交易數據</div>
+                            <div class="p-8 text-center text-sm text-base-content/40">暫無相關財務交易數據</div>
                         @endforelse
                     </div>
                 </div>
 
             @else
                 {{-- ============================================================ --}}
-                {{-- 趨勢報表列表（原有） --}}
+                {{-- 趨勢報表列表 --}}
                 {{-- ============================================================ --}}
-                <div class="bg-[var(--song-card-bg)] border border-[var(--song-border)] rounded-2xl backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.03)] overflow-hidden">
-                    <div class="p-4 bg-[rgba(162,189,219,0.1)] border-b border-[var(--song-border)] font-bold text-xs tracking-widest text-[var(--song-text)]/70">
+                <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
+                    <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70">
                         📅 週期趨勢明細 (時間 + 金額)
                     </div>
                     
                     <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
                         <table class="table table-pin-rows w-full text-sm">
                             <thead>
-                                <tr class="border-b border-[var(--song-border)] text-[var(--song-text)]/40">
-                                    <th class="bg-[var(--song-card-bg)] font-bold">時間區間</th>
-                                    <th class="bg-[var(--song-card-bg)] text-right font-bold">金額</th>
+                                <tr class="border-b border-base-200 text-base-content/40">
+                                    <th class="bg-base-100 font-bold">時間區間</th>
+                                    <th class="bg-base-100 text-right font-bold">金額</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[var(--song-border)]/50">
+                            <tbody class="divide-y divide-base-200">
                                 @foreach($this->trendData as $item)
-                                    <tr class="hover:bg-[rgba(162,189,219,0.05)] transition-colors border-0">
-                                        <td class="font-medium text-[var(--song-text)]/70 bg-transparent">{{ $item['label'] }}</td>
-                                        <td class="text-right font-mono font-bold text-[var(--song-text)] bg-transparent">${{ $item['amount_display'] }}</td>
+                                    <tr class="hover:bg-base-200 transition-colors border-0">
+                                        <td class="font-medium text-base-content/70 bg-transparent">{{ $item['label'] }}</td>
+                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">${{ $item['amount_display'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="block md:hidden divide-y divide-[var(--song-border)]/50 max-h-[400px] overflow-y-auto">
+                    <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
                         @foreach($this->trendData as $item)
                             <div class="p-3.5 flex justify-between items-center bg-transparent">
-                                <span class="text-sm font-medium text-[var(--song-text)]/70">{{ $item['label'] }}</span>
-                                <span class="font-mono font-bold text-sm text-[var(--song-text)]">${{ $item['amount_display'] }}</span>
+                                <span class="text-sm font-medium text-base-content/70">{{ $item['label'] }}</span>
+                                <span class="font-mono font-bold text-sm text-base-content">${{ $item['amount_display'] }}</span>
                             </div>
                         @endforeach
                     </div>
