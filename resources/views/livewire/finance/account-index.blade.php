@@ -177,7 +177,7 @@
             <p class="text-sm opacity-70 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
-            <x-button label="新增帳戶" icon="o-plus" class="btn-dark" wire:click="openCreateModal" />
+            <x-button label="新增帳戶" icon="o-plus" class="btn-purple" wire:click="openCreateModal" />
             <x-button label="記一筆" icon="o-pencil-square" class="btn-green text-white" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>

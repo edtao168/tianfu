@@ -260,9 +260,9 @@ class AccountIndex extends Component
     // ============================================================
     // 總資產刷新
     // ============================================================
-    
-    #[On('refresh-total-assets')]
-    public function refreshTotalAssets()
+
+	#[On('refresh-data')] //TransactionModal
+    public function refreshData()
     {
         // 清除計算屬性快取
         unset($this->totalAssets);

@@ -31,7 +31,7 @@ return [
             'theme' => 'blue',
         ],
         'e-wallet' => [
-            'name'  => '網絡支付',
+            'name'  => '電子支付',
             'icon'  => 'heroicon-o-device-phone-mobile',
             'theme' => 'green',
         ],
