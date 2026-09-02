@@ -341,7 +341,7 @@ class AccountIndex extends Component
         
         $this->showAccountModal = false;
         $this->resetForm();
-        $this->refreshTotalAssets();
+        $this->refreshData();
         $this->dispatch('notify', message: $message);
     }
     
@@ -360,7 +360,7 @@ class AccountIndex extends Component
         }
         
         $account->delete();
-        $this->refreshTotalAssets();
+        $this->refreshData();
         $this->dispatch('notify', message: '帳戶已刪除！');
     }
     
@@ -390,7 +390,7 @@ class AccountIndex extends Component
     {
         $this->currentShopId = $shopId;
         session(['current_shop_id' => $shopId]);
-        $this->refreshTotalAssets();
+        $this->refreshData();
     }
     
     // ============================================================
@@ -398,13 +398,19 @@ class AccountIndex extends Component
     // ============================================================
     
     public function render()
-    {
-        return view('livewire.finance.account-index', [
-            'accountTypeOptions' => config('business.account_types', []),
-            'availableCurrencies' => Currency::where('shop_id', $this->currentShopId)
-                ->where('is_active', true)
-                ->pluck('name', 'code')
-                ->toArray(),
-        ])->layout('layouts.app');
-    }
+	{
+		// 轉成 MaryUI <x-select> 能正確解析的格式
+		$accountTypeOptions = collect(config('business.account_types', []))
+			->map(fn ($item, $key) => ['id' => $key, 'name' => $item['name']])
+			->values()
+			->all();
+
+		return view('livewire.finance.account-index', [
+			'accountTypeOptions'  => $accountTypeOptions,
+			'availableCurrencies' => Currency::where('shop_id', $this->currentShopId)
+				->where('is_active', true)
+				->pluck('name', 'code')
+				->toArray(),
+		])->layout('layouts.app');
+	}
 }

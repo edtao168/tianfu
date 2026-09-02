@@ -287,8 +287,8 @@
         <div class="py-4">
             <x-form wire:submit="saveAccount" class="space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信零售現金、官網 Stripe" icon="o-pencil" required />
-                    <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
+                    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
+					<x-select label="帳戶類型" wire:model.live="accountType" :options="$accountTypeOptions" icon="o-tag" required />
                 </div>
 
                 <div class="space-y-2">
@@ -312,10 +312,21 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-300">
                     <div class="md:col-span-2">
-                        <x-input label="初始資產 (以選定幣別計價)" wire:model="accountBalance" 
-                                 prefix="{{ $availableCurrencies[$accountCurrency] ?? '$' }}" 
-                                 type="number" step="0.0001" class="font-mono text-lg text-right font-bold" required />
-                    </div>
+                        <x-input 
+							label="初始資產 (以選定幣別計價)" 
+							wire:model="accountBalance" 
+							prefix="{{ $availableCurrencies[$accountCurrency] ?? '$' }}" 
+							type="text" 
+							inputmode="decimal"
+							class="font-mono text-lg text-right font-bold" 
+							required 
+							x-data
+							x-on:input="
+								$event.target.value = $event.target.value.replace(/[^0-9.]/g, '');
+								$wire.set('accountBalance', $event.target.value)
+							"
+						/>
+					</div>
                     <div class="text-xs opacity-70 leading-relaxed md:pb-2">
                         💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
                     </div>
