@@ -1,4 +1,4 @@
-<?php //app\Livewire\Finance\ReportStats.php
+<?php // app/Livewire/Finance/ReportStats.php
 
 namespace App\Livewire\Finance;
 
@@ -6,13 +6,16 @@ use App\Models\Transaction;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\FinancialAccount;
+use App\Traits\WithDateNavigation;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ReportStats extends Component
 {
+    use WithDateNavigation;
+
     public int $shopId = 1;
 
     // 第一層分頁：category, trend, asset
@@ -24,22 +27,48 @@ class ReportStats extends Component
     // 第三層分頁：year, month, day
     public string $tab3 = 'month';
 
-    public int $selectedYear;
-    public int $selectedMonth;
-
-    // ============================================================
     // 總資產趨勢相關屬性
-    // ============================================================
     public string $assetTab = 'month';  // month 或 day
     public bool $showAssetTrend = false;
 
     public function mount()
     {
-        $this->selectedYear = (int) date('Y');
-        $this->selectedMonth = (int) date('n');
-        
-        // 從 session 或 user 取得 shopId
         $this->shopId = (int) session('current_shop_id', 1);
+        $this->currentDate = now()->format('Y-m');
+        $this->dateMode = 'month';
+        $this->updateDateMode();
+    }
+
+    /**
+     * 覆寫 Trait 鉤子：日期變動時觸發圖表更新
+     */
+    protected function onDateChanged()
+    {
+        $this->dispatch('refreshChart', $this->getChartData());
+    }
+
+    // ============================================================
+    // 計算屬性：解析當前年份與月份 (修正年份模式)
+    // ============================================================
+    
+    #[Computed]
+    public function selectedYear(): int
+    {
+        if ($this->dateMode === 'year') {
+            return (int) $this->currentDate;
+        }
+        return (int) Carbon::parse($this->currentDate)->year;
+    }
+
+    #[Computed]
+    public function selectedMonth(): int
+    {
+        if ($this->dateMode === 'year') {
+            // 年份模式下，為了查詢整年數據，月份不應被使用
+            // 但為了相容性，回傳 1（實際查詢時會用 whereYear）
+            return 1;
+        }
+        return (int) Carbon::parse($this->currentDate)->month;
     }
 
     // ============================================================
@@ -70,10 +99,11 @@ class ReportStats extends Component
             $this->showAssetTrend = false;
         } elseif ($value === 'asset') {
             $this->showAssetTrend = true;
-            $this->tab2 = 'balance';  // 資產趨勢固定用 balance
+            $this->tab2 = 'balance';
         } else {
             $this->showAssetTrend = false;
         }
+        $this->updateDateMode();
         $this->dispatch('refreshChart', $this->getChartData());
     }
 
@@ -84,17 +114,40 @@ class ReportStats extends Component
 
     public function updatedTab3()
     {
+        $this->updateDateMode();
         $this->dispatch('refreshChart', $this->getChartData());
     }
 
-    public function updatedAssetTab()
+    public function updatedAssetTab($value)
     {
+        $this->updateDateMode();
         $this->dispatch('refreshChart', $this->getChartData());
     }
-
-    public function changeDate()
+    
+    /**
+     * 更新日期模式，並確保 currentDate 格式正確
+     */
+    private function updateDateMode()
     {
-        $this->dispatch('refreshChart', $this->getChartData());
+        $activeMode = $this->showAssetTrend ? $this->assetTab : $this->tab3;
+        
+        if ($activeMode === 'year') {
+            $this->dateMode = 'year';
+            // 將 currentDate 轉為 YYYY 格式
+            if (strlen($this->currentDate) > 4) {
+                $this->currentDate = substr($this->currentDate, 0, 4);
+            }
+        } else {
+            $this->dateMode = 'month';
+            // 若原本為 YYYY 格式，補回當前月份成 YYYY-MM 格式
+            if (strlen($this->currentDate) === 4) {
+                $this->currentDate = $this->currentDate . '-' . now()->format('m');
+            }
+            // 確保格式為 YYYY-MM
+            if (strlen($this->currentDate) === 7 && strpos($this->currentDate, '-') !== false) {
+                // 已經是 YYYY-MM 格式，不需要處理
+            }
+        }
     }
 
     // ============================================================
@@ -108,21 +161,23 @@ class ReportStats extends Component
             'type' => $this->tab2,
             'title' => $categoryName . ' - 交易明細',
             'dateMode' => $this->tab3 === 'year' ? 'year' : 'month',
-            'baseDate' => $this->selectedYear . '-' . ($this->selectedMonth ?? 1) . '-01',
+            'baseDate' => $this->selectedYear . '-' . sprintf('%02d', $this->selectedMonth) . '-01',
         ]);
     }
 
     // ============================================================
-    // 分類報表數據
+    // 報表數據計算 (分類/趨勢/資產)
     // ============================================================
 
-    public function getCategoryDataProperty()
+    #[Computed]
+    public function categoryData()
     {
         $query = Transaction::query()
             ->where('shop_id', $this->shopId)
             ->where('type', $this->tab2);
 
-        if ($this->tab3 === 'year') {
+        // 修正：根據 dateMode 決定查詢條件
+        if ($this->dateMode === 'year') {
             $query->whereYear('recorded_at', $this->selectedYear);
         } else {
             $query->whereYear('recorded_at', $this->selectedYear)
@@ -154,11 +209,10 @@ class ReportStats extends Component
         }
 
         foreach ($categorySummary as $id => $data) {
-            if (bccomp($total, '0.0000', 4) > 0) {
-                $percentage = bcdiv(bcmul($data['amount'], '100', 4), $total, 2);
-            } else {
-                $percentage = '0.00';
-            }
+            $percentage = bccomp($total, '0.0000', 4) > 0 
+                ? bcdiv(bcmul($data['amount'], '100', 4), $total, 2) 
+                : '0.00';
+            
             $categorySummary[$id]['percentage'] = $percentage;
             $categorySummary[$id]['amount_display'] = number_format((float)$data['amount'], 2);
         }
@@ -171,14 +225,29 @@ class ReportStats extends Component
         ];
     }
 
-    // ============================================================
-    // 趨勢報表數據
-    // ============================================================
-
-    public function getTrendDataProperty()
+    #[Computed]
+    public function trendData()
     {
         $list = [];
-        if ($this->tab3 === 'month') {
+        
+        // 修正：根據 dateMode 決定趨勢顯示的粒度
+        if ($this->dateMode === 'year') {
+            // 年份模式：顯示各月趨勢
+            for ($m = 1; $m <= 12; $m++) {
+                $list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
+            }
+
+            $transactions = Transaction::query()
+                ->where('shop_id', $this->shopId)
+                ->whereYear('recorded_at', $this->selectedYear)
+                ->get(['type', 'amount', 'recorded_at']);
+
+            foreach ($transactions as $tx) {
+                $m = (int) Carbon::parse($tx->recorded_at)->format('n');
+                $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx);
+            }
+        } elseif ($this->tab3 === 'month') {
+            // 月度模式：顯示各月趨勢
             for ($m = 1; $m <= 12; $m++) {
                 $list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
             }
@@ -193,6 +262,7 @@ class ReportStats extends Component
                 $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx);
             }
         } else {
+            // 日模式：顯示各日趨勢
             $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 $list[$d] = ['label' => $d . '日', 'amount' => '0.0000'];
@@ -210,16 +280,11 @@ class ReportStats extends Component
             }
         }
 
-        $result = [];
-        foreach ($list as $key => $item) {
-            $result[] = [
-                'label' => $item['label'],
-                'amount' => $item['amount'],
-                'amount_display' => number_format((float)$item['amount'], 2)
-            ];
-        }
-
-        return $result;
+        return array_map(fn($item) => [
+            'label' => $item['label'],
+            'amount' => $item['amount'],
+            'amount_display' => number_format((float)$item['amount'], 2)
+        ], array_values($list));
     }
 
     private function calculateTrendAmount(string $currentAmount, $tx): string
@@ -234,71 +299,55 @@ class ReportStats extends Component
         return $tx->type === $this->tab2 ? bcadd($currentAmount, $txAmount, 4) : $currentAmount;
     }
 
-    // ============================================================
-    // 總資產趨勢數據（BCMath 精確計算）
-    // ============================================================
-
-    public function getAssetTrendDataProperty()
+    #[Computed]
+    public function assetTrendData()
     {
-		$result = [];
-		
-		$baseCurrency = Currency::where('shop_id', $this->shopId)
-			->where('is_base', true)
-			->first();
-			
-		if (!$baseCurrency) {
-			return [];
-		}
+        $result = [];
+        $baseCurrency = $this->baseCurrency;
+            
+        if (!$baseCurrency) return [];
 
-		$baseCode = $baseCurrency->code;
-		$baseSymbol = $baseCurrency->symbol;
+        $baseCode = $baseCurrency->code;
+        $baseSymbol = $baseCurrency->symbol;
 
-		if ($this->assetTab === 'month') {
-			for ($m = 1; $m <= 12; $m++) {
-				$endOfMonth = Carbon::create($this->selectedYear, $m)->endOfMonth();
-				// ✅ 正確：用 $result[] 自動遞增索引 (0, 1, 2...)，不要用 $result[$m]
-				$result[] = [
-					'label' => $m . '月',
-					'amount' => $this->calculateTotalAssets($endOfMonth, $baseCode),
-					'symbol' => $baseSymbol,
-				];
-			}
-		} else {
-			$daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
-			for ($d = 1; $d <= $daysInMonth; $d++) {
-				$endOfDay = Carbon::create($this->selectedYear, $this->selectedMonth, $d)->endOfDay();
-				// ✅ 正確：用 $result[]
-				$result[] = [
-					'label' => $d . '日',
-					'amount' => $this->calculateTotalAssets($endOfDay, $baseCode),
-					'symbol' => $baseSymbol,
-				];
-			}
-		}
+        if ($this->assetTab === 'month' || $this->dateMode === 'year') {
+            // 月度資產趨勢
+            for ($m = 1; $m <= 12; $m++) {
+                $endOfMonth = Carbon::create($this->selectedYear, $m)->endOfMonth();
+                $result[] = [
+                    'label' => $m . '月',
+                    'amount' => $this->calculateTotalAssets($endOfMonth, $baseCode),
+                    'symbol' => $baseSymbol,
+                ];
+            }
+        } else {
+            // 每日資產趨勢
+            $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $endOfDay = Carbon::create($this->selectedYear, $this->selectedMonth, $d)->endOfDay();
+                $result[] = [
+                    'label' => $d . '日',
+                    'amount' => $this->calculateTotalAssets($endOfDay, $baseCode),
+                    'symbol' => $baseSymbol,
+                ];
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
     private function calculateTotalAssets(Carbon $until, string $baseCode): string
     {
-        $accounts = FinancialAccount::where('shop_id', $this->shopId)
-            ->where('is_active', true)
-            ->get();
-
-        if ($accounts->isEmpty()) {
-            return '0.0000';
-        }
+        $accounts = FinancialAccount::where('shop_id', $this->shopId)->where('is_active', true)->get();
+        if ($accounts->isEmpty()) return '0.0000';
 
         $total = '0.0000';
-
         foreach ($accounts as $account) {
             $balance = $this->getAccountBalanceAt($account->id, $until);
-            
             if ($account->currency !== $baseCode) {
                 $rate = $this->getExchangeRate($account->currency, $baseCode);
-                $balance = bcmul($balance, $rate, 4);
+                $balance = bcmul($balance, (string)$rate, 4);
             }
-            
             $total = bcadd($total, $balance, 4);
         }
 
@@ -308,16 +357,12 @@ class ReportStats extends Component
     private function getAccountBalanceAt(int $accountId, Carbon $until): string
     {
         $account = FinancialAccount::where('shop_id', $this->shopId)->find($accountId);
-        if (!$account) {
-            return '0.0000';
-        }
+        if (!$account) return '0.0000';
 
         $initialBalance = (string) ($account->balance ?? '0.0000');
-        
         $transactions = Transaction::where('shop_id', $this->shopId)
             ->where(function ($query) use ($accountId) {
-                $query->where('from_account_id', $accountId)
-                      ->orWhere('to_account_id', $accountId);
+                $query->where('from_account_id', $accountId)->orWhere('to_account_id', $accountId);
             })
             ->where('recorded_at', '<=', $until)
             ->get();
@@ -325,110 +370,96 @@ class ReportStats extends Component
         $netChange = '0.0000';
         foreach ($transactions as $tx) {
             $txAmount = (string) $tx->amount;
-            if ($tx->from_account_id == $accountId) {
-                $netChange = bcsub($netChange, $txAmount, 4);
-            }
-            if ($tx->to_account_id == $accountId) {
-                $netChange = bcadd($netChange, $txAmount, 4);
-            }
+            if ($tx->from_account_id == $accountId) $netChange = bcsub($netChange, $txAmount, 4);
+            if ($tx->to_account_id == $accountId) $netChange = bcadd($netChange, $txAmount, 4);
         }
 
         return bcadd($initialBalance, $netChange, 4);
     }
 
-    private function getExchangeRate(string $from, string $to): string
+    private function getExchangeRate(string $from, string $to): float
     {
-        if ($from === $to) {
-            return '1.0000';
+        if ($from === $to) return 1.0;
+
+        $fromCurrency = Currency::where('shop_id', $this->shopId)->where('code', $from)->where('is_active', true)->first();
+        $toCurrency = Currency::where('shop_id', $this->shopId)->where('code', $to)->where('is_active', true)->first();
+
+        if (!$fromCurrency || !$toCurrency || $toCurrency->rate <= 0) {
+            return 1.0;
         }
 
-        $fromCurrency = Currency::where('shop_id', $this->shopId)
-            ->where('code', $from)
-            ->where('is_active', true)
-            ->first();
-
-        $toCurrency = Currency::where('shop_id', $this->shopId)
-            ->where('code', $to)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$fromCurrency || !$toCurrency || bccomp((string)$toCurrency->rate, '0.0000', 4) === 0) {
-            return '1.0000';
-        }
-
-        return bcdiv((string)$fromCurrency->rate, (string)$toCurrency->rate, 4);
+        return $fromCurrency->rate / $toCurrency->rate;
     }
-
-    // ============================================================
-    // 圖表數據與前端進階視覺樣式設定
-    // ============================================================
 
     public function getChartData()
     {
-		// 總資產趨勢模式 (折線圖)
-		if ($this->showAssetTrend) {
-			$data = $this->assetTrendData;
+        if ($this->showAssetTrend) {
+            $data = $this->assetTrendData;
+            return [
+                'type' => 'line',
+                'labels' => array_values(collect($data)->pluck('label')->all()),
+                'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
+                'color' => '#818cf8',
+                'centerText' => null,
+                'unit' => reset($data)['symbol'] ?? 'NT$',
+                'isAssetTrend' => true,
+            ];
+        }
 
-			// ✅ 強制拉出純索引陣列，確保長度與數值完全一對一 (只有 12 個)
-			$labels = array_values(collect($data)->pluck('label')->all());
-			$values = array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all());
+        if ($this->tab1 === 'category') {
+            $data = $this->categoryData;
+            return [
+                'type' => 'pie',
+                'labels' => array_values(collect($data['list'])->pluck('name')->all()),
+                'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
+                'centerText' => $data['total'] ?? '0.00',
+                'color' => null,
+                'isAssetTrend' => false,
+            ];
+        }
 
-			return [
-				'type' => 'line',
-				'labels' => $labels,
-				'values' => $values,
-				'color' => '#818cf8',
-				'centerText' => null,
-				'unit' => reset($data)['symbol'] ?? 'NT$',
-				'isAssetTrend' => true,
-			];
-		}
+        $data = $this->trendData;
+        return [
+            'type' => 'bar',
+            'labels' => array_values(collect($data)->pluck('label')->all()),
+            'values' => array_values(collect($data)->map(fn($item) => (float)$item['amount'])->all()),
+            'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
+            'centerText' => null,
+            'isAssetTrend' => false,
+        ];
+    }
 
-		// 分類報表
-		if ($this->tab1 === 'category') {
-			$data = $this->categoryData;
-			return [
-				'type' => 'pie',
-				'labels' => array_values(collect($data['list'])->pluck('name')->all()),
-				'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
-				'centerText' => $data['total'] ?? '0.00',
-				'color' => null,
-				'isAssetTrend' => false,
-			];
-		}
-
-		// 收支趨勢
-		$data = $this->trendData;
-		return [
-			'type' => 'bar',
-			'labels' => array_values(collect($data)->pluck('label')->all()),
-			'values' => array_values(collect($data)->map(fn($item) => (float)$item['amount'])->all()),
-			'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
-			'centerText' => null,
-			'isAssetTrend' => false,
-		];
-	}
-
-    // ============================================================
-    // 獲取幣別資訊（供 Blade 使用）
-    // ============================================================
-
-    public function getBaseCurrencyProperty()
+    #[Computed]
+    public function baseCurrency()
     {
-        return Currency::where('shop_id', $this->shopId)
-            ->where('is_base', true)
-            ->first();
+        return Currency::where('shop_id', $this->shopId)->where('is_base', true)->first();
     }
 
     // ============================================================
-    // Render
+    // 渲染
     // ============================================================
-
+    
     public function render()
     {
+        $parsedDate = $this->parseCurrentDate();
+        $isYearMode = ($this->dateMode === 'year');
+
+        // 統一格式化顯示日期與判斷是否為當前時間
+        if ($isYearMode) {
+            $displayDate = $this->selectedYear . ' 年';
+            $isCurrent = ($this->selectedYear === (int) now()->format('Y'));
+        } else {
+            $displayDate = $parsedDate->format('Y 年 m 月');
+            $isCurrent = $parsedDate->isCurrentMonth();
+        }
+
         return view('livewire.finance.report-stats', [
-            'chartData' => $this->getChartData(),
-            'baseCurrency' => $this->baseCurrency,
+            'displayDate' => $displayDate,
+            'isCurrent'   => $isCurrent,
+            'dateMode'    => $this->dateMode,
+            'chartData'   => $this->getChartData(),
+            'selectedYear' => $this->selectedYear,
+            'selectedMonth' => $this->selectedMonth,
         ])->layout('components.layouts.app');
     }
 }

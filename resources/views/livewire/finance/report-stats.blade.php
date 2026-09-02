@@ -4,7 +4,7 @@
     {{-- ============================================================ --}}
     {{-- 頂部篩選與第一層分頁 --}}
     {{-- ============================================================ --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-4">
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-4">
         <div class="inline-flex p-1 rounded-xl bg-base-200 border border-base-200 backdrop-blur-sm self-start flex-wrap gap-1">
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'category')">📊 分類報表</button>
@@ -14,33 +14,15 @@
                     wire:click="$set('tab1', 'asset')">🏦 總資產趨勢</button>
         </div>
 
+        {{-- 日期導航組件：模型對齊 currentDate --}}
         <div class="flex items-center gap-2">
-            <select wire:model.live="selectedYear" wire:change="changeDate" 
-                    class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
-                @foreach(range(date('Y') - 3, date('Y') + 1) as $y)
-                    <option value="{{ $y }}" class="bg-base-100 text-base-content">{{ $y }} 年</option>
-                @endforeach
-            </select>
-            
-            {{-- 月份選擇器：只在非「年」視角且非總資產模式顯示 --}}
-            @if(!($tab1 === 'category' && $tab3 === 'year') && !($tab1 === 'trend' && $tab3 === 'month') && !$showAssetTrend)
-                <select wire:model.live="selectedMonth" wire:change="changeDate" 
-                        class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
-                    @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}" class="bg-base-100 text-base-content">{{ $m }} 月</option>
-                    @endforeach
-                </select>
-            @endif
-
-            {{-- 總資產模式顯示月份（僅每日視角需要） --}}
-            @if($showAssetTrend && $assetTab === 'day')
-                <select wire:model.live="selectedMonth" wire:change="changeDate" 
-                        class="select select-sm pl-3 pr-10 bg-base-100 border-base-200 text-base-content rounded-lg opacity-100 font-medium">
-                    @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}" class="bg-base-100 text-base-content">{{ $m }} 月</option>
-                    @endforeach
-                </select>
-            @endif
+            <x-date-nav 
+                model="currentDate" 
+                :type="$dateMode"
+                :display="$displayDate" 
+				:isCurrent="$isCurrent" 
+				:disableNext="$isCurrent"
+            />
         </div>
     </div>
 
@@ -454,7 +436,7 @@ document.addEventListener('livewire:init', function () {
         }
 
         // 初始渲染
-        const initialData = @json($chartData);
+        const initialData = @json($chartData ?? null);
         if (initialData) {
             renderChart(initialData);
         }

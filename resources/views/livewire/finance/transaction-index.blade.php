@@ -1,7 +1,7 @@
 <!-- resources/views/livewire/finance/transaction-index.blade.php -->
 
-<div class="h-screen overflow-y-auto text-base-content">
-    <div class="sticky top-0 z-10 backdrop-blur-sm">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-base-content space-y-6">
+    <div class="sticky top-0 z-10 backdrop-blur-md bg-base-100/80 pt-2 pb-4 border-b border-base-200">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
@@ -15,29 +15,13 @@
 
         {{-- 月份導航 + 本月收支 --}}
         <div class="mt-4 space-y-3">
-            <div class="bg-base-100/95 flex items-center justify-between bg-base-200/60 p-1.5 rounded-2xl border border-base-200 shadow-inner">
-                <x-button 
-                    icon="o-chevron-left" 
-                    class="btn-xs btn-ghost text-base-content opacity-70 hover:opacity-100 px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
-                    wire:click="previousMonth" 
-                />
-                
-                <div class="flex items-center gap-1.5 font-mono font-black text-sm text-base-content tracking-wider select-none">
-                    <x-heroicon-o-calendar class="w-4 h-4 opacity-50" />
-                    <span>{{ $monthDisplay }}</span>
-                    @if($isCurrentMonth)
-                        <span class="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">本月</span>
-                    @endif
-                    <span class="text-xs font-normal opacity-50 ml-1">({{ $transactionCount }} 筆)</span>
-                </div>
-                
-                <x-button 
-                    icon="o-chevron-right" 
-                    class="btn-xs btn-ghost text-base-content opacity-70 hover:opacity-100 px-2.5 h-7 min-h-0 rounded-xl transition-all shadow-sm" 
-                    wire:click="nextMonth" 
-                    :disabled="$isCurrentMonth" 
-                />
-            </div>
+            <x-date-nav 
+                model="currentDate" 
+                type="month"
+                :display="$monthDisplay" 
+                :isCurrent="$isCurrentMonth" 
+                :disableNext="$isCurrentMonth" 
+            />
 
             {{-- 本月收支數據卡片 (1:1 雙欄) --}}
             <div class="grid grid-cols-2 gap-2">
@@ -86,10 +70,9 @@
     </div>
 
     <!-- 流水時間線主體 -->
-    <div class="space-y-6 mt-4">
+    <div class="space-y-6">
         @forelse($groupedTransactions as $date => $dayTransactions)
             <div class="space-y-3">
-                
                 <!-- 日期標頭 -->
                 <div class="text-xs font-bold opacity-70 tracking-wider flex items-center gap-2 px-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500/70"></span>
@@ -101,118 +84,95 @@
                 <!-- 當天交易卡片群組 -->
                 <div class="bg-base-100 rounded-2xl border border-base-200 shadow-sm divide-y divide-base-200/60 overflow-hidden">
                     @foreach($dayTransactions as $tx)
-						@php
-							$acc = $tx->fromAccount ?? $tx->toAccount;
-							
-							$typeConfig = config("business.account_types.{$acc?->type}") ?? config("business.account_types.cash");
-							$typeTheme = $typeConfig['theme'] ?? 'orange';
-							
-							$color = $acc?->color ?? 'default';
-							
-							$currencyCode = $acc?->currency ?? 'TWD';
-							$currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
-							
-							$isIncome = $tx->type === 'income';
-							$isExpense = $tx->type === 'expense';
-							$isTransfer = $tx->type === 'transfer';
-							
-							if ($isTransfer) {
-								$iconColor = 'text-sky-600 dark:text-sky-400';
-								$bgColor = 'bg-sky-500/10';
-								$amountClass = 'text-sky-600 dark:text-sky-400';
-								$amountPrefix = '↕';
-							} elseif ($isIncome) {
-								$iconColor = 'text-emerald-600 dark:text-emerald-400';
-								$bgColor = 'bg-emerald-500/10';
-								$amountClass = 'text-emerald-600 dark:text-emerald-400';
-								$amountPrefix = '+';
-							} elseif ($isExpense) {
-								$iconColor = 'text-rose-600 dark:text-rose-400';
-								$bgColor = 'bg-rose-500/10';
-								$amountClass = 'text-rose-600 dark:text-rose-400';
-								$amountPrefix = '-';
-							} else {
-								$iconColor = 'opacity-50';
-								$bgColor = 'bg-base-200';
-								$amountClass = 'text-base-content';
-								$amountPrefix = '';
-							}
-							
-							$displayTitle = '未分類';
-							$iconName = 'o-hashtag';
-							
-							if ($isTransfer) {
-								$fromName = $tx->fromAccount->name ?? '?';
-								$toName = $tx->toAccount->name ?? '?';
-								$displayTitle = $fromName . ' → ' . $toName;
-								$iconName = 'o-arrow-path';
-							} elseif ($tx->category) {
-								
-									$displayTitle = $tx->category->name;
-								
-								$iconName = $tx->category->icon ?? 'o-hashtag';
-							} else {
-								$displayTitle = $acc?->name ?? '未分類';
-								$iconName = $isExpense ? 'o-credit-card' : 'o-wallet';
-							}
-							
-							if (!str_starts_with($iconName, 'heroicon')) {
-								$iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
-							}
-						@endphp
-						
-						<!-- 單筆交易卡片 -->
-						<div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50"
-							 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })">
-							
-							{{-- 左側主題側邊條 --}}
-							<span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
-							
-							{{-- 圖標 --}}
-							<div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
-								<x-dynamic-component :component="$iconName" class="w-5 h-5 {{ $iconColor }}" />
-							</div>
-							
-							{{-- 內容區域 --}}
-							<div class="flex-1 min-w-0 ml-3 md:ml-4">
-								<div class="flex items-center justify-between gap-2">
-									<div class="flex items-center gap-2 min-w-0">
-										<span class="text-base md:text-base font-semibold text-base-content flex-shrink-0">
-											{{ $displayTitle }}
-										</span>
-										
-										@if($acc)
-											<span class="text-sm opacity-60 font-normal truncate">
-												（{{ $acc->name }}）
-											</span>
-										@endif
-										
-										@if($isTransfer)
-											<span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 flex-shrink-0">
-												轉帳
-											</span>
-										@endif
-									</div>
-									
-									{{-- 金額 --}}
-									<span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
-										<span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
-										{{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
-									</span>
-								</div>
-								
-								{{-- 備註 + 時間 --}}
-								<div class="flex items-center justify-between gap-2 mt-0.5">
-									<span class="text-sm opacity-60 truncate {{ $tx->memo ? '' : 'italic' }}">
-										{{ $tx->memo ?: '無備註' }}
-									</span>
-									<span class="text-sm font-mono opacity-50 flex-shrink-0">
-										{{ date('H:i', strtotime($tx->recorded_at)) }}
-									</span>
-								</div>
-							</div>
-						</div>
-					@endforeach
+                        @php
+                            $acc = $tx->fromAccount ?? $tx->toAccount;
+                            $typeConfig = config("business.account_types.{$acc?->type}") ?? config("business.account_types.cash");
+                            $typeTheme = $typeConfig['theme'] ?? 'orange';
+                            
+                            $currencyCode = $acc?->currency ?? 'TWD';
+                            $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
+                            
+                            $isIncome = $tx->type === 'income';
+                            $isExpense = $tx->type === 'expense';
+                            $isTransfer = $tx->type === 'transfer';
+                            
+                            if ($isTransfer) {
+                                $iconColor = 'text-sky-600 dark:text-sky-400';
+                                $bgColor = 'bg-sky-500/10';
+                                $amountClass = 'text-sky-600 dark:text-sky-400';
+                                $amountPrefix = '↕';
+                            } elseif ($isIncome) {
+                                $iconColor = 'text-emerald-600 dark:text-emerald-400';
+                                $bgColor = 'bg-emerald-500/10';
+                                $amountClass = 'text-emerald-600 dark:text-emerald-400';
+                                $amountPrefix = '+';
+                            } elseif ($isExpense) {
+                                $iconColor = 'text-rose-600 dark:text-rose-400';
+                                $bgColor = 'bg-rose-500/10';
+                                $amountClass = 'text-rose-600 dark:text-rose-400';
+                                $amountPrefix = '-';
+                            } else {
+                                $iconColor = 'opacity-50';
+                                $bgColor = 'bg-base-200';
+                                $amountClass = 'text-base-content';
+                                $amountPrefix = '';
+                            }
+                            
+                            if ($isTransfer) {
+                                $fromName = $tx->fromAccount->name ?? '?';
+                                $toName = $tx->toAccount->name ?? '?';
+                                $displayTitle = $fromName . ' → ' . $toName;
+                                $iconName = 'o-arrow-path';
+                            } elseif ($tx->category) {
+                                $displayTitle = $tx->category->name;
+                                $iconName = $tx->category->icon ?? 'o-hashtag';
+                            } else {
+                                $displayTitle = $acc?->name ?? '未分類';
+                                $iconName = $isExpense ? 'o-credit-card' : 'o-wallet';
+                            }
+                            
+                            if (!str_starts_with($iconName, 'heroicon')) {
+                                $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
+                            }
+                        @endphp
+                        
+                        <div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50"
+                             wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })">
+                            <span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
+                            
+                            <div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
+                                <x-dynamic-component :component="$iconName" class="w-5 h-5 {{ $iconColor }}" />
+                            </div>
+                            
+                            <div class="flex-1 min-w-0 ml-3 md:ml-4">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="text-base font-semibold text-base-content flex-shrink-0">
+                                            {{ $displayTitle }}
+                                        </span>
+                                        @if($acc)
+                                            <span class="text-sm opacity-60 font-normal truncate">（{{ $acc->name }}）</span>
+                                        @endif
+                                        @if($isTransfer)
+                                            <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 flex-shrink-0">轉帳</span>
+                                        @endif
+                                    </div>
+                                    <span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
+                                        <span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
+                                        {{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2 mt-0.5">
+                                    <span class="text-sm opacity-60 truncate {{ $tx->memo ? '' : 'italic' }}">
+                                        {{ $tx->memo ?: '無備註' }}
+                                    </span>
+                                    <span class="text-sm font-mono opacity-50 flex-shrink-0">
+                                        {{ date('H:i', strtotime($tx->recorded_at)) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         @empty
@@ -231,5 +191,4 @@
             <span>{{ $monthDisplay }}</span>
         </div>
     @endif
-
 </div>

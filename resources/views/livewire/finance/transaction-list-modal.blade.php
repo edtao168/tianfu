@@ -96,26 +96,15 @@
 				
 				<div class="space-y-4 md:space-y-5 max-w-full">
 
-					{{-- 日期範圍導航 --}}
+					{{-- 日期導航 (使用 date-nav 元件，根據 mode 動態調整) --}}
 					<div class="w-full max-w-full flex-shrink-0">
-						<div class="flex items-center justify-between bg-base-200/60 p-2 rounded-2xl border border-base-200 w-full shadow-inner">
-							<x-button 
-								icon="o-chevron-left" 
-								class="btn-xs btn-ghost opacity-70 hover:opacity-100 hover:bg-base-100 px-3 h-8 min-h-0 rounded-xl transition-all shadow-sm" 
-								wire:click="previousRange" 
-							/>
-							
-							<div class="flex items-center gap-2 font-mono font-black text-sm md:text-sm text-base-content tracking-wider select-none">
-								<x-heroicon-o-calendar class="w-5 h-5 opacity-50" />
-								<span>{{ $this->dateRangeDisplay }}</span>
-							</div>
-							
-							<x-button 
-								icon="o-chevron-right" 
-								class="btn-xs btn-ghost opacity-70 hover:opacity-100 hover:bg-base-100 px-3 h-8 min-h-0 rounded-xl transition-all shadow-sm" 
-								wire:click="nextRange" 
-							/>
-						</div>
+						<x-date-nav 
+							model="currentDate" 
+							:type="$dateMode"
+							:display="$dateDisplay" 
+							:isCurrent="$isCurrentDate" 
+							:disableNext="$isCurrentDate" 
+						/>
 					</div>
 
 					{{-- 交易明細列表 - 按日期分組 --}}
@@ -260,7 +249,7 @@
 						@empty
 							<div class="text-center opacity-60 py-10 bg-base-200/30 rounded-xl border border-dashed border-base-200">
 								<x-heroicon-o-document-text class="w-12 h-12 mx-auto mb-2 opacity-30" />
-								<p class="text-base md:text-sm tracking-wide font-medium">{{ $this->dateRangeDisplay }} 尚無任何流水紀錄</p>
+								<p class="text-base md:text-sm tracking-wide font-medium">{{ $dateDisplay }} 尚無任何流水紀錄</p>
 							</div>
 						@endforelse
 					</div>

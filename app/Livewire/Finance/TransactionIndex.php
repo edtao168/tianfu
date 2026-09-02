@@ -1,249 +1,139 @@
-<?php
-// app/Livewire/Finance/TransactionIndex.php
+<?php // app/Livewire/Finance/TransactionIndex.php
 
 namespace App\Livewire\Finance;
 
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
-use App\Services\CurrencyService;
-use App\Services\MoneyCalculator;
-use Carbon\Carbon;
+use App\Traits\WithDateNavigation;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Mary\Traits\Toast;
+use Livewire\WithPagination;
 
 class TransactionIndex extends Component
 {
-    use Toast;
+    use WithPagination, WithDateNavigation;
 
-    // 篩選器綁定變數
-    public string $searchCurrency = '';
+    public int $shopId = 1;
+
+    // UI 開關與篩選屬性
+    public bool $showFilters = false;
+    public ?string $searchCurrency = null;
     public ?int $searchAccountId = null;
     public ?int $searchCategoryId = null;
-    public string $searchType = '';
-
-    // 控制是否顯示進階篩選抽屜
-    public bool $showFilters = false;
-
-    // 年月選擇器
-    public string $transactionMonth = '';
-
-    // 預留多店店別，預設為 1
-    public int $shopId = 1;
-	
-	protected CurrencyService $currencyService;
-
-    public function boot(CurrencyService $currencyService)
-    {
-        $this->currencyService = $currencyService;
-    }
+    public ?string $searchType = null;
+    public string $search = '';
 
     public function mount()
     {
-        $this->transactionMonth = now()->format('Y-m');
+        // 1. 預設以「月」為單位
+        $this->currentDate = now()->format('Y-m');
+        $this->dateMode = 'month';
+        $this->shopId = (int) session('current_shop_id', 1);
     }
 
-    /**
-     * 當篩選條件變更時，重新載入數據
-     */
-    public function updatedSearchCurrency() { $this->loadTransactions(); }
-    public function updatedSearchAccountId() { $this->loadTransactions(); }
-    public function updatedSearchCategoryId() { $this->loadTransactions(); }
-    public function updatedSearchType() { $this->loadTransactions(); }
-	public function updatedTransactionMonth() { $this->loadTransactions(); }
-
-    /**
-     * 監聽數據刷新事件
-     */
     #[On('refresh-data')]
-    public function onDataChanged()
+    public function refreshData()
     {
-        $this->loadTransactions();
+        $this->resetPage();
     }
 
-    /**
-     * 監聽點擊編輯交易
-     */
-    #[On('edit-transaction')]
-    public function editTransaction($transactionId)
+    protected function onDateChanged()
     {
-        try {
-            $transaction = Transaction::find($transactionId);
-            if (!$transaction) {
-                $this->toast(type: 'error', title: '交易不存在');
-                return;
-            }
-
-            $this->dispatch('open-transaction-modal', transactionId: $transactionId);
-            
-        } catch (\Exception $e) {
-            \Log::error('Edit transaction error: ' . $e->getMessage());
-            $this->toast(type: 'error', title: '無法編輯交易：' . $e->getMessage());
-        }
+        $this->resetPage();
     }
 
-    /**
-     * 上一個月
-     */
-	public function previousMonth()
-	{
-		$date = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->subMonth();
-		$this->transactionMonth = $date->format('Y-m');
-	}
-
-	public function nextMonth()
-	{
-		$date = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->addMonth();
-		
-		// 不允許切換到比目前月份更晚的未來月份
-		if ($date->startOfMonth()->gt(now()->startOfMonth())) {
-			$date = now();
-		}
-		
-		$this->transactionMonth = $date->format('Y-m');
-	}
-
-    /**
-     * 載入交易數據（無分頁）
-     */
-    private function loadTransactions()
+    public function getBaseCurrencyProperty()
     {
-        // 這個方法會在 render 中被重新執行，不需要額外操作
-        // 保留此方法以維持一致性
+        return Currency::where('shop_id', $this->shopId)->where('is_base', true)->first();
     }
 
-    /**
-     * 刪除單筆記帳紀錄
-     */
-    public function deleteTransaction(int $id)
-    {
-        try {
-            DB::transaction(function () use ($id) {
-                $transaction = Transaction::where('id', $id)
-                    ->where('shop_id', $this->shopId)
-                    ->firstOrFail();
-
-                $accountId = $transaction->from_account_id ?? $transaction->to_account_id;
-                $account = FinancialAccount::where('id', $accountId)->lockForUpdate()->firstOrFail();
-
-                if ($transaction->type === 'expense') {
-                    $newBalance = bcadd($account->balance, $transaction->amount, 4);
-                } else {
-                    $newBalance = bcsub($account->balance, $transaction->amount, 4);
-                }
-
-                $account->update(['balance' => $newBalance]);
-                $transaction->delete();
-            });
-
-            $this->toast(type: 'success', title: '刪除成功', description: '該筆紀錄已移除，帳戶餘額已精確沖正回滾。');
-            $this->dispatch('refresh-data');
-            
-        } catch (\Exception $e) {
-            $this->toast(type: 'error', title: '刪除失敗', description: $e->getMessage());
-        }
-    }
-
-    /**
-     * 後端渲染主邏輯
-     */
     public function render()
     {
-        // render() 內的日期解析
-		$startDate = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->startOfMonth()->startOfDay();
-		$endDate = Carbon::createFromFormat('Y-m-d', $this->transactionMonth . '-01')->endOfMonth()->endOfDay();
+        $parsedDate = $this->parseCurrentDate();
 
-        // 建立基本查詢器
+        // 日期顯示與當月狀態判斷
+        $monthDisplay = $parsedDate->format('Y 年 m 月');
+        $isCurrentMonth = $parsedDate->isCurrentMonth();
+
+        // 按「月」進行交易紀錄查詢
         $query = Transaction::query()
-            ->with(['category', 'category.parent', 'fromAccount', 'toAccount'])
             ->where('shop_id', $this->shopId)
-			->where('user_id', auth()->id())
-            ->whereBetween('recorded_at', [$startDate, $endDate])
-            ->orderBy('recorded_at', 'desc');
+            ->whereYear('recorded_at', $parsedDate->year)
+            ->whereMonth('recorded_at', $parsedDate->month)
+            ->with(['category', 'fromAccount', 'toAccount']);
 
-        // 套用動態條件過濾
-        if ($this->searchType) {
-            $query->where('type', $this->searchType);
-        }
+        // 條件篩選
         if ($this->searchCategoryId) {
             $query->where('category_id', $this->searchCategoryId);
         }
+
         if ($this->searchAccountId) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('from_account_id', $this->searchAccountId)
                   ->orWhere('to_account_id', $this->searchAccountId);
             });
         }
+
+        if ($this->searchType) {
+            $query->where('type', $this->searchType);
+        }
+
         if ($this->searchCurrency) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereHas('fromAccount', fn($a) => $a->where('currency', $this->searchCurrency))
                   ->orWhereHas('toAccount', fn($a) => $a->where('currency', $this->searchCurrency));
             });
         }
 
-        // 取得所有交易（無分頁）
-        $transactions = $query->get();
-		
-		 // 為每個交易附加幣別符號
-		$transactions->each(function ($tx) {
-			$acc = $tx->fromAccount ?? $tx->toAccount;
-			$currencyCode = $acc->currency ?? 'TWD';
-			$currency = $this->currencyService->getCurrency($currencyCode);
-			$tx->currency_symbol = $currency?->symbol ?? 'NT$';
-			$tx->currency_code = $currencyCode;
-		});
+        if (!empty($this->search)) {
+            $query->where('note', 'like', '%' . $this->search . '%');
+        }
 
-        // 依日期分組
-        $groupedTransactions = $transactions->groupBy(function ($item) {
-            return Carbon::parse($item->recorded_at)->format('Y-m-d');
-        });
-
-        // 計算本月收支統計
+        // 高精度當月金額累加 (bcadd / bcsub)
+        $monthTransactions = (clone $query)->orderBy('recorded_at', 'desc')->get();
         $totalIncome = '0.0000';
         $totalExpense = '0.0000';
-		
-        foreach ($transactions as $tx) {
-            $currency = $tx->currency ?? $this->currencyService->getBaseCurrencyCode();
-            $amount = $tx->amount;
-            $amountInBase = $this->currencyService->convertToBase((string)$amount, $currency);
 
+        foreach ($monthTransactions as $tx) {
+            $amount = (string) $tx->amount;
             if ($tx->type === 'income') {
-                // 使用 MoneyCalculator
-                $totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
+                $totalIncome = bcadd($totalIncome, $amount, 4);
             } elseif ($tx->type === 'expense') {
-                // 使用 MoneyCalculator
-                $totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
+                $totalExpense = bcadd($totalExpense, $amount, 4);
             }
         }
 
-        // 撈取篩選選單所需資料
-        $accounts = FinancialAccount::where('is_active', true)->get();
-        $filteredAccounts = $this->searchCurrency ? $accounts->where('currency', $this->searchCurrency) : $accounts;
-        $categories = Category::whereNotNull('parent_id')->orderBy('sort_order')->get();
+        // 按日期（Y-m-d）分組
+        $groupedTransactions = $monthTransactions->groupBy(function ($item) {
+            return \Carbon\Carbon::parse($item->recorded_at)->format('Y-m-d');
+        });
 
-        // 計算當前月份顯示文字
-        $monthDisplay = Carbon::createFromFormat('Y-m', $this->transactionMonth)->format('Y 年 m 月');
-        $isCurrentMonth = Carbon::createFromFormat('Y-m', $this->transactionMonth)->isSameMonth(now());
-		
-		// 從資料庫取得所有幣別
-        $currencies = $this->currencyService->getAllCurrencies();
-		// 獲取基準貨幣符號
-		$baseSymbol = $this->currencyService->getBaseCurrencySymbol();
-
+        // 基礎選單與貨幣資料
+        $categories = Category::where('shop_id', $this->shopId)->get();
+        $accounts = FinancialAccount::where('shop_id', $this->shopId)->where('is_active', true)->get();
+        
+        $currenciesData = Currency::where('shop_id', $this->shopId)->get();
+        $currencies = [];
+        foreach ($currenciesData as $c) {
+            $currencies[$c->code] = [
+                'name' => $c->name,
+                'symbol' => $c->symbol,
+            ];
+        }
 
         return view('livewire.finance.transaction-index', [
             'groupedTransactions' => $groupedTransactions,
-            'transactions' => $transactions,
-            'currencies' => $currencies->toArray(),
-            'accounts' => $filteredAccounts,
+            'transactionCount' => $monthTransactions->count(),
             'categories' => $categories,
-            'totalIncome' => number_format((float)$totalIncome, 2),
-            'totalExpense' => number_format((float)$totalExpense, 2),
-            'baseSymbol' => $baseSymbol,
+            'accounts' => $accounts,
+            'currencies' => $currencies,
             'monthDisplay' => $monthDisplay,
             'isCurrentMonth' => $isCurrentMonth,
-            'transactionCount' => $transactions->count(),
+            'totalIncome' => number_format((float)$totalIncome, 2),
+            'totalExpense' => number_format((float)$totalExpense, 2),
+            'baseSymbol' => $this->baseCurrency?->symbol ?? 'NT$',
         ])->layout('components.layouts.app');
     }
 }
