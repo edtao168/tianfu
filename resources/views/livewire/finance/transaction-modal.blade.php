@@ -112,14 +112,15 @@
 
         {{-- 2. 原本的表單 Form 內容 --}}
         <x-form wire:submit="saveTransaction">
-            {{-- 日期選擇 --}}
+            {{-- 日期選擇（不用dateDisplay()） --}}
             <div class="mb-4">
                 <x-date-nav 
-                    model="currentDate" 
-                    type="day" 
-                    :display="\Carbon\Carbon::parse($currentDate)->format('Y/m/d')"
-                    :is-current="$currentDate === now()->format('Y-m-d')" 
-                />
+					model="currentDate" 
+					:type="$dateMode"
+					:display="date('Y-m-d', strtotime($currentDate))" 
+					:isCurrent="$currentDate === date('Y-m-d')" 
+					:disableNext="false"
+				/>
             </div>
             
             {{-- 帳戶選擇 --}}

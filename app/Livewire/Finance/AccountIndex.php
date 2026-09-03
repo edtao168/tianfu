@@ -59,37 +59,16 @@ class AccountIndex extends Component
             ->get();
         
         foreach ($currencies as $currency) {
-            $accounts = FinancialAccount::where('shop_id', $this->currentShopId)
-                ->where('user_id', auth()->id())
-                ->where('currency', $currency->code)
-                ->where('is_active', true)
-                ->get()
-                ->map(function ($account) {
-                    $initialBalance = (string) ($account->balance ?? '0');
-
-                    // 流入金額 (Inflow)：收入 (income) 或 轉帳 (transfer) 進入此帳戶
-                    $inflow = Transaction::where('shop_id', $this->currentShopId)
-                        ->where('user_id', auth()->id())
-                        ->where('to_account_id', $account->id)
-                        ->sum('amount');
-
-                    // 流出金額 (Outflow)：支出 (expense) 或 轉帳 (transfer) 從此帳戶扣除
-                    $outflow = Transaction::where('shop_id', $this->currentShopId)
-                        ->where('user_id', auth()->id())
-                        ->where('from_account_id', $account->id)
-                        ->sum('amount');
-
-                    // 交易後實際動態餘額 = 初始資產 + 流入 - 流出 (強制 BCMath 高精度運算)
-                    $actualBalance = bcsub(
-                        bcadd($initialBalance, (string)$inflow, 4),
-                        (string)$outflow,
-                        4
-                    );
-
-                    $account->calculated_balance = (float)$actualBalance;
-
-                    return $account;
-                });
+			$accounts = FinancialAccount::where('shop_id', $this->currentShopId)
+					->where('user_id', auth()->id())
+					->where('currency', $currency->code)
+					->where('is_active', true)
+					->get()
+					->map(function ($account) {
+						// 直接讀取 Model 封裝好的動態餘額
+						$account->calculated_balance = (float) $account->calculated_balance;
+						return $account;
+					});
             
             if ($accounts->isNotEmpty()) {
                 $groups[] = [

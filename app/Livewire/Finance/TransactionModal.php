@@ -260,7 +260,7 @@ class TransactionModal extends Component
             ->where('shop_id', $this->shop_id)
             ->first();
         
-        return $account ? $account->balance : 0;
+        return $account ? $account->calculated_balance : 0;
     }
 
     private function resetForm()
@@ -291,7 +291,7 @@ class TransactionModal extends Component
             ->map(fn($a) => [
                 'id' => $a->id,
                 'name' => $a->name,
-                'balance' => $a->balance,
+                'balance' => $a->calculated_balance,
                 'currency' => $a->currency
             ])
             ->toArray();

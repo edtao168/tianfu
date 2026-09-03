@@ -38,6 +38,31 @@ class FinancialAccount extends Model
     ];
 	
 	/**
+     * 取得帳戶動態計算後的實際餘額 (Decimal 16,4 嚴謹計算)
+     */
+    public function getCalculatedBalanceAttribute(): string
+    {
+        $initialBalance = (string) ($this->balance ?? '0');
+
+        // 流入金額 (Inflow)：收入 或 轉帳進入此帳戶
+        $inflow = Transaction::where('shop_id', $this->shop_id)
+            ->where('to_account_id', $this->id)
+            ->sum('amount');
+
+        // 流出金額 (Outflow)：支出 或 轉帳從此帳戶扣除
+        $outflow = Transaction::where('shop_id', $this->shop_id)
+            ->where('from_account_id', $this->id)
+            ->sum('amount');
+
+        // 交易後實際動態餘額 = 初始資產 + 流入 - 流出 (強制 BCMath 高精度運算)
+        return bcsub(
+            bcadd($initialBalance, (string)$inflow, 4),
+            (string)$outflow,
+            4
+        );
+    }
+	
+	/**
      * 一個帳戶擁有多筆交易明細
      */
     public function transactions(): HasMany
