@@ -10,7 +10,7 @@
     --song-border: rgba(231, 229, 228, 0.7);
     --song-card-bg: rgba(255, 255, 255, 0.75);
     --song-modal-bg: rgba(250, 249, 246, 0.98);
-	--song-input-bg: rgba(255, 255, 255, 0.95);
+    --song-input-bg: rgba(255, 255, 255, 0.95);
 }
 
 [data-theme="dark"] {
@@ -19,7 +19,7 @@
     --song-border: rgba(68, 64, 60, 0.5);
     --song-card-bg: rgba(28, 25, 23, 0.7);
     --song-modal-bg: rgba(20, 18, 18, 0.98);
-	--song-input-bg: rgba(41, 37, 36, 0.95);
+    --song-input-bg: rgba(41, 37, 36, 0.95);
 }
 
 /* ==========================================================================
@@ -43,7 +43,7 @@
     background-color: rgba(244, 63, 94, 0.6);
 }
 
-/* 側邊條 - 暗色模式（已經調低透明度，避免過亮） */
+/* 側邊條 - 暗色模式 */
 [data-theme="dark"] .card-orange .account-left-bar {
     background-color: rgba(251, 191, 36, 0.4);
 }
@@ -60,7 +60,7 @@
     background-color: rgba(244, 63, 94, 0.4);
 }
 
-/* hover 時側邊條加深，作為互動回饋 */
+/* hover 時側邊條加深 */
 .card-orange:hover .account-left-bar {
     background-color: rgba(251, 191, 36, 0.85);
 }
@@ -92,64 +92,100 @@
 [data-theme="dark"] .card-red:hover .account-left-bar {
     background-color: rgba(244, 63, 94, 0.6);
 }
+
 /* ==========================================================================
-   帳戶類型 Badge 背景色與文字色彩 (比照側邊條配色)
+   交易標題響應式截斷（方案二）
    ========================================================================== */
 
-/* 預設 Badge 基礎樣式微調 (若有需要) */
+/* 交易標題基礎樣式 */
+.transaction-title {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px; /* 手機版預設寬度 */
+}
+
+/* 手機版（< 640px）保持截斷 */
+@media (max-width: 639px) {
+    .transaction-title {
+        max-width: 100px;
+    }
+}
+
+/* 平板（640px - 767px）稍微放寬 */
+@media (min-width: 640px) and (max-width: 767px) {
+    .transaction-title {
+        max-width: 200px;
+    }
+}
+
+/* 電腦版（>= 768px）顯示完整 */
+@media (min-width: 768px) {
+    .transaction-title {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
+/* ==========================================================================
+   帳戶類型 Badge 背景色與文字色彩
+   ========================================================================== */
+
 .account-badge {
     transition: all 0.2s ease-in-out;
 }
 
-/* --- 亮色模式 Badge 配色 --- */
+/* 亮色模式 Badge 配色 */
 .card-orange .account-badge {
     background-color: rgba(251, 191, 36, 0.15);
-    color: #b45309; /* amber-700 */
+    color: #b45309;
 }
 .card-green .account-badge {
     background-color: rgba(52, 211, 153, 0.15);
-    color: #047857; /* emerald-700 */
+    color: #047857;
 }
 .card-blue .account-badge {
     background-color: rgba(56, 189, 248, 0.15);
-    color: #0369a1; /* sky-700 */
+    color: #0369a1;
 }
 .card-purple .account-badge {
     background-color: rgba(139, 92, 246, 0.15);
-    color: #6d28d9; /* violet-700 */
+    color: #6d28d9;
 }
 .card-red .account-badge {
     background-color: rgba(244, 63, 94, 0.15);
-    color: #be123c; /* rose-700 */
+    color: #be123c;
 }
 
-/* --- 暗色模式 Badge 配色 --- */
+/* 暗色模式 Badge 配色 */
 [data-theme="dark"] .card-orange .account-badge {
     background-color: rgba(251, 191, 36, 0.2);
-    color: #fcd34d; /* amber-300 */
+    color: #fcd34d;
 }
 [data-theme="dark"] .card-green .account-badge {
     background-color: rgba(52, 211, 153, 0.2);
-    color: #6ee7b7; /* emerald-300 */
+    color: #6ee7b7;
 }
 [data-theme="dark"] .card-blue .account-badge {
     background-color: rgba(56, 189, 248, 0.2);
-    color: #7dd3fc; /* sky-300 */
+    color: #7dd3fc;
 }
 [data-theme="dark"] .card-purple .account-badge {
     background-color: rgba(139, 92, 246, 0.2);
-    color: #c4b5fd; /* violet-300 */
+    color: #c4b5fd;
 }
 [data-theme="dark"] .card-red .account-badge {
     background-color: rgba(244, 63, 94, 0.2);
-    color: #fda4af; /* rose-300 */
+    color: #fda4af;
 }
 
 /* ==========================================================================
    字體大小控制
    ========================================================================== */
 
-/* 設定不同字體大小 */
 html[data-font-size="sm"] {
     --font-size-base: 14px;
 }
@@ -162,7 +198,6 @@ html[data-font-size="lg"] {
     --font-size-base: 18px;
 }
 
-/* 🔥 關鍵：將變數應用到根元素 */
 html {
     font-size: var(--font-size-base);
 }
@@ -181,43 +216,43 @@ html {
     @apply rounded-xl transition-all duration-200;
 }
 
-/* ----- 鈞窯海棠紅 (危險/刪除/支出) ----- */
+/* 鈞窯海棠紅 (危險/刪除/支出) */
 .btn-red {
     @apply bg-rose-50/60 text-rose-800 border border-rose-200/50 hover:bg-rose-100/50 hover:border-rose-300/60 focus:ring-rose-300/30;
 }
 
-/* ----- 柿染赭石 (警告/編輯/修改) ----- */
+/* 柿染赭石 (警告/編輯/修改) */
 .btn-orange {
     @apply bg-amber-50/60 text-amber-800 border border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-300/60 focus:ring-amber-300/30;
 }
 
-/* ----- 龍泉青瓷 (成功/新增/收入) ----- */
+/* 龍泉青瓷 (成功/新增/收入) */
 .btn-green {
     @apply bg-emerald-50/60 text-emerald-800 border border-emerald-200/50 hover:bg-emerald-100/50 hover:border-emerald-300/60 focus:ring-emerald-300/30;
 }
 
-/* ----- 汝窯天青 (資訊/連結/次要操作) ----- */
+/* 汝窯天青 (資訊/連結/次要操作) */
 .btn-blue {
     @apply bg-sky-50/60 text-sky-800 border border-sky-200/50 hover:bg-sky-100/50 hover:border-sky-300/60 focus:ring-sky-300/30;
 }
 
-/* ----- 暮山煙紫 (特殊/進階/報表) ----- */
+/* 暮山煙紫 (特殊/進階/報表) */
 .btn-purple {
     @apply bg-purple-50/60 text-purple-800 border border-purple-200/50 hover:bg-purple-100/50 hover:border-purple-300/60 focus:ring-purple-300/30;
 }
 
-/* ----- 松煙墨色 - 主要操作 (儲存/提交) ----- */
+/* 松煙墨色 - 主要操作 (儲存/提交) */
 .btn-dark {
     @apply bg-stone-800/90 text-stone-50 border border-stone-700/80 hover:bg-stone-700/90 focus:ring-stone-500/30 font-medium tracking-wider shadow-sm;
 }
 
-/* ----- 定窯牙白 - Ghost (取消/關閉) ----- */
+/* 定窯牙白 - Ghost (取消/關閉) */
 .btn-light {
     @apply bg-stone-100/60 text-stone-600 border border-stone-200/60 hover:bg-stone-200/60 hover:text-stone-700 focus:ring-stone-300/30;
 }
 
 /* ==========================================================================
-   範本 Modal - 宋式汝窯天青主題 (僅背景區別)
+   範本 Modal - 宋式汝窯天青主題
    ========================================================================== */
 
 .template-modal-blue .modal-box {
@@ -227,7 +262,6 @@ html {
     box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.12);
 }
 
-/* 只保留背景相關的樣式，移除所有文字顏色覆蓋 */
 .template-modal-blue .modal-box select,
 .template-modal-blue .modal-box .select select {
     background-color: var(--song-input-bg);
@@ -235,7 +269,7 @@ html {
 }
 
 .template-modal-blue .modal-box select option {
-    background-color: var(--song-bg); /* 使 option 背景跟隨宋風底色 */
+    background-color: var(--song-bg);
     color: var(--song-text);
 }
 
@@ -274,7 +308,7 @@ html {
 }
 
 /* ==========================================================================
-   交易類型語意色彩 (Expense / Income / Transfer)
+   交易類型語意色彩 - 完整版（含背景透明度）
    ========================================================================== */
 
 @layer utilities {
@@ -284,6 +318,12 @@ html {
     }
     .bg-tx-expense {
         @apply bg-rose-600 dark:bg-rose-500;
+    }
+    .bg-tx-expense\/10 {
+        @apply bg-rose-500/10 dark:bg-rose-400/10;
+    }
+    .bg-tx-expense\/20 {
+        @apply bg-rose-500/20 dark:bg-rose-400/20;
     }
     .border-tx-expense {
         @apply border-rose-200 dark:border-rose-800/50;
@@ -299,6 +339,12 @@ html {
     .bg-tx-income {
         @apply bg-emerald-600 dark:bg-emerald-500;
     }
+    .bg-tx-income\/10 {
+        @apply bg-emerald-500/10 dark:bg-emerald-400/10;
+    }
+    .bg-tx-income\/20 {
+        @apply bg-emerald-500/20 dark:bg-emerald-400/20;
+    }
     .border-tx-income {
         @apply border-emerald-200 dark:border-emerald-800/50;
     }
@@ -312,6 +358,12 @@ html {
     }
     .bg-tx-transfer {
         @apply bg-sky-600 dark:bg-sky-500;
+    }
+    .bg-tx-transfer\/10 {
+        @apply bg-sky-500/10 dark:bg-sky-400/10;
+    }
+    .bg-tx-transfer\/20 {
+        @apply bg-sky-500/20 dark:bg-sky-400/20;
     }
     .border-tx-transfer {
         @apply border-sky-200 dark:border-sky-800/50;

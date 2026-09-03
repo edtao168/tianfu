@@ -96,7 +96,7 @@
 				
 				<div class="space-y-4 md:space-y-5 max-w-full">
 
-					{{-- 日期導航 (使用 date-nav 元件，根據 mode 動態調整) --}}
+					{{-- 日期導航 --}}
 					<div class="w-full max-w-full flex-shrink-0">
 						<x-date-nav 
 							model="currentDate" 
@@ -141,21 +141,23 @@
 											$isTransfer = $tx['is_transfer'] ?? false;
 											$categoryIcon = $tx['category_icon'] ?? 'folder';
 											$categoryName = $tx['category_name'] ?? null;
+											
+											// 🎯 使用 colors.css 定義的語意類別
 											if ($isTransfer) {
-												$amountClass = 'text-sky-600 dark:text-sky-400';
-												$iconColor = 'text-sky-600 dark:text-sky-400';
-												$amountPrefix = '';
-												$bgColor = 'bg-sky-500/10';
+												$amountClass = 'text-tx-transfer';
+												$iconColor = 'text-tx-transfer';
+												$amountPrefix = '↕';
+												$bgColor = 'bg-tx-transfer/10';
 											} elseif ($isIncome) {
-												$amountClass = 'text-emerald-600 dark:text-emerald-400';
-												$iconColor = 'text-emerald-600 dark:text-emerald-400';
+												$amountClass = 'text-tx-income';
+												$iconColor = 'text-tx-income';
 												$amountPrefix = '+';
-												$bgColor = 'bg-emerald-500/10';
+												$bgColor = 'bg-tx-income/10';
 											} elseif ($isExpense) {
-												$amountClass = 'text-rose-600 dark:text-rose-400';
-												$iconColor = 'text-rose-600 dark:text-rose-400';
+												$amountClass = 'text-tx-expense';
+												$iconColor = 'text-tx-expense';
 												$amountPrefix = '-';
-												$bgColor = 'bg-rose-500/10';
+												$bgColor = 'bg-tx-expense/10';
 											} else {
 												$amountClass = 'text-base-content';
 												$iconColor = 'opacity-50';
@@ -165,13 +167,15 @@
 											
 											$displayAmount = $tx['display_amount'] ?? $tx['amount'];
 											
-											$subCategoryName = '';
+											// 建立顯示標題（完整內容）
 											if ($isTransfer) {
-												$subCategoryName = ($accountId && $tx['from_account_id'] == $accountId) ? '轉出' : '轉入';
+												$fromName = $tx['from_account_name'] ?? '帳戶';
+												$toName = $tx['to_account_name'] ?? '帳戶';
+												$displayTitle = $fromName . ' → ' . $toName;
 											} elseif ($categoryName) {
-												$subCategoryName = $categoryName;
+												$displayTitle = $categoryName;
 											} else {
-												$subCategoryName = $isIncome ? '收入' : '支出';
+												$displayTitle = $isIncome ? '收入' : '支出';
 											}
 											
 											$accountName = $tx['account_name'] ?? ($currentAccount->name ?? '');
@@ -188,10 +192,15 @@
 													$summary = ($tx['from_account_name'] ?? '帳戶') . ' ➔ ' . ($tx['to_account_name'] ?? '帳戶');
 												}
 											}
+											
+											// 🎯 統一邏輯：轉帳不顯示帳戶，收支顯示帳戶
+											// 在帳戶模式（$accountId）下，所有交易都屬於同一個帳戶，不重複顯示
+											// 在總覽模式（!$accountId）下，收支顯示帳戶名稱
+											$shouldShowAccount = !$isTransfer && !$accountId && $accountName;
 										@endphp
 										
 										<!-- 單筆交易卡片 -->
-										<div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50"
+										<div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
 											 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
 											
 											{{-- 左側主題側邊條 --}}
@@ -201,26 +210,24 @@
 											<div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
 												<x-dynamic-component 
 													:component="'heroicon-o-' . $categoryIcon" 
-													class="w-6 h-6 {{ $iconColor }}" />
+													class="w-5 h-5 {{ $iconColor }}" />
 											</div>
 											
 											{{-- 內容區域 --}}
 											<div class="flex-1 min-w-0 ml-3 md:ml-4">
 												<div class="flex items-center justify-between gap-2">
 													<div class="flex items-center gap-2 min-w-0">
-														<span class="text-base md:text-base font-semibold text-base-content flex-shrink-0">
-															{{ $subCategoryName }}
+														{{-- 🎯 純 CSS 響應式截斷 --}}
+														<span class="text-base md:text-base font-semibold text-base-content truncate min-w-0 
+																	 max-w-[120px] sm:max-w-[200px] md:max-w-none inline-block"
+															  title="{{ $displayTitle }}">
+															{{ $displayTitle }}
 														</span>
 														
-														@if($accountName)
-															<span class="text-sm opacity-60 font-normal truncate min-w-0">
+														{{-- 🎯 轉帳不顯示，收支顯示帳戶名稱 --}}
+														@if($shouldShowAccount)
+															<span class="text-sm opacity-60 font-normal truncate min-w-0 sm:inline">
 																（{{ $accountName }}）
-															</span>
-														@endif
-														
-														@if($isTransfer)
-															<span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 flex-shrink-0">
-																轉帳
 															</span>
 														@endif
 													</div>
@@ -234,7 +241,7 @@
 												
 												{{-- 備註 + 時間 --}}
 												<div class="flex items-center justify-between gap-2 mt-0.5">
-													<span class="text-sm opacity-60 truncate {{ $summary ? '' : 'italic' }}">
+													<span class="text-sm opacity-60 truncate min-w-0 {{ $summary ? '' : 'italic' }}">
 														{{ $summary ?: '無備註' }}
 													</span>
 													<span class="text-sm font-mono opacity-50 flex-shrink-0">

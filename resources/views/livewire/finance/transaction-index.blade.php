@@ -96,47 +96,64 @@
                             $isExpense = $tx->type === 'expense';
                             $isTransfer = $tx->type === 'transfer';
                             
+                            // 🎯 使用 colors.css 定義的語意類別
                             if ($isTransfer) {
-                                $iconColor = 'text-sky-600 dark:text-sky-400';
-                                $bgColor = 'bg-sky-500/10';
-                                $amountClass = 'text-sky-600 dark:text-sky-400';
+                                $iconColor = 'text-tx-transfer';
+                                $bgColor = 'bg-tx-transfer/10';
+                                $amountClass = 'text-tx-transfer';
                                 $amountPrefix = '↕';
-                            } elseif ($isIncome) {
-                                $iconColor = 'text-emerald-600 dark:text-emerald-400';
-                                $bgColor = 'bg-emerald-500/10';
-                                $amountClass = 'text-emerald-600 dark:text-emerald-400';
-                                $amountPrefix = '+';
-                            } elseif ($isExpense) {
-                                $iconColor = 'text-rose-600 dark:text-rose-400';
-                                $bgColor = 'bg-rose-500/10';
-                                $amountClass = 'text-rose-600 dark:text-rose-400';
-                                $amountPrefix = '-';
-                            } else {
-                                $iconColor = 'opacity-50';
-                                $bgColor = 'bg-base-200';
-                                $amountClass = 'text-base-content';
-                                $amountPrefix = '';
-                            }
-                            
-                            if ($isTransfer) {
+                                $iconName = 'o-arrow-path';
+                                
                                 $fromName = $tx->fromAccount->name ?? '?';
                                 $toName = $tx->toAccount->name ?? '?';
                                 $displayTitle = $fromName . ' → ' . $toName;
-                                $iconName = 'o-arrow-path';
                             } elseif ($tx->category) {
                                 $displayTitle = $tx->category->name;
                                 $iconName = $tx->category->icon ?? 'o-hashtag';
+                                
+                                if ($tx->category->type === 'expense') {
+                                    $iconColor = 'text-tx-expense';
+                                    $bgColor = 'bg-tx-expense/10';
+                                    $amountClass = 'text-tx-expense';
+                                    $amountPrefix = '-';
+                                } else {
+                                    $iconColor = 'text-tx-income';
+                                    $bgColor = 'bg-tx-income/10';
+                                    $amountClass = 'text-tx-income';
+                                    $amountPrefix = '+';
+                                }
                             } else {
+                                if ($isExpense) {
+                                    $iconColor = 'text-tx-expense';
+                                    $bgColor = 'bg-tx-expense/10';
+                                    $amountClass = 'text-tx-expense';
+                                    $amountPrefix = '-';
+                                    $iconName = 'o-credit-card';
+                                } elseif ($isIncome) {
+                                    $iconColor = 'text-tx-income';
+                                    $bgColor = 'bg-tx-income/10';
+                                    $amountClass = 'text-tx-income';
+                                    $amountPrefix = '+';
+                                    $iconName = 'o-wallet';
+                                } else {
+                                    $iconColor = 'opacity-50';
+                                    $bgColor = 'bg-base-200';
+                                    $amountClass = 'text-base-content';
+                                    $amountPrefix = '';
+                                    $iconName = 'o-question-mark-circle';
+                                }
                                 $displayTitle = $acc?->name ?? '未分類';
-                                $iconName = $isExpense ? 'o-credit-card' : 'o-wallet';
                             }
                             
                             if (!str_starts_with($iconName, 'heroicon')) {
                                 $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
                             }
+                            
+                            // 🎯 統一邏輯：轉帳不顯示帳戶，收支顯示帳戶
+                            $shouldShowAccount = !$isTransfer && $acc;
                         @endphp
                         
-                        <div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50"
+                        <div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
                              wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })">
                             <span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
                             
@@ -147,14 +164,18 @@
                             <div class="flex-1 min-w-0 ml-3 md:ml-4">
                                 <div class="flex items-center justify-between gap-2">
                                     <div class="flex items-center gap-2 min-w-0">
-                                        <span class="text-base font-semibold text-base-content flex-shrink-0">
+                                        {{-- 🎯 純 CSS 響應式截斷 --}}
+                                        <span class="text-base font-semibold text-base-content truncate min-w-0 
+                                                     max-w-[120px] sm:max-w-[200px] md:max-w-none inline-block"
+                                              title="{{ $displayTitle }}">
                                             {{ $displayTitle }}
                                         </span>
-                                        @if($acc)
-                                            <span class="text-sm opacity-60 font-normal truncate min-w-0">（{{ $acc->name }}）</span>
-                                        @endif
-                                        @if($isTransfer)
-                                            <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 flex-shrink-0">轉帳</span>
+                                        
+                                        {{-- 🎯 轉帳不顯示，收支顯示帳戶名稱 --}}
+                                        @if($shouldShowAccount)
+                                            <span class="text-sm opacity-60 font-normal truncate min-w-0 sm:inline">
+                                                （{{ $acc->name }}）
+                                            </span>
                                         @endif
                                     </div>
                                     <span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
@@ -163,7 +184,7 @@
                                     </span>
                                 </div>
                                 <div class="flex items-center justify-between gap-2 mt-0.5">
-                                    <span class="text-sm opacity-60 truncate {{ $tx->memo ? '' : 'italic' }}">
+                                    <span class="text-sm opacity-60 truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
                                         {{ $tx->memo ?: '無備註' }}
                                     </span>
                                     <span class="text-sm font-mono opacity-50 flex-shrink-0">
