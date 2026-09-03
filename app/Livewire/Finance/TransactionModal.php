@@ -10,6 +10,7 @@ use App\Models\FinancialAccount;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionTemplate;
+use App\Traits\WithDateNavigation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,7 @@ use Carbon\Carbon;
 
 class TransactionModal extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithDateNavigation;
 
     public bool $showTransactionModal = false;
     public bool $showTemplateModal = false;
@@ -54,19 +55,34 @@ class TransactionModal extends Component
 
     public function mount()
     {
-        $this->recordedAt = Carbon::now('Asia/Taipei')->format('Y-m-d\TH:i');
+		$this->dateMode = 'day';
+        $now = Carbon::now('Asia/Taipei');
+        $this->currentDate = $now->format('Y-m-d');
+        $this->recordedAt = $now->format('Y-m-d\TH:i');
+
         $this->categoryId = 2;
         $this->fromAccountId = 1;
-        
         $this->type = 'expense';
         $this->updatedType('expense');
     }
 
-    #[On('open-transaction-modal')]
+    /**
+     * 當 WithDateNavigation 更新 currentDate 後觸發 Hook
+     */
+    public function onDateChanged(): void
+    {
+        // 取得原先 recordedAt 中的時間部分 (HH:mm)，若無則預設當前時間
+        $timePart = strlen($this->recordedAt) >= 16 
+            ? substr($this->recordedAt, 11, 5) 
+            : now('Asia/Taipei')->format('H:i');
+
+        $this->recordedAt = "{$this->currentDate}T{$timePart}";
+    }
+	
+	#[On('open-transaction-modal')]
     public function openModal($transactionId = null)
     {
-        $this->resetForm();
-        $this->recordedAt = now()->format('Y-m-d\TH:i');
+		$this->resetForm();
         $this->showTemplateList = false;
 
         if ($transactionId) {
@@ -95,11 +111,19 @@ class TransactionModal extends Component
 
             $this->categoryId = $transaction->category_id;
             $this->amount = number_format((float)$transaction->amount, 2, '.', '');
-            $this->recordedAt = Carbon::parse($transaction->recorded_at)->format('Y-m-d\TH:i');
+            
+            // 設定日期與時間
+            $dt = Carbon::parse($transaction->recorded_at);
+            $this->currentDate = $dt->format('Y-m-d');
+            $this->recordedAt = $dt->format('Y-m-d\TH:i');
             $this->memo = $transaction->memo ?? '';
             $this->existingPhotoPath = $transaction->photo_path;
         } else {
             // 新增模式
+            $now = now('Asia/Taipei');
+            $this->currentDate = $now->format('Y-m-d');
+            $this->recordedAt = $now->format('Y-m-d\TH:i');
+            
             $this->type = 'expense';
             $this->fromAccountId = 1;
             $this->toAccountId = null;

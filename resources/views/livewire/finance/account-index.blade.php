@@ -199,66 +199,63 @@
         @endforeach
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- 5. 帳戶列表 --}}
-    {{-- ============================================================ --}}
-    @foreach($this->currencyGroups as $group)
-        @php
-            $currencyTheme = $group['theme'] ?? 'blue';
-            $currencyColorMap = [
-                'blue'   => 'sky',
-                'red'    => 'rose',
-                'green'  => 'emerald',
-                'purple' => 'violet',
-                'orange' => 'orange',
-            ];
-            $dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
-        @endphp
-        
-        <div class="space-y-3 pt-2 animate-fadeIn">
-            {{-- 標題列 --}}
-            <h2 class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2">
-                <span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
-                {{ $group['currency_name'] }}資產明細
-                <span class="text-xs opacity-50">點擊卡片看明細</span>
-            </h2>
-            
-            {{-- 統一的網格卡片 --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($group['accounts'] as $account)
-                    @php
-                        $typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
-                        $icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
-                        $typeTheme = $typeConfig['theme'] ?? 'orange';
-                    @endphp
+	{{-- ============================================================ --}}
+	{{-- 5. 帳戶列表 --}}
+	{{-- ============================================================ --}}
+	@foreach($this->currencyGroups as $group)
+		@php
+			$currencyTheme = $group['theme'] ?? 'blue';
+			$currencyColorMap = [
+				'blue'   => 'sky',
+				'red'    => 'rose',
+				'green'  => 'emerald',
+				'purple' => 'violet',
+				'orange' => 'orange',
+			];
+			$dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
+		@endphp
+		
+		<div class="space-y-3 pt-2 animate-fadeIn">
+			<h2 class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2">
+				<span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
+				{{ $group['currency_name'] }}資產明細
+				<span class="text-xs opacity-50">點擊卡片看明細</span>
+			</h2>
+			
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				@foreach($group['accounts'] as $account)
+					@php
+						$typeConfig = config("business.account_types.{$account->type}") ?? config("business.account_types.cash");
+						$icon = $typeConfig['icon'] ?? 'heroicon-o-currency-dollar';
+						$typeTheme = $typeConfig['theme'] ?? 'orange';
+					@endphp
 
-                    <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-200 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/20 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
-                        
-                        {{-- 側邊條 --}}
-                        <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
+					<div wire:click="viewAccountTransactions({{ $account->id }})" 
+						 class="card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-200 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/20 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
+						
+						<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 
-                        <div class="flex justify-between items-start relative z-10">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 opacity-50" />
-                                <span class="font-bold text-base-content text-base truncate">{{ $account->name }}</span>
-                            </div>
-                            <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md font-mono flex-shrink-0 ml-2">
+						<div class="flex justify-between items-start relative z-10">
+							<div class="flex items-center gap-2 min-w-0">
+								<x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 opacity-50" />
+								<span class="font-bold text-base-content text-base truncate">{{ $account->name }}</span>
+							</div>
+							<span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md font-mono flex-shrink-0 ml-2">
 								{{ $typeConfig['name'] }}
 							</span>
-                        </div>
-                        
-                        <div class="flex justify-between items-end mt-2 relative z-10">
-                            <span class="text-xs opacity-60 font-medium">當前餘額</span>
-                            <span class="font-mono text-xl font-extrabold text-base-content truncate ml-2">
-                                <span class="opacity-50 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->balance, 2) }}
-                            </span>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endforeach
+						</div>
+						
+						<div class="flex justify-between items-end mt-2 relative z-10">
+							<span class="text-xs opacity-60 font-medium">交易後實際餘額</span>
+							<span class="font-mono text-xl font-extrabold text-base-content truncate ml-2">
+								<span class="opacity-50 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->calculated_balance, 2) }}
+							</span>
+						</div>
+					</div>
+				@endforeach
+			</div>
+		</div>
+	@endforeach
 
     {{-- ============================================================ --}}
     {{-- 6. 新增/編輯帳戶 Modal --}}

@@ -151,7 +151,7 @@
                                             {{ $displayTitle }}
                                         </span>
                                         @if($acc)
-                                            <span class="text-sm opacity-60 font-normal truncate">（{{ $acc->name }}）</span>
+                                            <span class="text-sm opacity-60 font-normal truncate min-w-0">（{{ $acc->name }}）</span>
                                         @endif
                                         @if($isTransfer)
                                             <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 flex-shrink-0">轉帳</span>

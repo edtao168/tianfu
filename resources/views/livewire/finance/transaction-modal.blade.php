@@ -113,14 +113,13 @@
         {{-- 2. 原本的表單 Form 內容 --}}
         <x-form wire:submit="saveTransaction">
             {{-- 日期選擇 --}}
-            <div class="flex items-center justify-between mb-4 px-2 py-1 rounded-xl">
-                <button type="button" wire:click="changeDate(-1)" class="p-2 hover:bg-base-200 text-base-content rounded-full transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <span class="text-base font-bold tracking-wider text-base-content"> {{ \Carbon\Carbon::parse($this->recordedAt)->format('Y/m/d') }} </span>
-                <button type="button" wire:click="changeDate(1)" class="p-2 hover:bg-base-200 text-base-content rounded-full transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
+            <div class="mb-4">
+                <x-date-nav 
+                    model="currentDate" 
+                    type="day" 
+                    :display="\Carbon\Carbon::parse($currentDate)->format('Y/m/d')"
+                    :is-current="$currentDate === now()->format('Y-m-d')" 
+                />
             </div>
             
             {{-- 帳戶選擇 --}}

@@ -213,7 +213,7 @@
 														</span>
 														
 														@if($accountName)
-															<span class="text-sm opacity-60 font-normal truncate">
+															<span class="text-sm opacity-60 font-normal truncate min-w-0">
 																（{{ $accountName }}）
 															</span>
 														@endif

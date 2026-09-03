@@ -50,9 +50,9 @@ class AccountIndex extends Component
         return Shop::all();
     }
     
-    #[Computed]
+	#[Computed]
     public function currencyGroups()
-    {
+	{
         $groups = [];
         $currencies = Currency::where('is_active', true)
             ->where('shop_id', $this->currentShopId)
@@ -60,17 +60,43 @@ class AccountIndex extends Component
         
         foreach ($currencies as $currency) {
             $accounts = FinancialAccount::where('shop_id', $this->currentShopId)
-				->where('user_id', auth()->id())
+                ->where('user_id', auth()->id())
                 ->where('currency', $currency->code)
                 ->where('is_active', true)
-                ->get();
+                ->get()
+                ->map(function ($account) {
+                    $initialBalance = (string) ($account->balance ?? '0');
+
+                    // 流入金額 (Inflow)：收入 (income) 或 轉帳 (transfer) 進入此帳戶
+                    $inflow = Transaction::where('shop_id', $this->currentShopId)
+                        ->where('user_id', auth()->id())
+                        ->where('to_account_id', $account->id)
+                        ->sum('amount');
+
+                    // 流出金額 (Outflow)：支出 (expense) 或 轉帳 (transfer) 從此帳戶扣除
+                    $outflow = Transaction::where('shop_id', $this->currentShopId)
+                        ->where('user_id', auth()->id())
+                        ->where('from_account_id', $account->id)
+                        ->sum('amount');
+
+                    // 交易後實際動態餘額 = 初始資產 + 流入 - 流出 (強制 BCMath 高精度運算)
+                    $actualBalance = bcsub(
+                        bcadd($initialBalance, (string)$inflow, 4),
+                        (string)$outflow,
+                        4
+                    );
+
+                    $account->calculated_balance = (float)$actualBalance;
+
+                    return $account;
+                });
             
             if ($accounts->isNotEmpty()) {
                 $groups[] = [
                     'currency' => $currency->code,
                     'currency_name' => $currency->name,
                     'currency_symbol' => $currency->symbol,
-                    'total_balance' => $accounts->sum('balance'),
+                    'total_balance' => $accounts->sum('calculated_balance'),
                     'accounts' => $accounts,
                     'theme' => config('business.currency_theme_map.' . $currency->code, 'blue'),
                 ];
@@ -80,7 +106,7 @@ class AccountIndex extends Component
         return $groups;
     }
     
-    #[Computed]
+	#[Computed]
     public function totalAssets()
     {
         $baseCurrency = Currency::where('shop_id', $this->currentShopId)
@@ -99,24 +125,23 @@ class AccountIndex extends Component
         
         $total = 0;
         $breakdown = [];
-        $currencies = Currency::where('shop_id', $this->currentShopId)
-            ->where('is_active', true)
-            ->get();
         
-        foreach ($currencies as $currency) {
-            $balance = FinancialAccount::where('shop_id', $this->currentShopId)
-                ->where('user_id', auth()->id())
-				->where('currency', $currency->code)
-                ->where('is_active', true)
-                ->sum('balance');
+        // 引用計算好的 currencyGroups 以維持一致的動態餘額
+        foreach ($this->currencyGroups as $group) {
+            $currency = Currency::where('shop_id', $this->currentShopId)
+                ->where('code', $group['currency'])
+                ->first();
+
+            if (!$currency) continue;
+
+            $balance = $group['total_balance'];
             
-            // 顯示本幣（即使餘額為0）和有餘額的其他幣別
             if ($balance != 0 || $currency->is_base) {
                 $convertedValue = $currency->is_base 
                     ? $balance 
-                    : $balance * $currency->rate;
+                    : bcmul((string)$balance, (string)$currency->rate, 4);
                 
-                $total += $convertedValue;
+                $total = bcadd((string)$total, (string)$convertedValue, 4);
                 
                 $breakdown[] = [
                     'code' => $currency->code,
@@ -124,20 +149,19 @@ class AccountIndex extends Component
                     'symbol' => $currency->symbol,
                     'balance' => $balance,
                     'rate' => $currency->rate,
-                    'converted' => $convertedValue,
+                    'converted' => (float)$convertedValue,
                     'is_base' => $currency->is_base,
                     'theme' => config('business.currency_theme_map.' . $currency->code, 'blue'),
                 ];
             }
         }
         
-        // 按餘額排序（大的在前面）
         usort($breakdown, function ($a, $b) {
             return $b['balance'] <=> $a['balance'];
         });
         
         return [
-            'total' => $total,
+            'total' => (float)$total,
             'base_symbol' => $baseCurrency->symbol,
             'base_code' => $baseCurrency->code,
             'breakdown' => $breakdown,

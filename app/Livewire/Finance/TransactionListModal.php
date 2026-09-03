@@ -54,7 +54,7 @@ class TransactionListModal extends Component
     {
         $date = $this->parseCurrentDate();
         return match ($this->dateMode) {
-            'day' => $date->format('Y 年 m 月 d 日'),
+            'day' => $date->format('Y-m-d'),
             'year' => $date->format('Y 年'),
             default => $date->format('Y 年 m 月'),
         };
