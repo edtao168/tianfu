@@ -92,7 +92,7 @@
 			</div>
 
 			{{-- 內文與數據區塊 --}}
-			<div class="p-4 md:p-6 bg-base-100 flex-1 overflow-y-auto min-h-0 space-y-4">
+			<div class="px-0 md:px-6 bg-base-100 flex-1 overflow-y-auto min-h-0 space-y-4">
 				
 				<div class="space-y-4 md:space-y-5 max-w-full">
 
