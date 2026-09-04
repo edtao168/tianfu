@@ -76,7 +76,7 @@
                 <!-- 日期標頭 -->
                 <div class="text-xs font-bold opacity-70 tracking-wider flex items-center gap-2 px-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500/70"></span>
-                    <span>{{ date('Y 年 m 月 d 日', strtotime($date)) }}</span>
+                    <span>{{ date('Y-m-d', strtotime($date)) }}</span>
                     <span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][date('w', strtotime($date))] }}</span>
                     <span class="text-[10px] font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
                 </div>
@@ -149,7 +149,7 @@
                                 $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
                             }
                             
-                            // 🎯 統一邏輯：轉帳不顯示帳戶，收支顯示帳戶
+                            // 🎯 帳戶：轉帳不顯示，收支顯示
                             $shouldShowAccount = !$isTransfer && $acc;
                         @endphp
                         
@@ -162,36 +162,39 @@
                             </div>
                             
                             <div class="flex-1 min-w-0 ml-3 md:ml-4">
-                                <div class="flex items-center justify-between gap-2">
-                                    <div class="flex items-center gap-2 min-w-0">
-                                        {{-- 🎯 純 CSS 響應式截斷 --}}
-                                        <span class="text-base font-semibold text-base-content truncate min-w-0 
-                                                     max-w-[120px] sm:max-w-[200px] md:max-w-none inline-block"
-                                              title="{{ $displayTitle }}">
-                                            {{ $displayTitle }}
-                                        </span>
-                                        
-                                        {{-- 🎯 轉帳不顯示，收支顯示帳戶名稱 --}}
-                                        @if($shouldShowAccount)
-                                            <span class="text-sm opacity-60 font-normal truncate min-w-0 sm:inline">
-                                                （{{ $acc->name }}）
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
-                                        <span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
-                                        {{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between gap-2 mt-0.5">
-                                    <span class="text-sm opacity-60 truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
-                                        {{ $tx->memo ?: '無備註' }}
-                                    </span>
-                                    <span class="text-sm font-mono opacity-50 flex-shrink-0">
-                                        {{ date('H:i', strtotime($tx->recorded_at)) }}
-                                    </span>
-                                </div>
-                            </div>
+								<div class="flex items-center gap-2">
+									{{-- 標題區塊 --}}
+									<div class="flex items-center gap-2 min-w-0 flex-1">
+										{{-- 🟢 收支：類別名稱完整顯示 (flex-shrink-0) --}}
+										{{-- 🟡 轉帳：顯示完整來源→目的地，但空間不足時截斷 (truncate) --}}
+										<span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}" 
+											  title="{{ $displayTitle }}">
+											{{ $displayTitle }}
+										</span>
+										
+										{{-- 只有非轉帳才顯示帳戶名稱 --}}
+										@if($shouldShowAccount)
+											<span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
+												{{ $acc->name }}
+											</span>
+										@endif
+									</div>
+									
+									{{-- 金額區塊：永遠固定靠右，不被壓縮 --}}
+									<span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
+										<span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
+										{{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
+									</span>
+								</div>
+								<div class="flex items-center justify-between gap-2 mt-0.5">
+									<span class="text-sm opacity-60 truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
+										{{ $tx->memo ?: '無備註' }}
+									</span>
+									<span class="text-sm font-mono opacity-50 flex-shrink-0">
+										{{ date('H:i', strtotime($tx->recorded_at)) }}
+									</span>
+								</div>
+							</div>
                         </div>
                     @endforeach
                 </div>

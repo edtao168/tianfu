@@ -215,10 +215,13 @@
 											
 											{{-- 內容區域 --}}
 											<div class="flex-1 min-w-0 ml-3 md:ml-4">
-												<div class="flex items-center justify-between gap-2">
-													<div class="flex items-center gap-2 min-w-0">
-														{{-- 🎯 純 CSS 響應式截斷 --}}
-														<span class="text-base md:text-base font-semibold text-base-content truncate min-w-0 
+												<div class="flex items-center gap-2">
+													{{-- 標題區塊 --}}
+													<div class="flex items-center gap-2 min-w-0 flex-1">
+														{{-- 🟢 收支：類別名稱完整顯示 (flex-shrink-0) --}}
+														{{-- 🟡 轉帳：顯示完整來源→目的地，但空間不足時截斷 (truncate) --}}
+														<span class="text-base md:text-base font-semibold text-base-content 
+																	 {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}
 																	 max-w-[120px] sm:max-w-[200px] md:max-w-none inline-block"
 															  title="{{ $displayTitle }}">
 															{{ $displayTitle }}
@@ -226,8 +229,8 @@
 														
 														{{-- 🎯 轉帳不顯示，收支顯示帳戶名稱 --}}
 														@if($shouldShowAccount)
-															<span class="text-sm opacity-60 font-normal truncate min-w-0 sm:inline">
-																（{{ $accountName }}）
+															<span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
+																{{ $accountName }}
 															</span>
 														@endif
 													</div>

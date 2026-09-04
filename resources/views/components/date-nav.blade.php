@@ -68,7 +68,7 @@
                 </div>
 
                 {{-- 「年」標籤 --}}
-                <span class="text-sm font-bold text-base-content/60 select-none">年</span>
+                <!-- span class="text-sm font-bold text-base-content/60 select-none">年</span -->
 
             @else
                 {{-- 月/日選擇器 --}}
@@ -91,9 +91,9 @@
                 </div>
 
                 {{-- 顯示類型標籤 --}}
-                <span class="text-sm font-bold text-base-content/60 select-none">
+                <!-- span class="text-sm font-bold text-base-content/60 select-none">
                     {{ $type === 'month' ? '月' : '日' }}
-                </span>
+                </span -->
             @endif
 
             {{-- 重置按鈕 --}}
