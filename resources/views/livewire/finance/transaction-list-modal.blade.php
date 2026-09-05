@@ -20,9 +20,9 @@
 							<div class="min-w-0 flex-1">
 								<h3 class="text-lg md:text-lg font-black text-base-content tracking-wide font-sans flex items-center gap-2 flex-wrap">
 									<span class="truncate">{{ $title }}</span> 
-									<span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-base-200 text-base-content opacity-80 font-mono flex-shrink-0">
+									<!-- span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-base-200 text-base-content opacity-80 font-mono flex-shrink-0">
 										{{ $transactionType === 'expense' ? '支出' : ($transactionType === 'income' ? '收入' : '交易明細') }}
-									</span>
+									</span -->
 								</h3>
 								<p class="text-sm opacity-70 mt-0.5 flex items-center gap-2 flex-wrap">
 									<span>共 <strong class="text-base-content font-mono">{{ $transactionsData['total_count'] ?? 0 }}</strong> 筆記錄</span>
