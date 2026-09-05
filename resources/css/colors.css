@@ -94,7 +94,7 @@
 }
 
 /* ==========================================================================
-   交易標題響應式截斷（方案二）
+   交易標題響應式截斷
    ========================================================================== */
 
 /* 交易標題基礎樣式 */
@@ -371,4 +371,28 @@ html {
     .badge-tx-transfer {
         @apply bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/50;
     }
+}
+
+/* ==========================================================================
+   帳戶名稱截斷 - 原生 select 強制截斷
+   ========================================================================== */
+
+/* 強制 select 與 option 單行截斷 */
+select.truncate,
+select.truncate option {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* 防止 flex/grid 子元素撐開導致 truncate 失效 */
+.min-w-0 {
+    min-width: 0;
+}
+
+/* 暗色模式下 option 背景色確保可讀 */
+[data-theme="dark"] select option {
+    background-color: var(--song-bg);
+    color: var(--song-text);
 }

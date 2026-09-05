@@ -3,9 +3,9 @@
 namespace App\Livewire\Finance;
 
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
-use App\Services\CurrencyService;
 use App\Traits\WithDateNavigation;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
@@ -18,7 +18,7 @@ class TransactionListModal extends Component
     use Toast, WithDateNavigation;
 
     public bool $showModal = false;
-    public $shopId = 1;
+    public int $shopId = 1;
 
     // 查詢篩選條件
     public ?int $accountId = null;
@@ -27,25 +27,16 @@ class TransactionListModal extends Component
 
     // 標題與幣別顯示
     public string $title = '交易明細列表';
-    public string $subtitle = '';
     public string $currencySymbol = 'NT$';
-    public string $targetCurrency = '';
 
     // 交易資料
     public array $transactionsData = [];
     
     // 統計摘要
-    public array $statsSummary = [
-        'month_expense' => '0.00',
-        'month_income' => '0.00',
-        'year_expense' => '0.00',
-        'year_income' => '0.00',
-    ];
+    public array $statsSummary = [];
 
     // 關聯實體快照
     public ?FinancialAccount $currentAccount = null;
-    
-    protected CurrencyService $currencyService;
 
     // ========== 計算屬性 ==========
     
@@ -54,8 +45,8 @@ class TransactionListModal extends Component
     {
         $date = $this->parseCurrentDate();
         return match ($this->dateMode) {
-            'day' => $date->format('Y-m-d'),
-            'year' => $date->format('Y 年'),
+            'day'   => $date->format('Y-m-d'),
+            'year'  => $date->format('Y 年'),
             default => $date->format('Y 年 m 月'),
         };
     }
@@ -65,10 +56,16 @@ class TransactionListModal extends Component
     {
         $date = $this->parseCurrentDate();
         return match ($this->dateMode) {
-            'day' => $date->isToday(),
-            'year' => $date->isCurrentYear(),
+            'day'   => $date->isToday(),
+            'year'  => $date->isCurrentYear(),
             default => $date->isCurrentMonth(),
         };
+    }
+
+    #[Computed]
+    public function baseSymbol(): string
+    {
+        return $this->currencySymbol;
     }
 
     #[Computed]
@@ -84,12 +81,6 @@ class TransactionListModal extends Component
     }
 
     #[Computed]
-    public function baseSymbol(): string
-    {
-        return $this->currencySymbol;
-    }
-
-    #[Computed]
     public function transactionCount(): int
     {
         return $this->transactionsData['total_count'] ?? 0;
@@ -97,23 +88,14 @@ class TransactionListModal extends Component
 
     // ========== 生命週期方法 ==========
 
-    public function boot(CurrencyService $currencyService)
-    {
-        $this->currencyService = $currencyService;
-    }
-
     public function mount()
     {
-        // 預設以「月」為單位
         $this->currentDate = now()->format('Y-m');
         $this->dateMode = 'month';
         $this->shopId = (int) session('current_shop_id', 1);
         $this->resetTransactionsData();
     }
 
-    /**
-     * 當日期變更時重新載入資料
-     */
     protected function onDateChanged(): void
     {
         if ($this->showModal) {
@@ -126,31 +108,24 @@ class TransactionListModal extends Component
     #[On('open-transaction-list-modal')]
     public function openModal(array $params = [])
     {
-        if (!is_array($params)) {
-            $params = [];
-        }
-
         $this->resetFilter();
+        $this->resetTransactionsData();
 
+        // 設定篩選條件
         $this->accountId = $params['accountId'] ?? null;
         $this->categoryId = $params['categoryId'] ?? null;
         $this->transactionType = $params['type'] ?? null;
-        
-        // 設定日期模式（從參數傳入）
-        // 支援: 'day', 'month', 'year'
         $this->dateMode = $params['dateMode'] ?? 'month';
-        
-        // 設定標題
         $this->title = $params['title'] ?? $this->getDefaultTitle();
-        
-        // 設定 currentDate
+
+        // 設定日期
         if (isset($params['baseDate'])) {
             $this->currentDate = $this->formatDateForMode($params['baseDate'], $this->dateMode);
         } else {
             $this->currentDate = now()->format($this->getDateFormat());
         }
 
-        // 1. 設定目標幣別
+        // 設定帳戶與幣別
         if ($this->accountId) {
             $account = FinancialAccount::find($this->accountId);
             if (!$account) {
@@ -158,14 +133,13 @@ class TransactionListModal extends Component
                 return;
             }
             $this->currentAccount = $account;
-            $this->targetCurrency = $account->currency;
+            $this->currencySymbol = $account->currencySymbol ?? 'NT$';
         } else {
-            $this->targetCurrency = $this->getBaseCurrency();
+            $baseCurrency = Currency::where('shop_id', $this->shopId)
+                ->where('is_base', true)
+                ->first();
+            $this->currencySymbol = $baseCurrency?->symbol ?? 'NT$';
         }
-
-        // 2. 取得幣別符號
-        $currencyData = $this->currencyService->getCurrency($this->targetCurrency);
-        $this->currencySymbol = $currencyData ? $currencyData->symbol : 'NT$';
 
         $this->loadTransactions();
         $this->showModal = true;
@@ -179,79 +153,103 @@ class TransactionListModal extends Component
         }
     }
 
-    // ========== 輔助方法 ==========
+    // ========== 核心方法：載入交易明細 ==========
 
-    /**
-     * 獲取預設標題
-     */
-    private function getDefaultTitle(): string
-    {
-        return match ($this->dateMode) {
-            'day' => '本日交易明細',
-            'year' => '年度交易統計',
-            default => '交易明細列表',
-        };
-    }
-
-    /**
-     * 根據模式格式化日期
-     */
-    private function formatDateForMode(string $date, string $mode): string
-    {
-        $carbon = Carbon::parse($date);
-        return match ($mode) {
-            'day' => $carbon->format('Y-m-d'),
-            'year' => $carbon->format('Y'),
-            default => $carbon->format('Y-m'),
-        };
-    }
-
-    /**
-     * 獲取日期格式
-     */
-    private function getDateFormat(): string
-    {
-        return match ($this->dateMode) {
-            'day' => 'Y-m-d',
-            'year' => 'Y',
-            default => 'Y-m',
-        };
-    }
-
-    /**
-     * 載入交易明細
-     */
     public function loadTransactions()
     {
         $currentDate = $this->parseCurrentDate();
-        
-        // 根據模式計算開始和結束日期
+
+        // 計算日期範圍
+        [$start, $end] = $this->getDateRange($currentDate);
+
+        // 取得分類 ID（含子分類）
+        $targetCategoryIds = $this->getCategoryIdsWithChildren();
+
+        // 建立查詢條件
+        $applyFilter = $this->buildFilterClosure($targetCategoryIds);
+
+        // 查詢期間交易
+        $transactions = Transaction::query()
+            ->where($applyFilter)
+            ->whereBetween('recorded_at', [$start, $end])
+            ->with(['category', 'fromAccount', 'toAccount'])
+            ->orderBy('recorded_at', 'desc')
+            ->get();
+
+        // 載入關聯資料
+        $categories = $this->loadCategories($transactions);
+        $accounts = $this->loadAccounts($transactions);
+        $currencies = $this->loadCurrencies();
+
+        // 組裝交易列表與統計
+        [$formattedList, $totalIncome, $totalExpense] = $this->buildTransactionList(
+            $transactions,
+            $categories,
+            $accounts,
+            $currencies
+        );
+
+        // 計算淨額與期初期末餘額
+        $netAmount = bcsub($totalIncome, $totalExpense, 4);
+        [$openingBalance, $closingBalance] = $this->calculateBalances($netAmount);
+
+        // 組裝統計摘要
+        $this->statsSummary = [
+            'total_income'      => $totalIncome,
+            'total_expense'     => $totalExpense,
+            'net_amount'        => $netAmount,
+            'opening_balance'   => $openingBalance,
+            'closing_balance'   => $closingBalance,
+            'is_account_mode'   => !is_null($this->accountId),
+            'currency_symbol'   => $this->currencySymbol,
+        ];
+
+        // 組裝交易資料
+        $this->transactionsData = [
+            'list'         => $formattedList,
+            'total_income' => $totalIncome,
+            'total_expense'=> $totalExpense,
+            'net_amount'   => $netAmount,
+            'total_count'  => $transactions->count(),
+        ];
+    }
+
+    // ========== 輔助方法 ==========
+
+    private function getDateRange(Carbon $currentDate): array
+    {
         $start = match ($this->dateMode) {
-            'day' => $currentDate->copy()->startOfDay(),
-            'year' => $currentDate->copy()->startOfYear(),
+            'day'   => $currentDate->copy()->startOfDay(),
+            'year'  => $currentDate->copy()->startOfYear(),
             default => $currentDate->copy()->startOfMonth(),
         };
         $end = match ($this->dateMode) {
-            'day' => $currentDate->copy()->endOfDay(),
-            'year' => $currentDate->copy()->endOfYear(),
+            'day'   => $currentDate->copy()->endOfDay(),
+            'year'  => $currentDate->copy()->endOfYear(),
             default => $currentDate->copy()->endOfMonth(),
         };
+        return [$start, $end];
+    }
 
-        // 計算年度範圍（用於年度統計）
-        $yearStart = $currentDate->copy()->startOfYear();
-        $yearEnd = $currentDate->copy()->endOfYear();
-
-        // 1. 若有 categoryId，包含該大類及所有子類 ID
-        $targetCategoryIds = [];
-        if ($this->categoryId) {
-            $subCategoryIds = Category::where('parent_id', $this->categoryId)->pluck('id')->toArray();
-            $targetCategoryIds = array_merge([$this->categoryId], $subCategoryIds);
+    private function getCategoryIdsWithChildren(): array
+    {
+        if (!$this->categoryId) {
+            return [];
         }
 
-        // 2. 構建基底 Query 閉包
-        $applyFilter = function ($query) use ($targetCategoryIds) {
+        $subCategoryIds = Category::where('parent_id', $this->categoryId)
+            ->pluck('id')
+            ->toArray();
+        
+        return array_merge([$this->categoryId], $subCategoryIds);
+    }
+
+    private function buildFilterClosure(array $targetCategoryIds): \Closure
+    {
+        return function ($query) use ($targetCategoryIds) {
             $query->where('shop_id', $this->shopId);
 
+            // 帳戶篩選
             if ($this->accountId) {
                 $query->where(function ($q) {
                     $q->where('from_account_id', $this->accountId)
@@ -259,236 +257,243 @@ class TransactionListModal extends Component
                 });
             }
 
+            // 分類篩選（含子分類）
             if (!empty($targetCategoryIds)) {
                 $query->whereIn('category_id', $targetCategoryIds);
             }
 
+            // 交易類型篩選
             if ($this->transactionType) {
                 $query->where('type', $this->transactionType);
             }
         };
+    }
 
-        // 3. 計算統計數據（期間內 + 年度）
-        $periodTxs = Transaction::query()
-            ->where($applyFilter)
-            ->whereBetween('recorded_at', [$start, $end])
-            ->get();
-            
-        $yearTxs = Transaction::query()
-            ->where($applyFilter)
-            ->whereBetween('recorded_at', [$yearStart, $yearEnd])
-            ->get();
+    private function loadCategories($transactions): \Illuminate\Support\Collection
+    {
+        $categoryIds = $transactions->pluck('category_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+        
+        return Category::whereIn('id', $categoryIds)->get()->keyBy('id');
+    }
 
-        $periodExpense = '0.0000';
-        $periodIncome = '0.0000';
-        foreach ($periodTxs as $tx) {
-            $amt = (string)$tx->amount;
-            if ($tx->type === 'expense') {
-                $periodExpense = bcadd($periodExpense, $amt, 4);
-            }
-            if ($tx->type === 'income') {
-                $periodIncome = bcadd($periodIncome, $amt, 4);
-            }
-        }
-
-        $yearExpense = '0.0000';
-        $yearIncome = '0.0000';
-        foreach ($yearTxs as $tx) {
-            $amt = (string)$tx->amount;
-            if ($tx->type === 'expense') {
-                $yearExpense = bcadd($yearExpense, $amt, 4);
-            }
-            if ($tx->type === 'income') {
-                $yearIncome = bcadd($yearIncome, $amt, 4);
-            }
-        }
-
-        // 4. 取得交易流水清單
-        $transactions = $periodTxs->sortByDesc('recorded_at');
-
-        $categoryIds = $transactions->pluck('category_id')->filter()->unique()->toArray();
-        $categories = Category::whereIn('id', $categoryIds)->get()->keyBy('id');
-
+    private function loadAccounts($transactions): \Illuminate\Support\Collection
+    {
         $accountIds = [];
         foreach ($transactions as $tx) {
-            if ($tx->from_account_id) {
-                $accountIds[] = $tx->from_account_id;
-            }
-            if ($tx->to_account_id) {
-                $accountIds[] = $tx->to_account_id;
-            }
+            if ($tx->from_account_id) $accountIds[] = $tx->from_account_id;
+            if ($tx->to_account_id) $accountIds[] = $tx->to_account_id;
         }
-        $accounts = FinancialAccount::whereIn('id', array_unique($accountIds))->get()->keyBy('id');
+        
+        return FinancialAccount::whereIn('id', array_unique($accountIds))
+            ->get()
+            ->keyBy('id');
+    }
 
-        // 獲取幣別配置
-        $currencies = config('business.currencies', []);
+    private function loadCurrencies(): array
+    {
+        $currenciesData = Currency::where('shop_id', $this->shopId)->get();
+        $currencies = [];
+        foreach ($currenciesData as $c) {
+            $currencies[$c->code] = [
+                'name'   => $c->name,
+                'symbol' => $c->symbol,
+            ];
+        }
+        return $currencies;
+    }
 
+    private function buildTransactionList(
+        $transactions,
+        $categories,
+        $accounts,
+        array $currencies
+    ): array {
         $totalIncome = '0.0000';
         $totalExpense = '0.0000';
         $formattedList = [];
 
         foreach ($transactions as $tx) {
+            // 判斷交易類型
             $isTransfer = ($tx->type === 'transfer');
-            $isIncome = false;
-            $isExpense = false;
+            [$isIncome, $isExpense] = $this->determineIncomeExpense($tx);
 
-            // 明細清單：保留交易原本金額，不進行匯率換算
-            $rawAmount = (string)$tx->amount;
+            // 獲取金額
+            $rawAmount = (string) $tx->amount;
 
-            // 上方統計區：換算為本幣（Base Currency）進行精確加總
-            $convertedAmountForStats = $this->convertToBase($rawAmount, $tx->currency);
-            
-            // 獲取帳戶並決定主題色
-            $account = null;
-            if ($this->accountId && $this->currentAccount) {
-                $account = $this->currentAccount;
-            } else {
-                $account = $tx->fromAccount ?? $tx->toAccount;
-            }
-                
-            $typeConfig = config("business.account_types.{$account?->type}") ?? config("business.account_types.cash");
-            $accountTypeTheme = $typeConfig['theme'] ?? 'orange';
-    
-            // 判斷收入/支出（依據是否有指定帳戶）
-            if ($this->accountId) {
-                // 帳戶模式：根據與指定帳戶的關係判斷
-                if ($tx->type === 'income' && $tx->to_account_id == $this->accountId) {
-                    $isIncome = true;
-                } elseif ($tx->type === 'expense' && $tx->from_account_id == $this->accountId) {
-                    $isExpense = true;
-                } elseif ($isTransfer) {
-                    if ($tx->to_account_id == $this->accountId) {
-                        $isIncome = true;
-                    } elseif ($tx->from_account_id == $this->accountId) {
-                        $isExpense = true;
-                    }
-                }
-            } else {
-                // 期間模式：根據交易類型判斷
-                if ($tx->type === 'income') {
-                    $isIncome = true;
-                }
-                if ($tx->type === 'expense') {
-                    $isExpense = true;
-                }
-            }
-
-            // 累計頂部統計金額（使用換算後的本幣）
+            // 統計用金額（直接使用原始金額，不做匯率換算）
             if ($isIncome) {
-                $totalIncome = bcadd($totalIncome, $convertedAmountForStats, 4);
+                $totalIncome = bcadd($totalIncome, $rawAmount, 4);
             } elseif ($isExpense) {
-                $totalExpense = bcadd($totalExpense, $convertedAmountForStats, 4);
+                $totalExpense = bcadd($totalExpense, $rawAmount, 4);
             }
 
-            // 分類圖示與名稱
-            $categoryIcon = 'folder';
-            $categoryName = null;
+            // 獲取帳戶主題色
+            $accountTypeTheme = $this->getAccountTheme($tx);
 
-            if ($isTransfer) {
-                $categoryIcon = 'arrow-path';
-            } elseif ($tx->category_id && isset($categories[$tx->category_id])) {
-                $category = $categories[$tx->category_id];
-                $categoryIcon = $category->icon ?? 'folder';
-                $categoryName = $category->name;
-            }
+            // 分類資訊
+            [$categoryIcon, $categoryName] = $this->getCategoryInfo($tx, $categories, $isTransfer);
 
             // 帳戶名稱
-            $fromAccountName = $tx->from_account_id && isset($accounts[$tx->from_account_id])
-                ? $accounts[$tx->from_account_id]->name
-                : null;
-            $toAccountName = $tx->to_account_id && isset($accounts[$tx->to_account_id])
-                ? $accounts[$tx->to_account_id]->name
-                : null;
+            $accountName = $this->getAccountDisplayName($tx, $accounts);
 
-            // 獲取顯示用的帳戶名稱
-            if ($this->accountId) {
-                $accountName = $this->currentAccount->name ?? '';
-            } else {
-                if ($isTransfer) {
-                    if ($fromAccountName && $toAccountName) {
-                        $accountName = $fromAccountName . ' ➔ ' . $toAccountName;
-                    } else {
-                        $accountName = $fromAccountName ?? $toAccountName ?? '未知帳戶';
-                    }
-                } elseif ($isIncome) {
-                    $accountName = $toAccountName ?? $fromAccountName ?? '未知帳戶';
-                } elseif ($isExpense) {
-                    $accountName = $fromAccountName ?? $toAccountName ?? '未知帳戶';
-                } else {
-                    $accountName = $fromAccountName ?? $toAccountName ?? '未知帳戶';
-                }
-            }
-
-            // 獲取該筆交易原幣別符號
+            // 幣別符號
             $txCurrencySymbol = $currencies[$tx->currency]['symbol'] ?? 'NT$';
 
-            // 組裝單筆交易資料
             $formattedList[] = [
-                'id' => $tx->id,
-                'type' => $tx->type,
-                'amount' => $tx->amount,
-                'recorded_at' => $tx->recorded_at,
-                'memo' => $tx->memo,
-                'category_id' => $tx->category_id,
-                'from_account_id' => $tx->from_account_id,
-                'to_account_id' => $tx->to_account_id,
-                'currency' => $tx->currency,
-                'currency_symbol' => $txCurrencySymbol,
-                'display_amount' => $rawAmount,
-                'is_income' => $isIncome,
-                'is_expense' => $isExpense,
-                'is_transfer' => $isTransfer,
-                'category_icon' => $categoryIcon,
-                'category_name' => $categoryName,
-                'from_account_name' => $fromAccountName,
-                'to_account_name' => $toAccountName,
-                'account_name' => $accountName,
-                'account_type_theme' => $accountTypeTheme,    
+                'id'                  => $tx->id,
+                'type'                => $tx->type,
+                'amount'              => $tx->amount,
+                'recorded_at'         => $tx->recorded_at,
+                'memo'                => $tx->memo,
+                'category_id'         => $tx->category_id,
+                'from_account_id'     => $tx->from_account_id,
+                'to_account_id'       => $tx->to_account_id,
+                'currency'            => $tx->currency,
+                'currency_symbol'     => $txCurrencySymbol,
+                'display_amount'      => $rawAmount,
+                'is_income'           => $isIncome,
+                'is_expense'          => $isExpense,
+                'is_transfer'         => $isTransfer,
+                'category_icon'       => $categoryIcon,
+                'category_name'       => $categoryName,
+                'from_account_name'   => $accounts[$tx->from_account_id]->name ?? null,
+                'to_account_name'     => $accounts[$tx->to_account_id]->name ?? null,
+                'account_name'        => $accountName,
+                'account_type_theme'  => $accountTypeTheme,
             ];
         }
 
-        // 計算淨額
-        $netAmount = bcsub($totalIncome, $totalExpense, 4);
+        return [$formattedList, $totalIncome, $totalExpense];
+    }
 
-        // ========== 帳戶模式：計算期初與期末餘額 ==========
+    private function determineIncomeExpense($tx): array
+    {
+        $isIncome = false;
+        $isExpense = false;
+
+        if ($this->accountId) {
+            // 帳戶模式
+            if ($tx->type === 'income' && $tx->to_account_id == $this->accountId) {
+                $isIncome = true;
+            } elseif ($tx->type === 'expense' && $tx->from_account_id == $this->accountId) {
+                $isExpense = true;
+            } elseif ($tx->type === 'transfer') {
+                if ($tx->to_account_id == $this->accountId) {
+                    $isIncome = true;
+                } elseif ($tx->from_account_id == $this->accountId) {
+                    $isExpense = true;
+                }
+            }
+        } else {
+            // 期間模式
+            if ($tx->type === 'income') $isIncome = true;
+            if ($tx->type === 'expense') $isExpense = true;
+        }
+
+        return [$isIncome, $isExpense];
+    }
+
+    private function getAccountTheme($tx): string
+    {
+        $account = null;
+        if ($this->accountId && $this->currentAccount) {
+            $account = $this->currentAccount;
+        } else {
+            $account = $tx->fromAccount ?? $tx->toAccount;
+        }
+
+        $typeConfig = config("business.account_types.{$account?->type}") 
+            ?? config("business.account_types.cash");
+        
+        return $typeConfig['theme'] ?? 'orange';
+    }
+
+    private function getCategoryInfo($tx, $categories, bool $isTransfer): array
+    {
+        if ($isTransfer) {
+            return ['arrow-path', null];
+        }
+
+        if ($tx->category_id && isset($categories[$tx->category_id])) {
+            $category = $categories[$tx->category_id];
+            return [$category->icon ?? 'folder', $category->name];
+        }
+
+        return ['folder', null];
+    }
+
+    private function getAccountDisplayName($tx, $accounts): string
+    {
+        $fromAccountName = $accounts[$tx->from_account_id]->name ?? null;
+        $toAccountName = $accounts[$tx->to_account_id]->name ?? null;
+
+        if ($this->accountId) {
+            return $this->currentAccount?->name ?? '';
+        }
+
+        if ($tx->type === 'transfer') {
+            if ($fromAccountName && $toAccountName) {
+                return $fromAccountName . ' ➔ ' . $toAccountName;
+            }
+            return $fromAccountName ?? $toAccountName ?? '未知帳戶';
+        }
+
+        if ($tx->type === 'income') {
+            return $toAccountName ?? $fromAccountName ?? '未知帳戶';
+        }
+
+        if ($tx->type === 'expense') {
+            return $fromAccountName ?? $toAccountName ?? '未知帳戶';
+        }
+
+        return $fromAccountName ?? $toAccountName ?? '未知帳戶';
+    }
+
+    private function calculateBalances(string $netAmount): array
+    {
         $openingBalance = '0.0000';
         $closingBalance = '0.0000';
-        $isAccountMode = !is_null($this->accountId);
 
-        if ($isAccountMode && $this->currentAccount) {
-            $currentBalance = (string)$this->currentAccount->balance;
-            $closingBalance = $currentBalance;
+        if ($this->accountId && $this->currentAccount) {
+            $closingBalance = (string) $this->currentAccount->balance;
             $openingBalance = bcsub($closingBalance, $netAmount, 4);
         }
 
-        // ========== 組裝 statsSummary ==========
-        $this->statsSummary = [
-            'total_income' => $totalIncome,
-            'total_expense' => $totalExpense,
-            'net_amount' => $netAmount,
-            'opening_balance' => $openingBalance,
-            'closing_balance' => $closingBalance,
-            'is_account_mode' => $isAccountMode,
-            'currency_symbol' => $this->currencySymbol,
-        ];
-
-        // ========== 組裝 transactionsData ==========
-        $this->transactionsData = [
-            'list' => $formattedList,
-            'total_income' => $totalIncome,
-            'total_expense' => $totalExpense,
-            'net_amount' => $netAmount,
-            'total_count' => $transactions->count(),
-        ];
+        return [$openingBalance, $closingBalance];
     }
-    
-    public function closeModal()
+
+    private function getDefaultTitle(): string
     {
-        $this->showModal = false;
-        $this->dispatch('modal-closed');
+        return match ($this->dateMode) {
+            'day'   => '本日交易明細',
+            'year'  => '年度交易統計',
+            default => '交易明細列表',
+        };
     }
 
-    private function resetFilter()
+    private function formatDateForMode(string $date, string $mode): string
+    {
+        $carbon = Carbon::parse($date);
+        return match ($mode) {
+            'day'   => $carbon->format('Y-m-d'),
+            'year'  => $carbon->format('Y'),
+            default => $carbon->format('Y-m'),
+        };
+    }
+
+    private function getDateFormat(): string
+    {
+        return match ($this->dateMode) {
+            'day'   => 'Y-m-d',
+            'year'  => 'Y',
+            default => 'Y-m',
+        };
+    }
+
+    private function resetFilter(): void
     {
         $this->accountId = null;
         $this->categoryId = null;
@@ -496,24 +501,33 @@ class TransactionListModal extends Component
         $this->currentAccount = null;
     }
 
-    private function resetTransactionsData()
+    private function resetTransactionsData(): void
     {
         $this->transactionsData = [
-            'list' => [],
-            'total_income' => '0.0000',
+            'list'          => [],
+            'total_income'  => '0.0000',
             'total_expense' => '0.0000',
-            'total_count' => 0,
+            'total_count'   => 0,
         ];
+        $this->statsSummary = [];
     }
 
-    public function editAccount()
+    // ========== 公開方法（供 Blade 呼叫） ==========
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->dispatch('modal-closed');
+    }
+
+    public function editAccount(): void
     {
         if (!$this->accountId) return;
         $this->showModal = false;
         $this->dispatch('edit-account-from-transactions', accountId: $this->accountId);
     }
 
-    public function toggleAccountVisibility()
+    public function toggleAccountVisibility(): void
     {
         if (!$this->accountId) return;
 
@@ -533,43 +547,17 @@ class TransactionListModal extends Component
         }
     }
 
-    // ========== 貨幣轉換方法 ==========
-
-    private function getBaseCurrency(): string
-    {
-        return $this->currencyService->getBaseCurrencyCode();
-    }
-
-    private function getBaseCurrencySymbol(): string
-    {
-        return $this->currencyService->getBaseCurrencySymbol();
-    }
-
-    private function convertToBase(string $amount, string $currency): string
-    {
-        return $this->currencyService->convertToBase($amount, $currency);
-    }
-
-    private function convertFromBase(string $amount, string $currency): string
-    {
-        return $this->currencyService->convertFromBase($amount, $currency);
-    }
-
-    // ========== render 方法 ==========
-
+    // ========== 渲染 ==========
     public function render()
     {
         return view('livewire.finance.transaction-list-modal', [
-            // 日期相關（根據模式顯示不同格式）
-            'dateDisplay' => $this->dateDisplay,
-            'isCurrentDate' => $this->isCurrentDate,
-            'dateMode' => $this->dateMode,
-            
-            // 統計數據
-            'totalIncome' => $this->totalIncome,
-            'totalExpense' => $this->totalExpense,
-            'baseSymbol' => $this->baseSymbol,
-            'transactionCount' => $this->transactionCount,
+            'dateDisplay'     => $this->dateDisplay,
+            'isCurrentDate'   => $this->isCurrentDate,
+            'dateMode'        => $this->dateMode,
+            'totalIncome'     => $this->totalIncome,
+            'totalExpense'    => $this->totalExpense,
+            'baseSymbol'      => $this->baseSymbol,
+            'transactionCount'=> $this->transactionCount,
         ]);
     }
 }

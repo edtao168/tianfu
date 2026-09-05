@@ -3,8 +3,7 @@
 	<x-modal 
 		wire:model="showModal" 
 		backdrop-blur-md 
-		max-width="5xl" 
-		box-class="border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl p-0 overflow-hidden pt-16 pb-24 md:pt-0 md:pb-0 bg-base-100 text-base-content"
+		box-class="w-full px-2 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl p-0 overflow-hidden pt-16 pb-24 md:pt-0 md:pb-0 bg-base-100 text-base-content"
 	>
 		<div class="flex flex-col h-[calc(100vh-10rem)] md:h-[80vh] max-h-[80vh]">
 
@@ -220,9 +219,7 @@
 													<div class="flex items-center gap-2 min-w-0 flex-1">
 														{{-- 🟢 收支：類別名稱完整顯示 (flex-shrink-0) --}}
 														{{-- 🟡 轉帳：顯示完整來源→目的地，但空間不足時截斷 (truncate) --}}
-														<span class="text-base md:text-base font-semibold text-base-content 
-																	 {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}
-																	 max-w-[120px] sm:max-w-[200px] md:max-w-none inline-block"
+														<span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}"
 															  title="{{ $displayTitle }}">
 															{{ $displayTitle }}
 														</span>

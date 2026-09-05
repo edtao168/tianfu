@@ -128,16 +128,16 @@
                 {{-- 轉帳模式 --}}
                 <div class="grid grid-cols-5 gap-3 mb-4 items-end">
                     {{-- 轉出帳戶 --}}
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold mb-1 text-base-content">轉出賬戶</label>
-                        <select wire:model.live="fromAccountId" class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content">
-                            <option value="" class="bg-base-100 text-base-content"> 選擇帳戶 </option>
-                            @foreach($this->accounts as $account)
-                                <option value="{{ $account['id'] }}" class="bg-base-100 text-base-content"> {{ $account['name'] }} </option>
-                            @endforeach
-                        </select>
-                        @error('fromAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
-                    </div>
+					<div class="col-span-2 min-w-0">
+						<label class="block text-xs font-bold mb-1 text-base-content">轉出賬戶</label>
+						<select wire:model.live="fromAccountId" class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content truncate">
+							<option value="" class="bg-base-100 text-base-content" title="選擇帳戶"> 選擇帳戶 </option>
+							@foreach($this->accounts as $account)
+								<option value="{{ $account['id'] }}" class="bg-base-100 text-base-content" title="{{ $account['name'] }}"> {{ $account['name'] }} </option>
+							@endforeach
+						</select>
+						@error('fromAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
+					</div>
 
                     {{-- 切換按鈕 --}}
                     <div class="col-span-1 flex justify-center pb-1">
@@ -147,18 +147,18 @@
                     </div>
 
                     {{-- 轉入帳戶 --}}
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold mb-1 text-base-content">轉入賬戶</label>
-                        <select wire:model.live="toAccountId" class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content">
-                            <option value="" class="bg-base-100 text-base-content"> 選擇目標帳戶 </option>
-                            @foreach($this->accounts as $account)
-                                @if(!$fromAccountId || $account['id'] !== $fromAccountId)
-                                    <option value="{{ $account['id'] }}" class="bg-base-100 text-base-content"> {{ $account['name'] }} </option>
-                                @endif
-                            @endforeach
-                        </select>
-                        @error('toAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
-                    </div>
+					<div class="col-span-2 min-w-0">
+						<label class="block text-xs font-bold mb-1 text-base-content">轉入賬戶</label>
+						<select wire:model.live="toAccountId" class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content truncate">
+							<option value="" class="bg-base-100 text-base-content" title="選擇目標帳戶"> 選擇目標帳戶 </option>
+							@foreach($this->accounts as $account)
+								@if(!$fromAccountId || $account['id'] !== $fromAccountId)
+									<option value="{{ $account['id'] }}" class="bg-base-100 text-base-content" title="{{ $account['name'] }}"> {{ $account['name'] }} </option>
+								@endif
+							@endforeach
+						</select>
+						@error('toAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
+					</div>
                 </div>
                 
                 {{-- 轉帳金額顯示 (僅轉帳模式) --}}               
@@ -240,24 +240,24 @@
                 </div>
                 
                 <div class="grid grid-cols-4 gap-3 mb-4">
-                    <div class="col-span-2">
-                        <x-select
-                            wire:model.live="fromAccountId"
-                            :options="$this->accounts"
-                            option-label="name"
-                            option-value="id"
-                            placeholder="選擇帳戶"
-                        />
-                        @error('fromAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="col-span-2 flex items-center justify-end gap-2">
-                        <span class="text-sm text-base-content/60">餘額</span>
-                        <span class="text-sm font-bold text-base-content" wire:key="balance-fromAccountId-{{ $this->fromAccountId ?? 'none' }}">
-                            @php $selectedAccount = collect($this->accounts)->firstWhere('id', $this->fromAccountId ?? null); @endphp
-                            @if($selectedAccount) {{ $selectedAccount['currency'] }} {{ number_format($selectedAccount['balance'] ?? 0, 0) }} @else 0 @endif
-                        </span>
-                    </div>
-                </div>
+					<div class="col-span-2 min-w-0">
+						<x-choices 
+							wire:model="fromAccountId" 
+							:options="$this->accounts" 
+							single 
+							searchable 
+							class="rounded-xl truncate" 
+						/>
+						@error('fromAccountId') <span class="text-tx-expense text-xs">{{ $message }}</span> @enderror
+					</div>
+					<div class="col-span-2 flex items-center justify-end gap-2">
+						<span class="text-sm text-base-content/60">餘額</span>
+						<span class="text-sm font-bold text-base-content" wire:key="balance-fromAccountId-{{ $this->fromAccountId ?? 'none' }}">
+							@php $selectedAccount = collect($this->accounts)->firstWhere('id', $this->fromAccountId ?? null); @endphp
+							@if($selectedAccount) {{ $selectedAccount['currency'] }} {{ number_format($selectedAccount['balance'] ?? 0, 0) }} @else 0 @endif
+						</span>
+					</div>
+				</div>
             @endif
 
             {{-- 照片 + 備註 --}}
@@ -516,41 +516,41 @@
             </div>
 
             {{-- 範本帳戶選擇 --}}
-            <div class="grid grid-cols-4 gap-3 mb-4">
-                <div class="col-span-2">
-                    <select 
-                        wire:model.live="templateFromAccountId"
-                        class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content">
-                        <option value="" class="bg-base-100 text-base-content/50">
-                            選擇帳戶
-                        </option>
-                        @foreach($this->accounts as $account)
-                            <option value="{{ $account['id'] }}" class="bg-base-100 text-base-content">
-                                {{ $account['name'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('templateFromAccountId') 
-                        <span class="text-tx-expense text-xs">{{ $message }}</span> 
-                    @enderror
-                </div>
-                
-                <div class="col-span-2 flex items-center justify-end gap-2">
-                    <span class="text-sm text-base-content/60">餘額</span>
-                    <span class="text-sm font-bold text-base-content" 
-                          wire:key="balance-templateFromAccountId-{{ $this->templateFromAccountId ?? 'none' }}">
-                        @php
-                            $selectedAccount = collect($this->accounts)->firstWhere('id', $this->templateFromAccountId ?? null);
-                        @endphp
-                        @if($selectedAccount)
-                            {{ $selectedAccount['currency'] }} 
-                            {{ number_format($selectedAccount['balance'] ?? 0, 0) }}
-                        @else
-                            0
-                        @endif
-                    </span>
-                </div>
-            </div>
+			<div class="grid grid-cols-4 gap-3 mb-4">
+				<div class="col-span-2 min-w-0">
+					<select 
+						wire:model.live="templateFromAccountId"
+						class="select select-bordered w-full h-11 text-sm rounded-xl bg-base-100 text-base-content truncate">
+						<option value="" class="bg-base-100 text-base-content/50" title="選擇帳戶">
+							選擇帳戶
+						</option>
+						@foreach($this->accounts as $account)
+							<option value="{{ $account['id'] }}" class="bg-base-100 text-base-content" title="{{ $account['name'] }}">
+								{{ $account['name'] }}
+							</option>
+						@endforeach
+					</select>
+					@error('templateFromAccountId') 
+						<span class="text-tx-expense text-xs">{{ $message }}</span> 
+					@enderror
+				</div>
+				
+				<div class="col-span-2 flex items-center justify-end gap-2">
+					<span class="text-sm text-base-content/60">餘額</span>
+					<span class="text-sm font-bold text-base-content" 
+						  wire:key="balance-templateFromAccountId-{{ $this->templateFromAccountId ?? 'none' }}">
+						@php
+							$selectedAccount = collect($this->accounts)->firstWhere('id', $this->templateFromAccountId ?? null);
+						@endphp
+						@if($selectedAccount)
+							{{ $selectedAccount['currency'] }} 
+							{{ number_format($selectedAccount['balance'] ?? 0, 0) }}
+						@else
+							0
+						@endif
+					</span>
+				</div>
+			</div>
 
             {{-- 範本轉帳目標帳戶 --}}
             @if($templateType === 'transfer')
