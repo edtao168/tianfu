@@ -61,6 +61,35 @@ class FinancialAccount extends Model
             4
         );
     }
+
+	/**
+	 * 計算截至指定時間（$endDate）的歷史實際餘額（計算每月期末金額）
+	 */
+	public function getBalanceAtDate(?\Carbon\Carbon $endDate = null): string
+	{
+		$initialBalance = (string) ($this->balance ?? '0');
+
+		$inflowQuery = Transaction::where('shop_id', $this->shop_id)
+			->where('to_account_id', $this->id);
+
+		$outflowQuery = Transaction::where('shop_id', $this->shop_id)
+			->where('from_account_id', $this->id);
+
+		if ($endDate) {
+			$inflowQuery->where('recorded_at', '<=', $endDate);
+			$outflowQuery->where('recorded_at', '<=', $endDate);
+		}
+
+		$inflow = $inflowQuery->sum('amount');
+		$outflow = $outflowQuery->sum('amount');
+
+		// 歷史餘額 = 初始金額 + 截至時間的總流入 - 截至時間的總流出
+		return bcsub(
+			bcadd($initialBalance, (string)$inflow, 4),
+			(string)$outflow,
+			4
+		);
+	}
 	
 	/**
      * 一個帳戶擁有多筆交易明細

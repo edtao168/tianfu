@@ -154,65 +154,61 @@ class TransactionListModal extends Component
     }
 
     // ========== 核心方法：載入交易明細 ==========
+	
+	public function loadTransactions()
+	{
+		$currentDate = $this->parseCurrentDate();
 
-    public function loadTransactions()
-    {
-        $currentDate = $this->parseCurrentDate();
+		// 1. 計算該區間的開頭與結束點 ($start, $end)
+		[$start, $end] = $this->getDateRange($currentDate);
 
-        // 計算日期範圍
-        [$start, $end] = $this->getDateRange($currentDate);
+		$targetCategoryIds = $this->getCategoryIdsWithChildren();
+		$applyFilter = $this->buildFilterClosure($targetCategoryIds);
 
-        // 取得分類 ID（含子分類）
-        $targetCategoryIds = $this->getCategoryIdsWithChildren();
+		// 2. 查詢當月交易明細
+		$transactions = Transaction::query()
+			->where($applyFilter)
+			->whereBetween('recorded_at', [$start, $end])
+			->with(['category', 'fromAccount', 'toAccount'])
+			->orderBy('recorded_at', 'desc')
+			->get();
 
-        // 建立查詢條件
-        $applyFilter = $this->buildFilterClosure($targetCategoryIds);
+		$categories = $this->loadCategories($transactions);
+		$accounts = $this->loadAccounts($transactions);
+		$currencies = $this->loadCurrencies();
 
-        // 查詢期間交易
-        $transactions = Transaction::query()
-            ->where($applyFilter)
-            ->whereBetween('recorded_at', [$start, $end])
-            ->with(['category', 'fromAccount', 'toAccount'])
-            ->orderBy('recorded_at', 'desc')
-            ->get();
+		[$formattedList, $totalIncome, $totalExpense] = $this->buildTransactionList(
+			$transactions,
+			$categories,
+			$accounts,
+			$currencies
+		);
 
-        // 載入關聯資料
-        $categories = $this->loadCategories($transactions);
-        $accounts = $this->loadAccounts($transactions);
-        $currencies = $this->loadCurrencies();
+		// 3. 計算當月淨變化量
+		$netAmount = bcsub($totalIncome, $totalExpense, 4);
 
-        // 組裝交易列表與統計
-        [$formattedList, $totalIncome, $totalExpense] = $this->buildTransactionList(
-            $transactions,
-            $categories,
-            $accounts,
-            $currencies
-        );
+		// 4. 正確計算「歷史期末」與「歷史期初」餘額
+		[$openingBalance, $closingBalance] = $this->calculateBalances($netAmount, $end);
 
-        // 計算淨額與期初期末餘額
-        $netAmount = bcsub($totalIncome, $totalExpense, 4);
-        [$openingBalance, $closingBalance] = $this->calculateBalances($netAmount);
+		// 組裝統計摘要
+		$this->statsSummary = [
+			'total_income'      => $totalIncome,
+			'total_expense'     => $totalExpense,
+			'net_amount'        => $netAmount,
+			'opening_balance'   => $openingBalance,
+			'closing_balance'   => $closingBalance,
+			'is_account_mode'   => !is_null($this->accountId),
+			'currency_symbol'   => $this->currencySymbol,
+		];
 
-        // 組裝統計摘要
-        $this->statsSummary = [
-            'total_income'      => $totalIncome,
-            'total_expense'     => $totalExpense,
-            'net_amount'        => $netAmount,
-            'opening_balance'   => $openingBalance,
-            'closing_balance'   => $closingBalance,
-            'is_account_mode'   => !is_null($this->accountId),
-            'currency_symbol'   => $this->currencySymbol,
-        ];
-
-        // 組裝交易資料
-        $this->transactionsData = [
-            'list'         => $formattedList,
-            'total_income' => $totalIncome,
-            'total_expense'=> $totalExpense,
-            'net_amount'   => $netAmount,
-            'total_count'  => $transactions->count(),
-        ];
-    }
+		$this->transactionsData = [
+			'list'         => $formattedList,
+			'total_income' => $totalIncome,
+			'total_expense'=> $totalExpense,
+			'net_amount'   => $netAmount,
+			'total_count'  => $transactions->count(),
+		];
+	}
 
     // ========== 輔助方法 ==========
 
@@ -452,18 +448,24 @@ class TransactionListModal extends Component
         return $fromAccountName ?? $toAccountName ?? '未知帳戶';
     }
 
-    private function calculateBalances(string $netAmount): array
-    {
-        $openingBalance = '0.0000';
-        $closingBalance = '0.0000';
+    /**
+	 * 正確導出歷史期初期末餘額
+	 */
+	private function calculateBalances(string $netAmount, \Carbon\Carbon $endDate): array
+	{
+		$openingBalance = '0.0000';
+		$closingBalance = '0.0000';
 
-        if ($this->accountId && $this->currentAccount) {
-            $closingBalance = (string) $this->currentAccount->balance;
-            $openingBalance = bcsub($closingBalance, $netAmount, 4);
-        }
+		if ($this->accountId && $this->currentAccount) {
+			// 期末金額 = 截至該月份最後一天 23:59:59 的累積餘額
+			$closingBalance = $this->currentAccount->getBalanceAtDate($endDate);
+			
+			// 期初金額 = 該月期末金額 - 該月淨收益
+			$openingBalance = bcsub($closingBalance, $netAmount, 4);
+		}
 
-        return [$openingBalance, $closingBalance];
-    }
+		return [$openingBalance, $closingBalance];
+	}
 
     private function getDefaultTitle(): string
     {

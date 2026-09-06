@@ -240,7 +240,6 @@ class AccountIndex extends Component
     
     public function showPeriodDetail($period)
     {
-        // 將 period 對應至 TransactionListModal 的 dateMode
 		$dateMode = match($period) {
 			'today' => 'day',
 			'month' => 'month',
@@ -251,14 +250,15 @@ class AccountIndex extends Component
 		$titleMap = [
 			'today' => '本日交易明細',
 			'month' => '本月交易明細',
-			'year'  => '本年交易明細',
+			'year'  => '本年度交易明細',
 		];
 
-		$this->dispatch('open-transaction-list-modal', [
+		// 加上 params: 具名參數
+		$this->dispatch('open-transaction-list-modal', params: [
 			'dateMode' => $dateMode,
-			'title'    => $titleMap[$period] ?? '交易明細列表',
+			'title'    => $titleMap[$period] ?? '交易明細',
 		]);
-    }
+	}
     
     // ============================================================
     // 總資產刷新
@@ -383,11 +383,15 @@ class AccountIndex extends Component
     
     public function viewAccountTransactions($accountId)
     {
-        $this->dispatch('open-transaction-list-modal', [
+		// 建議此處也同步加上 title 與 params: 具名參數，確保帳戶明細標題正常
+		$account = \App\Models\FinancialAccount::find($accountId);
+
+		$this->dispatch('open-transaction-list-modal', params: [
 			'accountId' => $accountId,
 			'dateMode'  => 'month',
+			'title'     => ($account ? $account->name . ' - ' : '') . '交易明細',
 		]);
-    }
+	}
     
     public function switchShop($shopId)
     {
