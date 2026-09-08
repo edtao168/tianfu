@@ -421,126 +421,98 @@ class TransactionModal extends Component
         $this->showTransactionModal = true;
     }
 
-    public function executeSaveProcedure()
-    {
-        $userId = Auth::id();
-        if (!$userId) throw new \Exception('請先登入才能記帳');
+	public function executeSaveProcedure()
+	{
+		$userId = Auth::id();
+		if (!$userId) throw new \Exception('請先登入才能記帳');
 
-        $rules = [
-            'fromAccountId' => 'required|exists:financial_accounts,id',
-            'amount' => 'required|numeric|gt:0',
-            'recordedAt' => 'required|date',
-            'photo' => 'nullable|image|max:5120',
-        ];
+		$rules = [
+			'fromAccountId' => 'required|exists:financial_accounts,id',
+			'amount' => 'required|numeric|gt:0',
+			'recordedAt' => 'required|date',
+			'photo' => 'nullable|image|max:5120',
+		];
 
-        if ($this->type === 'transfer') {
-            $rules['toAccountId'] = 'required|exists:financial_accounts,id|different:fromAccountId';
-        } else {
-            $rules['categoryId'] = 'required|exists:categories,id';
-        }
+		if ($this->type === 'transfer') {
+			$rules['toAccountId'] = 'required|exists:financial_accounts,id|different:fromAccountId';
+		} else {
+			$rules['categoryId'] = 'required|exists:categories,id';
+		}
 
-        $this->validate($rules);
+		$this->validate($rules);
 
-        $finalPhotoPath = $this->existingPhotoPath;
-        if ($this->photo) {
-            if ($this->existingPhotoPath) {
-                Storage::disk('public')->delete($this->existingPhotoPath);
-            }
-            $finalPhotoPath = $this->photo->store('transactions', 'public');
-        }
+		$finalPhotoPath = $this->existingPhotoPath;
+		if ($this->photo) {
+			if ($this->existingPhotoPath) {
+				Storage::disk('public')->delete($this->existingPhotoPath);
+			}
+			$finalPhotoPath = $this->photo->store('transactions', 'public');
+		}
 
-        DB::transaction(function () use ($userId, $finalPhotoPath) {
-            if ($this->transactionId) {
-                $oldTx = Transaction::where('shop_id', $this->shop_id)
-                    ->lockForUpdate()
-                    ->findOrFail($this->transactionId);
+		DB::transaction(function () use ($userId, $finalPhotoPath) {
+			// 1. 轉帳模式
+			if ($this->type === 'transfer') {
+				$fromAccount = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
+				$toAccount = FinancialAccount::where('id', $this->toAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
 
-                if ($oldTx->type === 'transfer') {
-                    $oldFrom = FinancialAccount::where('id', $oldTx->from_account_id)->lockForUpdate()->first();
-                    $oldTo = FinancialAccount::where('id', $oldTx->to_account_id)->lockForUpdate()->first();
-                    if ($oldFrom) $oldFrom->increment('balance', $oldTx->amount);
-                    if ($oldTo) $oldTo->decrement('balance', $oldTx->amount);
-                } else {
-                    if ($oldTx->type === 'expense') {
-                        $oldAcc = FinancialAccount::where('id', $oldTx->from_account_id)->lockForUpdate()->first();
-                        if ($oldAcc) $oldAcc->increment('balance', $oldTx->amount);
-                    } elseif ($oldTx->type === 'income') {
-                        $oldAcc = FinancialAccount::where('id', $oldTx->to_account_id)->lockForUpdate()->first();
-                        if ($oldAcc) $oldAcc->decrement('balance', $oldTx->amount);
-                    }
-                }
-            }
+				// 檢查轉出帳戶目前動態餘額是否足夠
+				if (bccomp($fromAccount->calculated_balance, $this->amount, 4) < 0) {
+					throw new \Exception('來源帳戶餘額不足！');
+				}
 
-            if ($this->type === 'transfer') {
-                $fromAccount = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
-                $toAccount = FinancialAccount::where('id', $this->toAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
+				Transaction::updateOrCreate(
+					['id' => $this->transactionId, 'shop_id' => $this->shop_id],
+					[
+						'user_id' => $userId,
+						'type' => 'transfer',
+						'from_account_id' => $this->fromAccountId,
+						'to_account_id' => $this->toAccountId,
+						'category_id' => null,
+						'amount' => $this->amount,
+						'recorded_at' => $this->recordedAt,
+						'memo' => $this->memo,
+						'photo_path' => $finalPhotoPath,
+					]
+				);
+			} 
+			// 2. 支出 / 收入模式
+			else {
+				FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
 
-                if (bccomp($fromAccount->balance, $this->amount, 4) < 0) {
-                    throw new \Exception('來源帳戶餘額不足！');
-                }
-
-                $fromAccount->balance = bcsub($fromAccount->balance, $this->amount, 4);
-                $toAccount->balance = bcadd($toAccount->balance, $this->amount, 4);
-                $fromAccount->save();
-                $toAccount->save();
-
-                Transaction::updateOrCreate(
-                    ['id' => $this->transactionId, 'shop_id' => $this->shop_id],
-                    [
-                        'user_id' => $userId,
-                        'type' => 'transfer',
-                        'from_account_id' => $this->fromAccountId,
-                        'to_account_id' => $this->toAccountId,
-                        'category_id' => null,
-                        'amount' => $this->amount,
-                        'recorded_at' => $this->recordedAt,
-                        'memo' => $this->memo,
-                        'photo_path' => $finalPhotoPath,
-                    ]
-                );
-            } else {
-                $account = FinancialAccount::where('id', $this->fromAccountId)->where('shop_id', $this->shop_id)->lockForUpdate()->firstOrFail();
-
-                if ($this->type === 'expense') {
-                    $account->balance = bcsub($account->balance, $this->amount, 4);
-                    $account->save();
-
-                    Transaction::updateOrCreate(
-                        ['id' => $this->transactionId, 'shop_id' => $this->shop_id],
-                        [
-                            'user_id' => $userId,
-                            'type' => 'expense',
-                            'from_account_id' => $this->fromAccountId,
-                            'to_account_id' => null,
-                            'category_id' => $this->categoryId,
-                            'amount' => $this->amount,
-                            'recorded_at' => $this->recordedAt,
-                            'memo' => $this->memo,
-                            'photo_path' => $finalPhotoPath,
-                        ]
-                    );
-                } else {
-                    $account->balance = bcadd($account->balance, $this->amount, 4);
-                    $account->save();
-
-                    Transaction::updateOrCreate(
-                        ['id' => $this->transactionId, 'shop_id' => $this->shop_id],
-                        [
-                            'user_id' => $userId,
-                            'type' => 'income',
-                            'from_account_id' => null,
-                            'to_account_id' => $this->fromAccountId,
-                            'category_id' => $this->categoryId,
-                            'amount' => $this->amount,
-                            'recorded_at' => $this->recordedAt,
-                            'memo' => $this->memo,
-                            'photo_path' => $finalPhotoPath,
-                        ]
-                    );
-                }
-            }
-        });
-    }
+				if ($this->type === 'expense') {
+					Transaction::updateOrCreate(
+						['id' => $this->transactionId, 'shop_id' => $this->shop_id],
+						[
+							'user_id' => $userId,
+							'type' => 'expense',
+							'from_account_id' => $this->fromAccountId,
+							'to_account_id' => null,
+							'category_id' => $this->categoryId,
+							'amount' => $this->amount,
+							'recorded_at' => $this->recordedAt,
+							'memo' => $this->memo,
+							'photo_path' => $finalPhotoPath,
+						]
+					);
+				} else { // income
+					Transaction::updateOrCreate(
+						['id' => $this->transactionId, 'shop_id' => $this->shop_id],
+						[
+							'user_id' => $userId,
+							'type' => 'income',
+							'from_account_id' => null,
+							'to_account_id' => $this->fromAccountId,
+							'category_id' => $this->categoryId,
+							'amount' => $this->amount,
+							'recorded_at' => $this->recordedAt,
+							'memo' => $this->memo,
+							'photo_path' => $finalPhotoPath,
+						]
+					);
+				}
+			}
+		});
+	}
 
     public function saveTransaction()
     {
@@ -624,79 +596,42 @@ class TransactionModal extends Component
     }
 
     public function deleteTransaction()
-    {
-        $userId = Auth::id();
-        if (!$userId) {
-            $this->dispatch('toast', type: 'error', text: '請先登入才能刪除記錄');
-            return;
-        }
+	{
+		$userId = Auth::id();
+		if (!$userId) {
+			$this->dispatch('toast', type: 'error', text: '請先登入才能刪除記錄');
+			return;
+		}
 
-        if (!$this->transactionId) {
-            $this->dispatch('toast', type: 'error', text: '找不到要刪除的記錄');
-            return;
-        }
+		if (!$this->transactionId) {
+			$this->dispatch('toast', type: 'error', text: '找不到要刪除的記錄');
+			return;
+		}
 
-        try {
-            DB::transaction(function () use ($userId) {
-                $transaction = Transaction::where('shop_id', $this->shop_id)
-                    ->where('id', $this->transactionId)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+		try {
+			DB::transaction(function () use ($userId) {
+				$transaction = Transaction::where('shop_id', $this->shop_id)
+					->where('id', $this->transactionId)
+					->lockForUpdate()
+					->firstOrFail();
 
-                if ($transaction->type === 'transfer') {
-                    $fromAccount = FinancialAccount::where('id', $transaction->from_account_id)
-                        ->where('shop_id', $this->shop_id)
-                        ->lockForUpdate()
-                        ->first();
-                    $toAccount = FinancialAccount::where('id', $transaction->to_account_id)
-                        ->where('shop_id', $this->shop_id)
-                        ->lockForUpdate()
-                        ->first();
+				if ($transaction->photo_path) {
+					Storage::disk('public')->delete($transaction->photo_path);
+				}
 
-                    if ($fromAccount) {
-                        $fromAccount->balance = bcadd($fromAccount->balance, $transaction->amount, 4);
-                        $fromAccount->save();
-                    }
-                    if ($toAccount) {
-                        $toAccount->balance = bcsub($toAccount->balance, $transaction->amount, 4);
-                        $toAccount->save();
-                    }
-                } elseif ($transaction->type === 'expense') {
-                    $account = FinancialAccount::where('id', $transaction->from_account_id)
-                        ->where('shop_id', $this->shop_id)
-                        ->lockForUpdate()
-                        ->first();
-                    if ($account) {
-                        $account->balance = bcadd($account->balance, $transaction->amount, 4);
-                        $account->save();
-                    }
-                } elseif ($transaction->type === 'income') {
-                    $account = FinancialAccount::where('id', $transaction->to_account_id)
-                        ->where('shop_id', $this->shop_id)
-                        ->lockForUpdate()
-                        ->first();
-                    if ($account) {
-                        $account->balance = bcsub($account->balance, $transaction->amount, 4);
-                        $account->save();
-                    }
-                }
+				// 刪除交易記錄即可，Calculated Balance 會自動校正
+				$transaction->delete();
+			});
 
-                if ($transaction->photo_path) {
-                    Storage::disk('public')->delete($transaction->photo_path);
-                }
+			$this->showTransactionModal = false;
+			$this->dispatch('refresh-transaction-list');
+			$this->dispatch('refresh-data');
+			$this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
 
-                $transaction->delete();
-            });
-
-            $this->showTransactionModal = false;
-            $this->dispatch('refresh-transaction-list');
-            $this->dispatch('refresh-data');
-            $this->dispatch('toast', type: 'success', text: '記錄已成功刪除！');
-
-        } catch (\Exception $e) {
-            $this->dispatch('toast', type: 'error', text: '刪除失敗：' . $e->getMessage());
-        }
-    }
+		} catch (\Exception $e) {
+			$this->dispatch('toast', type: 'error', text: '刪除失敗：' . $e->getMessage());
+		}
+	}
 
     public function render()
     {
