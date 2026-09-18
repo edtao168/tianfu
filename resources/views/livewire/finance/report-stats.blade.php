@@ -411,7 +411,9 @@ document.addEventListener('livewire:init', function () {
             if (!isPie) {
                 config.options.scales = {
                     y: { 
-                        beginAtZero: true, 
+                        beginAtZero: false,
+						suggestedMin: undefined,
+						suggestedMax: undefined,
                         grid: { color: palette.grid },
                         ticks: {
                             color: palette.text + '90',

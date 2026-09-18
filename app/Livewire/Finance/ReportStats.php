@@ -394,17 +394,22 @@ class ReportStats extends Component
     public function getChartData()
     {
         if ($this->showAssetTrend) {
-            $data = $this->assetTrendData;
-            return [
-                'type' => 'line',
-                'labels' => array_values(collect($data)->pluck('label')->all()),
-                'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
-                'color' => '#818cf8',
-                'centerText' => null,
-                'unit' => reset($data)['symbol'] ?? 'NT$',
-                'isAssetTrend' => true,
-            ];
-        }
+    $data = $this->assetTrendData;
+    $values = collect($data)->map(fn($item) => (float) $item['amount'])->all();
+    $minValue = !empty($values) ? min($values) : 0;
+    $suggestedMin = $minValue < 0 ? $minValue * 1.1 : $minValue * 0.9;
+
+    return [
+        'type' => 'line',
+        'labels' => array_values(collect($data)->pluck('label')->all()),
+        'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
+        'color' => '#818cf8',
+        'centerText' => null,
+        'unit' => reset($data)['symbol'] ?? 'NT$',
+        'isAssetTrend' => true,
+        //'suggestedMin' => round($suggestedMin, 2), //Y軸下限
+    ];
+}
 
         if ($this->tab1 === 'category') {
             $data = $this->categoryData;
