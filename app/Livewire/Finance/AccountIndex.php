@@ -56,6 +56,8 @@ class AccountIndex extends Component
         $groups = [];
         $currencies = Currency::where('is_active', true)
             ->where('shop_id', $this->currentShopId)
+			->orderByRaw('is_base DESC') // 本幣優先
+->orderBy('code')
             ->get();
         
         foreach ($currencies as $currency) {
