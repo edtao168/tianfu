@@ -173,7 +173,8 @@
                                             } 
                                         })
                                     " 
-                                    x-on:focus-amount-input.window="shouldFocus = true" 
+                                    x-on:focus-amount-input.window="shouldFocus = true"
+									x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
                                     placeholder="0" 
                                     autocomplete="off" 
                                     class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-base-content text-lg text-tx-expense" 
@@ -217,7 +218,13 @@
                         <div class="col-span-2 flex items-center">
                             <div class="relative w-full flex items-center px-3 py-2 rounded-xl border border-base-300 bg-base-200/50">
                                 <span class="text-2xl font-bold shrink-0 mr-1 {{ $signColor }}">{{ $sign }}</span>
-                                <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" x-data="{ shouldFocus: false }" x-init=" $watch('shouldFocus', value => { if (value) { $nextTick(() => { $el.focus(); $el.select(); shouldFocus = false; }); } }) " x-on:focus-amount-input.window="shouldFocus = true" placeholder="0" autocomplete="off" class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-base-content text-4xl {{ $signColor }}" />
+                                <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" 
+    x-data="{ shouldFocus: false }" 
+    x-init=" $watch('shouldFocus', value => { if (value) { $nextTick(() => { $el.focus(); $el.select(); shouldFocus = false; }); } }) " 
+    x-on:focus-amount-input.window="shouldFocus = true"
+    x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
+    placeholder="0" autocomplete="off" 
+    class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-base-content text-4xl {{ $signColor }}" />
                             </div>
                             @error('amount') <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
@@ -462,15 +469,16 @@
                         <div class="relative w-full flex items-center bg-base-200/50 px-3 py-2 rounded-xl border border-base-300">
                             <span class="text-2xl font-bold shrink-0 mr-1 {{ $signColor }}">{{ $sign }}</span>
                             <input type="text"
-                                   inputmode="decimal"
-                                   wire:model.live.debounce.500ms="amount"
-                                   placeholder="0"
-                                   autocomplete="off"
-                                   class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded
-                                          placeholder:text-base-content/40 text-right
-                                          caret-base-content {{ $signColor }}"
-                                   style="font-size: 2.25rem; height: 3rem; margin: 0;"
-                            />
+								   inputmode="decimal"
+								   wire:model.live.debounce.500ms="amount"
+								   x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
+								   placeholder="0"
+								   autocomplete="off"
+								   class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded
+										  placeholder:text-base-content/40 text-right
+										  caret-base-content {{ $signColor }}"
+								   style="font-size: 2.25rem; height: 3rem; margin: 0;"
+							/>
                         </div>
                         @error('amount')
                             <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span>
