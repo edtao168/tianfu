@@ -130,6 +130,20 @@
 				</div>
 				<x-heroicon-o-chevron-right class="w-4 h-4 opacity-40 group-hover:opacity-80 transition-opacity" />
 			</a>
+			
+			{{-- 操作手冊 --}}
+			<a href="{{ route('finance.docs') }}" 
+			   wire:click="close"
+			   class="flex w-full group items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-base-200/60 transition-all duration-200 border border-transparent hover:border-base-200">
+				<div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+					<x-heroicon-o-book-open class="w-5 h-5 text-white" />
+				</div>
+				<div class="flex-1 text-left">
+					<div class="font-semibold text-base-content">操作手冊</div>
+					<div class="text-xs opacity-60">系統功能指引與常見問題</div>
+				</div>
+				<x-heroicon-o-chevron-right class="w-4 h-4 opacity-40 group-hover:opacity-80 transition-opacity" />
+			</a>
 
 			{{-- 聯絡我 --}}
 			<a href="{{ route('finance.contact') }}" 
