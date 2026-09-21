@@ -18,10 +18,10 @@ class ReportStats extends Component
 
     public int $shopId = 1;
 
-    // 第一層分頁：category, trend, asset
+    // 第一層分頁：category, trend, asset, account  // ⬅️ 新增 account
     public string $tab1 = 'category';
     
-    // 第二層分頁：expense, income, balance
+    // 第二層分頁：expense, income, balance, composition, trend  // ⬅️ 新增 composition/trend
     public string $tab2 = 'expense';
     
     // 第三層分頁：year, month, day
@@ -93,21 +93,35 @@ class ReportStats extends Component
 
     public function updatedTab1($value)
     {
+        // ⬅️ 修改：加入 account 分支，並清理 tab2 值域污染
         if ($value === 'category') {
-            if ($this->tab2 === 'balance') $this->tab2 = 'expense';
+            // 分類報表只接受 expense / income
+            if (!in_array($this->tab2, ['expense', 'income'], true)) {
+                $this->tab2 = 'expense';
+            }
             if ($this->tab3 === 'day') $this->tab3 = 'month';
             $this->showAssetTrend = false;
         } elseif ($value === 'asset') {
             $this->showAssetTrend = true;
             $this->tab2 = 'balance';
+        } elseif ($value === 'account') {
+            // 賬戶報表只接受 composition / trend
+            $this->showAssetTrend = false;
+            if (!in_array($this->tab2, ['composition', 'trend'], true)) {
+                $this->tab2 = 'composition';
+            }
         } else {
+            // trend 報表：expense / income / balance
+            if (!in_array($this->tab2, ['expense', 'income', 'balance'], true)) {
+                $this->tab2 = 'expense';
+            }
             $this->showAssetTrend = false;
         }
         $this->updateDateMode();
         $this->dispatch('refreshChart', $this->getChartData());
     }
 
-    public function updatedTab2()
+    public function updatedTab2($value)
     {
         $this->dispatch('refreshChart', $this->getChartData());
     }
@@ -391,25 +405,245 @@ class ReportStats extends Component
         return $fromCurrency->rate / $toCurrency->rate;
     }
 
+    // ============================================================
+    // ⬅️ 新增：賬戶報表相關計算
+    // ============================================================
+
+    /**
+     * 根據當前 dateMode 與 tab3，取得期末快照日期
+     */
+    private function getSnapshotDate(): Carbon
+    {
+        if ($this->dateMode === 'year') {
+            return Carbon::create($this->selectedYear, 12, 31)->endOfDay();
+        }
+
+        // month / day 模式：取當月最後一天（若有 selectedDay 再擴充）
+        return Carbon::create($this->selectedYear, $this->selectedMonth)
+            ->endOfMonth()->endOfDay();
+    }
+
+    /**
+     * 為每個賬戶產生固定顏色（依 id 取樣）
+     */
+    private function getAccountColor(int $accountId): string
+    {
+        $palette = [
+            '#818cf8', '#f87171', '#34d399', '#fbbf24',
+            '#a78bfa', '#60a5fa', '#fb923c', '#4ade80',
+            '#f472b6', '#22d3ee',
+        ];
+
+        return $palette[$accountId % count($palette)];
+    }
+
+    #[Computed]
+    public function accountCompositionData()
+    {
+        $baseCurrency = $this->baseCurrency;
+        if (!$baseCurrency) {
+            return [
+                'total' => '0.00',
+                'list' => [],
+                'others' => [],
+                'symbol' => 'NT$',
+                'snapshot_date' => null,
+            ];
+        }
+
+        $baseCode = $baseCurrency->code;
+        $until = $this->getSnapshotDate();
+
+        $accounts = FinancialAccount::where('shop_id', $this->shopId)
+            ->where('is_active', true)
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            return [
+                'total' => '0.00',
+                'list' => [],
+                'others' => [],
+                'symbol' => $baseCurrency->symbol ?? 'NT$',
+                'snapshot_date' => $until->format('Y-m-d'),
+            ];
+        }
+
+        $list = [];
+        $total = '0.0000';
+
+        foreach ($accounts as $account) {
+            $balance = $this->getAccountBalanceAt($account->id, $until);
+
+            if ($account->currency !== $baseCode) {
+                $rate = $this->getExchangeRate($account->currency, $baseCode);
+                $balance = bcmul($balance, (string)$rate, 4);
+            }
+
+            // 餘額為 0 的賬戶不顯示
+            if (bccomp($balance, '0.0000', 4) === 0) {
+                continue;
+            }
+
+            $list[] = [
+                'id' => $account->id,
+                'name' => $account->name,
+                'currency' => $account->currency,
+                'amount' => $balance,
+            ];
+            $total = bcadd($total, $balance, 4);
+        }
+
+        // 依金額降序
+        usort($list, fn($a, $b) => bccomp($b['amount'], $a['amount'], 4));
+
+        // 計算百分比 + Top N + 其它（佔比 < 3%）
+        $threshold = 3.0;
+        $mainList = [];
+        $otherList = [];
+        $otherTotal = '0.0000';
+
+        foreach ($list as $item) {
+            $percentage = bccomp($total, '0.0000', 4) > 0
+                ? (float) bcdiv(bcmul($item['amount'], '100', 4), $total, 2)
+                : 0.0;
+
+            $item['percentage'] = number_format($percentage, 2);
+            $item['amount_display'] = number_format((float)$item['amount'], 2);
+
+            if ($percentage < $threshold) {
+                $otherList[] = $item;
+                $otherTotal = bcadd($otherTotal, $item['amount'], 4);
+            } else {
+                $mainList[] = $item;
+            }
+        }
+
+        // 加入「其它」項目
+        if (!empty($otherList)) {
+            $otherPercentage = bccomp($total, '0.0000', 4) > 0
+                ? (float) bcdiv(bcmul($otherTotal, '100', 4), $total, 2)
+                : 0.0;
+
+            $mainList[] = [
+                'id' => null,
+                'name' => '其它（' . count($otherList) . ' 個賬戶）',
+                'currency' => $baseCode,
+                'amount' => $otherTotal,
+                'percentage' => number_format($otherPercentage, 2),
+                'amount_display' => number_format((float)$otherTotal, 2),
+                'children' => $otherList,
+            ];
+        }
+
+        return [
+            'total' => number_format((float)$total, 2),
+            'list' => $mainList,
+            'others' => $otherList,
+            'symbol' => $baseCurrency->symbol ?? 'NT$',
+            'snapshot_date' => $until->format('Y-m-d'),
+        ];
+    }
+
+    #[Computed]
+    public function accountTrendData()
+    {
+        $baseCurrency = $this->baseCurrency;
+        if (!$baseCurrency) {
+            return ['labels' => [], 'series' => [], 'symbol' => 'NT$'];
+        }
+
+        $baseCode = $baseCurrency->code;
+        $baseSymbol = $baseCurrency->symbol;
+
+        $accounts = FinancialAccount::where('shop_id', $this->shopId)
+            ->where('is_active', true)
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            return ['labels' => [], 'series' => [], 'symbol' => $baseSymbol];
+        }
+
+        // 決定時間點
+        $labels = [];
+        $timePoints = [];
+
+        if ($this->dateMode === 'year') {
+            for ($m = 1; $m <= 12; $m++) {
+                $labels[] = $m . '月';
+                $timePoints[] = Carbon::create($this->selectedYear, $m)->endOfMonth()->endOfDay();
+            }
+        } else {
+            $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $labels[] = $d . '日';
+                $timePoints[] = Carbon::create($this->selectedYear, $this->selectedMonth, $d)->endOfDay();
+            }
+        }
+
+        // 計算每個賬戶的序列
+        $series = [];
+        foreach ($accounts as $account) {
+            $values = [];
+            $hasNonZero = false;
+
+            foreach ($timePoints as $tp) {
+                $balance = $this->getAccountBalanceAt($account->id, $tp);
+
+                if ($account->currency !== $baseCode) {
+                    $rate = $this->getExchangeRate($account->currency, $baseCode);
+                    $balance = bcmul($balance, (string)$rate, 4);
+                }
+
+                $values[] = (float) round((float)$balance, 2);
+                if (bccomp($balance, '0.0000', 4) !== 0) {
+                    $hasNonZero = true;
+                }
+            }
+
+            // 全為 0 的賬戶不顯示
+            if (!$hasNonZero) {
+                continue;
+            }
+
+            $series[] = [
+                'id' => $account->id,
+                'name' => $account->name,
+                'currency' => $account->currency,
+                'values' => $values,
+                'color' => $this->getAccountColor($account->id),
+            ];
+        }
+
+        return [
+            'labels' => $labels,
+            'series' => $series,
+            'symbol' => $baseSymbol,
+        ];
+    }
+
+    // ============================================================
+    // 圖表資料出口
+    // ============================================================
+
     public function getChartData()
     {
         if ($this->showAssetTrend) {
-    $data = $this->assetTrendData;
-    $values = collect($data)->map(fn($item) => (float) $item['amount'])->all();
-    $minValue = !empty($values) ? min($values) : 0;
-    $suggestedMin = $minValue < 0 ? $minValue * 1.1 : $minValue * 0.9;
+            $data = $this->assetTrendData;
+            $values = collect($data)->map(fn($item) => (float) $item['amount'])->all();
+            $minValue = !empty($values) ? min($values) : 0;
+            $suggestedMin = $minValue < 0 ? $minValue * 1.1 : $minValue * 0.9;
 
-    return [
-        'type' => 'line',
-        'labels' => array_values(collect($data)->pluck('label')->all()),
-        'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
-        'color' => '#818cf8',
-        'centerText' => null,
-        'unit' => reset($data)['symbol'] ?? 'NT$',
-        'isAssetTrend' => true,
-        //'suggestedMin' => round($suggestedMin, 2), //Y軸下限
-    ];
-}
+            return [
+                'type' => 'line',
+                'labels' => array_values(collect($data)->pluck('label')->all()),
+                'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
+                'color' => '#818cf8',
+                'centerText' => null,
+                'unit' => reset($data)['symbol'] ?? 'NT$',
+                'isAssetTrend' => true,
+                'isSmallMultiples' => false, // ⬅️ 新增
+            ];
+        }
 
         if ($this->tab1 === 'category') {
             $data = $this->categoryData;
@@ -420,9 +654,41 @@ class ReportStats extends Component
                 'centerText' => $data['total'] ?? '0.00',
                 'color' => null,
                 'isAssetTrend' => false,
+                'isSmallMultiples' => false, // ⬅️ 新增
             ];
         }
 
+        // ⬅️ 新增：賬戶報表分支
+        if ($this->tab1 === 'account') {
+            if ($this->tab2 === 'composition') {
+                $data = $this->accountCompositionData;
+                return [
+                    'type' => 'pie',
+                    'labels' => array_values(collect($data['list'])->pluck('name')->all()),
+                    'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
+                    'centerText' => $data['total'] ?? '0.00',
+                    'color' => null,
+                    'isAssetTrend' => false,
+                    'isSmallMultiples' => false,
+                    'symbol' => $data['symbol'] ?? 'NT$',
+                ];
+            }
+
+            // trend
+            $data = $this->accountTrendData;
+            return [
+                'type' => 'smallMultiples',
+                'labels' => $data['labels'] ?? [],
+                'series' => $data['series'] ?? [],
+                'color' => null,
+                'centerText' => null,
+                'isAssetTrend' => false,
+                'isSmallMultiples' => true,
+                'symbol' => $data['symbol'] ?? 'NT$',
+            ];
+        }
+
+        // trend 報表（expense/income/balance）
         $data = $this->trendData;
         return [
             'type' => 'bar',
@@ -431,6 +697,7 @@ class ReportStats extends Component
             'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
             'centerText' => null,
             'isAssetTrend' => false,
+            'isSmallMultiples' => false, // ⬅️ 新增
         ];
     }
 
@@ -465,6 +732,9 @@ class ReportStats extends Component
             'chartData'   => $this->getChartData(),
             'selectedYear' => $this->selectedYear,
             'selectedMonth' => $this->selectedMonth,
+            // ⬅️ 新增：僅在 account tab 才計算，避免無謂開銷
+            'accountCompositionData' => $this->tab1 === 'account' ? $this->accountCompositionData : null,
+            'accountTrendData'       => $this->tab1 === 'account' ? $this->accountTrendData : null,
         ])->layout('components.layouts.app');
     }
 }

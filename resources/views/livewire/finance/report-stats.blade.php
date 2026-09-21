@@ -10,6 +10,9 @@
                     wire:click="$set('tab1', 'category')">📊 分類報表</button>
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'trend')">📈 收支趨勢</button>
+            {{-- ⬅️ 新增：賬戶報表 --}}
+            <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                    wire:click="$set('tab1', 'account')">💼 賬戶報表</button>
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $showAssetTrend ? 'bg-primary/20 text-primary shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'asset')">🏦 總資產趨勢</button>
         </div>
@@ -30,16 +33,25 @@
     {{-- 第二層與第三層分頁控制區 --}}
     {{-- ============================================================ --}}
     <div class="flex flex-wrap gap-4 items-center justify-between">
-        {{-- 第二層分頁：支出/收入/結餘 --}}
+        {{-- 第二層分頁：支出/收入/結餘 或 賬戶的佔比/趨勢 --}}
         <div class="flex gap-1.5 p-1 bg-base-200 rounded-xl border border-base-200 backdrop-blur-sm">
             @if(!$showAssetTrend)
-                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'expense' ? 'bg-error/20 text-error hover:bg-error/30' : 'btn-ghost text-base-content/50' }}" 
-                        wire:click="$set('tab2', 'expense')">支出</button>
-                <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'income' ? 'bg-success/20 text-success hover:bg-success/30' : 'btn-ghost text-base-content/50' }}" 
-                        wire:click="$set('tab2', 'income')">收入</button>
-                @if($tab1 === 'trend')
-                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'balance' ? 'bg-base-100 text-base-content hover:bg-base-300' : 'btn-ghost text-base-content/50' }}" 
-                            wire:click="$set('tab2', 'balance')">結餘</button>
+                @if($tab1 === 'account')
+                    {{-- ⬅️ 新增：賬戶報表的佔比/趨勢 --}}
+                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'composition' ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'btn-ghost text-base-content/50' }}" 
+                            wire:click="$set('tab2', 'composition')">佔比</button>
+                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'trend' ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'btn-ghost text-base-content/50' }}" 
+                            wire:click="$set('tab2', 'trend')">趨勢</button>
+                @else
+                    {{-- 原有的支出/收入/結餘 --}}
+                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'expense' ? 'bg-error/20 text-error hover:bg-error/30' : 'btn-ghost text-base-content/50' }}" 
+                            wire:click="$set('tab2', 'expense')">支出</button>
+                    <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'income' ? 'bg-success/20 text-success hover:bg-success/30' : 'btn-ghost text-base-content/50' }}" 
+                            wire:click="$set('tab2', 'income')">收入</button>
+                    @if($tab1 === 'trend')
+                        <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'balance' ? 'bg-base-100 text-base-content hover:bg-base-300' : 'btn-ghost text-base-content/50' }}" 
+                                wire:click="$set('tab2', 'balance')">結餘</button>
+                    @endif
                 @endif
             @else
                 {{-- 總資產模式：顯示本位幣資訊 --}}
@@ -57,6 +69,14 @@
                         wire:click="$set('assetTab', 'month')">月度</button>
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'day' ? 'bg-base-100 text-primary' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('assetTab', 'day')">每日</button>
+            @elseif($tab1 === 'account')
+                {{-- ⬅️ 新增：賬戶報表的年/月/日 --}}
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'year' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
+                        wire:click="$set('tab3', 'year')">年度</button>
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
+                        wire:click="$set('tab3', 'month')">月度</button>
+                <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'day' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
+                        wire:click="$set('tab3', 'day')">每日</button>
             @elseif($tab1 === 'category')
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'year' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'year')">年{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
@@ -78,28 +98,188 @@
         
         {{-- 左側圖表區 --}}
         <div class="lg:col-span-5 bg-base-100 border border-base-200 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
-            <div class="w-full max-w-[320px] relative" style="min-height: 300px;">
-                <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
-                @if($tab1 === 'category' && !$showAssetTrend)
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-                        <span class="text-xs text-base-content/50 font-bold tracking-widest">總額</span>
-                        <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">${{ $this->categoryData['total'] ?? '0.00' }}</span>
-                    </div>
-                @endif
-                @if($showAssetTrend)
-                    <div class="absolute top-2 right-2 text-[10px] text-base-content/30 font-mono">
-                        {{ $baseCurrency->code ?? 'TWD' }}
-                    </div>
-                @endif
-            </div>
+            @if($tab1 === 'account' && $tab2 === 'trend')
+                {{-- ⬅️ 新增：小倍數圖容器 --}}
+                <div id="smallMultiplesContainer" class="w-full grid grid-cols-1 gap-3" style="max-height: 520px; overflow-y: auto;">
+                    {{-- JS 動態生成多個 canvas --}}
+                </div>
+            @else
+                {{-- 原有的單圖表 canvas --}}
+                <div class="w-full max-w-[320px] relative" style="min-height: 300px;">
+                    <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
+                    @if($tab1 === 'category' && !$showAssetTrend)
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                            <span class="text-xs text-base-content/50 font-bold tracking-widest">總額</span>
+                            <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">${{ $this->categoryData['total'] ?? '0.00' }}</span>
+                        </div>
+                    @endif
+                    @if($showAssetTrend)
+                        <div class="absolute top-2 right-2 text-[10px] text-base-content/30 font-mono">
+                            {{ $baseCurrency->code ?? 'TWD' }}
+                        </div>
+                    @endif
+                    @if($tab1 === 'account' && $tab2 === 'composition')
+                        {{-- ⬅️ 新增：賬戶佔比中心文字 --}}
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                            <span class="text-xs text-base-content/50 font-bold tracking-widest">總資產</span>
+                            <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">
+                                {{ $accountCompositionData['symbol'] ?? 'NT$' }}{{ $accountCompositionData['total'] ?? '0.00' }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
 
         {{-- 右側數據列表區 --}}
         <div class="lg:col-span-7 space-y-4">
             
-            @if($showAssetTrend)
+            @if($tab1 === 'account')
                 {{-- ============================================================ --}}
-                {{-- 總資產趨勢列表 --}}
+                {{-- ⬅️ 新增：賬戶報表列表（佔比 / 趨勢） --}}
+                {{-- ============================================================ --}}
+                @if($tab2 === 'composition')
+                    <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
+                        <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
+                            <span>💼 賬戶佔比明細</span>
+                            <span class="text-[10px] font-normal text-base-content/40">
+                                快照日：{{ $accountCompositionData['snapshot_date'] ?? '—' }}
+                            </span>
+                        </div>
+                        
+                        {{-- PC 表格 --}}
+                        <div class="hidden md:block overflow-x-auto">
+                            <table class="table w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-base-200 text-base-content/40">
+                                        <th class="bg-transparent font-bold">賬戶</th>
+                                        <th class="bg-transparent text-right font-bold">餘額</th>
+                                        <th class="bg-transparent text-right font-bold">佔比</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-base-200">
+                                    @forelse($accountCompositionData['list'] as $item)
+                                        <tr class="hover:bg-base-200 transition-colors border-0">
+                                            <td class="font-bold text-base-content bg-transparent">
+                                                {{ $item['name'] }}
+                                                @if(!empty($item['children']))
+                                                    <div class="text-[10px] text-base-content/40 font-normal mt-0.5">
+                                                        {{ collect($item['children'])->pluck('name')->join('、') }}
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td class="text-right font-mono font-bold text-base-content bg-transparent">
+                                                {{ $accountCompositionData['symbol'] }}{{ $item['amount_display'] }}
+                                            </td>
+                                            <td class="text-right font-mono text-base-content/50 bg-transparent">{{ $item['percentage'] }}%</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center py-8 text-base-content/40 bg-transparent">暫無賬戶數據</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- 手機卡片 --}}
+                        <div class="block md:hidden divide-y divide-base-200">
+                            @forelse($accountCompositionData['list'] as $item)
+                                <div class="p-4 flex justify-between items-center">
+                                    <div>
+                                        <div class="font-bold text-base-content text-sm">{{ $item['name'] }}</div>
+                                        <div class="text-xs text-base-content/50 mt-0.5">佔比 {{ $item['percentage'] }}%</div>
+                                    </div>
+                                    <div class="font-mono font-extrabold text-md text-base-content">
+                                        {{ $accountCompositionData['symbol'] }}{{ $item['amount_display'] }}
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="p-8 text-center text-sm text-base-content/40">暫無賬戶數據</div>
+                            @endforelse
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
+                        <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
+                            <span>📈 各賬戶餘額明細</span>
+                            <span class="text-[10px] font-normal text-base-content/40">
+                                {{ $selectedYear }} 年 @if($tab3 === 'day') {{ $selectedMonth }} 月 @endif
+                            </span>
+                        </div>
+                        
+                        {{-- PC 表格 --}}
+                        <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
+                            <table class="table table-pin-rows w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-base-200 text-base-content/40">
+                                        <th class="bg-base-100 font-bold">賬戶</th>
+                                        <th class="bg-base-100 text-right font-bold">期末餘額</th>
+                                        <th class="bg-base-100 text-right font-bold">變動</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-base-200">
+                                    @foreach($accountTrendData['series'] as $s)
+                                        @php
+                                            $first = $s['values'][0] ?? 0;
+                                            $last = !empty($s['values']) ? end($s['values']) : 0;
+                                            $change = $last - $first;
+                                            $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
+                                            $changeSymbol = $change > 0 ? '↑' : ($change < 0 ? '↓' : '—');
+                                        @endphp
+                                        <tr class="hover:bg-base-200 transition-colors border-0">
+                                            <td class="font-medium text-base-content/80 bg-transparent">
+                                                <span class="inline-flex items-center gap-2">
+                                                    <span class="inline-block w-2 h-2 rounded-full" style="background: {{ $s['color'] }}"></span>
+                                                    {{ $s['name'] }}
+                                                </span>
+                                            </td>
+                                            <td class="text-right font-mono font-bold text-base-content bg-transparent">
+                                                {{ $accountTrendData['symbol'] }}{{ number_format($last, 2) }}
+                                            </td>
+                                            <td class="text-right font-mono text-sm {{ $changeClass }} bg-transparent">
+                                                @if($change != 0)
+                                                    {{ $changeSymbol }} {{ $accountTrendData['symbol'] }}{{ number_format(abs($change), 2) }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- 手機卡片 --}}
+                        <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
+                            @foreach($accountTrendData['series'] as $s)
+                                @php
+                                    $first = $s['values'][0] ?? 0;
+                                    $last = !empty($s['values']) ? end($s['values']) : 0;
+                                    $change = $last - $first;
+                                    $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
+                                    $changeSymbol = $change > 0 ? '↑' : ($change < 0 ? '↓' : '—');
+                                @endphp
+                                <div class="p-3.5 flex justify-between items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-base-content/80 flex items-center gap-2">
+                                            <span class="inline-block w-2 h-2 rounded-full" style="background: {{ $s['color'] }}"></span>
+                                            {{ $s['name'] }}
+                                        </div>
+                                        @if($change != 0)
+                                            <span class="text-xs ml-4 {{ $changeClass }}">{{ $changeSymbol }} {{ number_format(abs($change), 2) }}</span>
+                                        @endif
+                                    </div>
+                                    <span class="font-mono font-bold text-sm text-base-content">
+                                        {{ $accountTrendData['symbol'] }}{{ number_format($last, 2) }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+            @elseif($showAssetTrend)
+                {{-- ============================================================ --}}
+                {{-- 總資產趨勢列表（原有邏輯，完全不動） --}}
                 {{-- ============================================================ --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
@@ -175,7 +355,7 @@
 
             @elseif($tab1 === 'category')
                 {{-- ============================================================ --}}
-                {{-- 分類報表列表 --}}
+                {{-- 分類報表列表（原有邏輯，完全不動） --}}
                 {{-- ============================================================ --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
@@ -232,7 +412,7 @@
 
             @else
                 {{-- ============================================================ --}}
-                {{-- 趨勢報表列表 --}}
+                {{-- 趨勢報表列表（原有邏輯，完全不動） --}}
                 {{-- ============================================================ --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70">
@@ -299,26 +479,37 @@ document.addEventListener('livewire:init', function () {
 
     setTimeout(function() {
         const canvas = document.getElementById('financeChart');
-        if (!canvas) return;
+        if (!canvas) {
+            // 若初始就在 account/trend 模式，financeChart 不存在，改為等待 smallMultiplesContainer
+        }
         
-        const ctx = canvas.getContext('2d');
         let chartInstance = null;
+        const smallMultiplesInstances = [];
 
+        // ------------------------------------------------------------
+        // 單圖表渲染（原有邏輯）
+        // ------------------------------------------------------------
         function renderChart(data) {
+            const canvasEl = document.getElementById('financeChart');
+            if (!canvasEl) return; // 小倍數模式下不存在
+            
+            const ctx = canvasEl.getContext('2d');
+
             if (chartInstance) {
                 chartInstance.destroy();
                 chartInstance = null;
             }
 
-            const container = canvas.parentElement;
+            const container = canvasEl.parentElement;
             if (container) {
-                canvas.style.width = '100%';
-                canvas.style.height = '100%';
+                canvasEl.style.width = '100%';
+                canvasEl.style.height = '100%';
             }
 
             const centerTotalEl = document.getElementById('chartCenterTotal');
             if (centerTotalEl && data.centerText !== undefined && data.centerText !== null) {
-                centerTotalEl.textContent = '$' + data.centerText;
+                const symbol = data.symbol || '$';
+                centerTotalEl.textContent = symbol + data.centerText;
             }
 
             const palette = getSongPalette();
@@ -412,8 +603,8 @@ document.addEventListener('livewire:init', function () {
                 config.options.scales = {
                     y: { 
                         beginAtZero: false,
-						suggestedMin: undefined,
-						suggestedMax: undefined,
+                        suggestedMin: undefined,
+                        suggestedMax: undefined,
                         grid: { color: palette.grid },
                         ticks: {
                             color: palette.text + '90',
@@ -437,23 +628,140 @@ document.addEventListener('livewire:init', function () {
             chartInstance = new Chart(ctx, config);
         }
 
+        // ------------------------------------------------------------
+        // ⬅️ 新增：小倍數圖渲染
+        // ------------------------------------------------------------
+        function renderSmallMultiples(data) {
+            const container = document.getElementById('smallMultiplesContainer');
+            if (!container) return;
+
+            // 清除舊圖表
+            smallMultiplesInstances.forEach(c => c.destroy());
+            smallMultiplesInstances.length = 0;
+            container.innerHTML = '';
+
+            const palette = getSongPalette();
+
+            if (!data.series || data.series.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-16 text-base-content/40">
+                        <span class="text-3xl mb-2">📭</span>
+                        <span class="text-sm">暫無賬戶數據</span>
+                    </div>`;
+                return;
+            }
+
+            const symbol = data.symbol || 'NT$';
+
+            data.series.forEach((s, idx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-base-200/50 border border-base-200 rounded-xl p-3';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-base-content/80 flex items-center gap-1.5">
+                            <span class="inline-block w-2 h-2 rounded-full" style="background: ${s.color}"></span>
+                            ${s.name}
+                        </span>
+                        <span class="text-[10px] text-base-content/50 font-mono">
+                            ${symbol}${(s.values[s.values.length - 1] || 0).toLocaleString()}
+                        </span>
+                    </div>
+                    <div style="height: 110px; position: relative;">
+                        <canvas id="sm-chart-${idx}"></canvas>
+                    </div>
+                `;
+                container.appendChild(card);
+
+                const ctx = card.querySelector('canvas').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: s.values,
+                            borderColor: s.color,
+                            backgroundColor: s.color + '20',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointBackgroundColor: s.color,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(20, 18, 18, 0.9)',
+                                titleColor: '#FAF9F6',
+                                bodyColor: '#E7E5E4',
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${symbol}${context.parsed.y.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: palette.grid },
+                                ticks: {
+                                    color: palette.text + '60',
+                                    font: { size: 9, family: 'mono' },
+                                    maxTicksLimit: 4,
+                                    callback: function(value) {
+                                        if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                                        if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+                                        return value;
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: palette.text + '60',
+                                    font: { size: 9 },
+                                    maxTicksLimit: 6,
+                                }
+                            }
+                        }
+                    }
+                });
+                smallMultiplesInstances.push(chart);
+            });
+        }
+
+        // ------------------------------------------------------------
+        // ⬅️ 新增：統一分流渲染
+        // ------------------------------------------------------------
+        function renderByData(data) {
+            if (!data) return;
+            if (data.isSmallMultiples) {
+                renderSmallMultiples(data);
+            } else {
+                renderChart(data);
+            }
+        }
+
         // 初始渲染
         const initialData = @json($chartData ?? null);
-        if (initialData) {
-            renderChart(initialData);
-        }
+        renderByData(initialData);
 
         // 監聽 Livewire 事件
         Livewire.on('refreshChart', (data) => {
             if (data && data[0]) {
-                renderChart(data[0]);
+                renderByData(data[0]);
             }
         });
 
         // 監聽暗色模式切換
         const observer = new MutationObserver(() => {
-            if (initialData) {
-                renderChart(initialData);
+            const fresh = @json($chartData ?? null);
+            if (fresh) {
+                renderByData(fresh);
             }
         });
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -463,9 +771,8 @@ document.addEventListener('livewire:init', function () {
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                if (chartInstance) {
-                    chartInstance.resize();
-                }
+                if (chartInstance) chartInstance.resize();
+                smallMultiplesInstances.forEach(c => c.resize());
             }, 250);
         });
 
