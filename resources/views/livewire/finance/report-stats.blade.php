@@ -4,46 +4,72 @@
     {{-- ============================================================ --}}
     {{-- 頂部篩選與第一層分頁 --}}
     {{-- ============================================================ --}}
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-base-200 pb-4">
         <div class="inline-flex p-1 rounded-xl bg-base-200 border border-base-200 backdrop-blur-sm self-start flex-wrap gap-1">
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'category')">📊 分類報表</button>
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'trend')">📈 收支趨勢</button>
-            {{-- ⬅️ 新增：賬戶報表 --}}
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'account')">💼 賬戶報表</button>
             <button class="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 {{ $showAssetTrend ? 'bg-primary/20 text-primary shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'asset')">🏦 總資產趨勢</button>
         </div>
 
-        {{-- 日期導航組件：模型對齊 currentDate --}}
         <div class="flex items-center gap-2">
             <x-date-nav 
                 model="currentDate" 
                 :type="$dateMode"
                 :display="$displayDate" 
-				:isCurrent="$isCurrent" 
-				:disableNext="$isCurrent"
+                :isCurrent="$isCurrent" 
+                :disableNext="$isCurrent"
             />
         </div>
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 第二層與第三層分頁控制區 --}}
+    {{-- 幣別切換器（總資產趨勢時隱藏，因為強制合併） --}}
+    {{-- ============================================================ --}}
+    @if(!$showAssetTrend)
+        <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-base-content/50 tracking-widest">幣別</span>
+            <div class="flex gap-1 p-1 bg-base-200 rounded-xl border border-base-200 backdrop-blur-sm flex-wrap">
+                <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 {{ $currencyFilter === 'all' ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}"
+                        wire:click="$set('currencyFilter', 'all')">
+                    🌐 全部（合併）
+                </button>
+                @foreach($this->availableCurrencies as $currency)
+                    @php
+                        $theme = config('business.currency_theme_map')[$currency->code] ?? 'gray';
+                        $activeClass = match($theme) {
+                            'blue' => 'bg-sky-500/20 text-sky-700 dark:text-sky-300 shadow-sm',
+                            'red' => 'bg-rose-500/20 text-rose-700 dark:text-rose-300 shadow-sm',
+                            'green' => 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shadow-sm',
+                            'purple' => 'bg-purple-500/20 text-purple-700 dark:text-purple-300 shadow-sm',
+                            default => 'bg-base-100 text-base-content shadow-sm',
+                        };
+                    @endphp
+                    <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
+                            wire:click="$set('currencyFilter', '{{ $currency->code }}')">
+                        {{ $currency->symbol }} {{ $currency->code }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- 第二層與第三層分頁 --}}
     {{-- ============================================================ --}}
     <div class="flex flex-wrap gap-4 items-center justify-between">
-        {{-- 第二層分頁：支出/收入/結餘 或 賬戶的佔比/趨勢 --}}
         <div class="flex gap-1.5 p-1 bg-base-200 rounded-xl border border-base-200 backdrop-blur-sm">
             @if(!$showAssetTrend)
                 @if($tab1 === 'account')
-                    {{-- ⬅️ 新增：賬戶報表的佔比/趨勢 --}}
                     <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'composition' ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'btn-ghost text-base-content/50' }}" 
                             wire:click="$set('tab2', 'composition')">佔比</button>
                     <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'trend' ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'btn-ghost text-base-content/50' }}" 
                             wire:click="$set('tab2', 'trend')">趨勢</button>
                 @else
-                    {{-- 原有的支出/收入/結餘 --}}
                     <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'expense' ? 'bg-error/20 text-error hover:bg-error/30' : 'btn-ghost text-base-content/50' }}" 
                             wire:click="$set('tab2', 'expense')">支出</button>
                     <button class="btn btn-xs md:btn-sm font-bold rounded-lg border-0 transition-all duration-200 {{ $tab2 === 'income' ? 'bg-success/20 text-success hover:bg-success/30' : 'btn-ghost text-base-content/50' }}" 
@@ -54,23 +80,20 @@
                     @endif
                 @endif
             @else
-                {{-- 總資產模式：顯示本位幣資訊 --}}
                 <span class="px-3 py-1 text-xs font-bold text-primary bg-primary/10 rounded-lg">
                     本位幣：{{ $baseCurrency->symbol ?? 'NT$' }} {{ $baseCurrency->code ?? 'TWD' }}
                 </span>
             @endif
         </div>
 
-        {{-- 第三層分頁：年/月/日 --}}
         <div class="join border border-base-200 rounded-lg overflow-hidden bg-base-200 backdrop-blur-sm">
             @if($showAssetTrend)
-                {{-- 總資產模式專用 --}}
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'month' ? 'bg-base-100 text-primary' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('assetTab', 'month')">月度</button>
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $assetTab === 'day' ? 'bg-base-100 text-primary' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('assetTab', 'day')">每日</button>
             @elseif($tab1 === 'account')
-                {{-- ⬅️ 新增：賬戶報表的年/月/日 --}}
+                {{-- ⬅️ 賬戶報表：年/月/日，預設 year（由 Component 控制） --}}
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'year' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
                         wire:click="$set('tab3', 'year')">年度</button>
                 <button class="join-item btn btn-xs md:btn-sm border-0 rounded-none {{ $tab3 === 'month' ? 'bg-base-100 text-base-content' : 'btn-ghost text-base-content/50' }}" 
@@ -92,38 +115,58 @@
     </div>
 
     {{-- ============================================================ --}}
+    {{-- 交易效應 vs 匯率效應分解（僅合併模式的總資產趨勢） --}}
+    {{-- ============================================================ --}}
+    @if($showAssetTrend && $effectBreakdown)
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-base-100 border border-base-200 p-4 rounded-xl">
+                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">期間變動</div>
+                <div class="text-lg font-black font-mono {{ $effectBreakdown['total_change_raw'] >= 0 ? 'text-success' : 'text-error' }}">
+                    {{ $effectBreakdown['total_change'] }}
+                </div>
+            </div>
+            <div class="bg-base-100 border border-base-200 p-4 rounded-xl">
+                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">💼 交易貢獻</div>
+                <div class="text-lg font-black font-mono {{ $effectBreakdown['transaction_effect_raw'] >= 0 ? 'text-success' : 'text-error' }}">
+                    {{ $effectBreakdown['transaction_effect'] }}
+                </div>
+            </div>
+            <div class="bg-base-100 border border-base-200 p-4 rounded-xl">
+                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">💱 匯率重估</div>
+                <div class="text-lg font-black font-mono {{ $effectBreakdown['fx_effect_raw'] >= 0 ? 'text-success' : 'text-error' }}">
+                    {{ $effectBreakdown['fx_effect'] }}
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
     {{-- 主內容區 --}}
     {{-- ============================================================ --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {{-- 左側圖表區 --}}
         <div class="lg:col-span-5 bg-base-100 border border-base-200 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
             @if($tab1 === 'account' && $tab2 === 'trend')
-                {{-- ⬅️ 新增：小倍數圖容器 --}}
-                <div id="smallMultiplesContainer" class="w-full grid grid-cols-1 gap-3" style="max-height: 520px; overflow-y: auto;">
-                    {{-- JS 動態生成多個 canvas --}}
-                </div>
+                <div id="smallMultiplesContainer" class="w-full grid grid-cols-1 gap-3" style="max-height: 520px; overflow-y: auto;"></div>
             @else
-                {{-- 原有的單圖表 canvas --}}
                 <div class="w-full max-w-[320px] relative" style="min-height: 300px;">
                     <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
                     @if($tab1 === 'category' && !$showAssetTrend)
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
                             <span class="text-xs text-base-content/50 font-bold tracking-widest">總額</span>
-                            <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">${{ $this->categoryData['total'] ?? '0.00' }}</span>
+                            <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">{{ $this->categoryData['total'] ?? '0.00' }}</span>
                         </div>
                     @endif
                     @if($showAssetTrend)
                         <div class="absolute top-2 right-2 text-[10px] text-base-content/30 font-mono">
-                            {{ $baseCurrency->code ?? 'TWD' }}
+                            {{ $currencyFilter === 'all' ? ($baseCurrency->code ?? 'TWD') : $currencyFilter }}
                         </div>
                     @endif
                     @if($tab1 === 'account' && $tab2 === 'composition')
-                        {{-- ⬅️ 新增：賬戶佔比中心文字 --}}
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
                             <span class="text-xs text-base-content/50 font-bold tracking-widest">總資產</span>
                             <span class="text-lg font-black text-base-content font-mono" id="chartCenterTotal">
-                                {{ $accountCompositionData['symbol'] ?? 'NT$' }}{{ $accountCompositionData['total'] ?? '0.00' }}
+                                {{ $accountCompositionData['total'] ?? '0.00' }}
                             </span>
                         </div>
                     @endif
@@ -131,13 +174,9 @@
             @endif
         </div>
 
-        {{-- 右側數據列表區 --}}
         <div class="lg:col-span-7 space-y-4">
             
             @if($tab1 === 'account')
-                {{-- ============================================================ --}}
-                {{-- ⬅️ 新增：賬戶報表列表（佔比 / 趨勢） --}}
-                {{-- ============================================================ --}}
                 @if($tab2 === 'composition')
                     <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                         <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
@@ -146,8 +185,6 @@
                                 快照日：{{ $accountCompositionData['snapshot_date'] ?? '—' }}
                             </span>
                         </div>
-                        
-                        {{-- PC 表格 --}}
                         <div class="hidden md:block overflow-x-auto">
                             <table class="table w-full text-sm">
                                 <thead>
@@ -168,9 +205,7 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td class="text-right font-mono font-bold text-base-content bg-transparent">
-                                                {{ $accountCompositionData['symbol'] }}{{ $item['amount_display'] }}
-                                            </td>
+                                            <td class="text-right font-mono font-bold text-base-content bg-transparent">{{ $item['amount_display'] }}</td>
                                             <td class="text-right font-mono text-base-content/50 bg-transparent">{{ $item['percentage'] }}%</td>
                                         </tr>
                                     @empty
@@ -179,8 +214,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        {{-- 手機卡片 --}}
                         <div class="block md:hidden divide-y divide-base-200">
                             @forelse($accountCompositionData['list'] as $item)
                                 <div class="p-4 flex justify-between items-center">
@@ -188,9 +221,7 @@
                                         <div class="font-bold text-base-content text-sm">{{ $item['name'] }}</div>
                                         <div class="text-xs text-base-content/50 mt-0.5">佔比 {{ $item['percentage'] }}%</div>
                                     </div>
-                                    <div class="font-mono font-extrabold text-md text-base-content">
-                                        {{ $accountCompositionData['symbol'] }}{{ $item['amount_display'] }}
-                                    </div>
+                                    <div class="font-mono font-extrabold text-md text-base-content">{{ $item['amount_display'] }}</div>
                                 </div>
                             @empty
                                 <div class="p-8 text-center text-sm text-base-content/40">暫無賬戶數據</div>
@@ -205,8 +236,6 @@
                                 {{ $selectedYear }} 年 @if($tab3 === 'day') {{ $selectedMonth }} 月 @endif
                             </span>
                         </div>
-                        
-                        {{-- PC 表格 --}}
                         <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
                             <table class="table table-pin-rows w-full text-sm">
                                 <thead>
@@ -247,8 +276,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        {{-- 手機卡片 --}}
                         <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
                             @foreach($accountTrendData['series'] as $s)
                                 @php
@@ -278,9 +305,7 @@
                 @endif
 
             @elseif($showAssetTrend)
-                {{-- ============================================================ --}}
-                {{-- 總資產趨勢列表（原有邏輯，完全不動） --}}
-                {{-- ============================================================ --}}
+                {{-- 總資產趨勢列表 --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
                         <span>📈 總資產趨勢明細</span>
@@ -289,6 +314,22 @@
                         </span>
                     </div>
                     
+                    @php
+                        // 統一取出 table 資料（合併 / 分幣別）
+                        if (isset($this->assetTrendData['mode']) && $this->assetTrendData['mode'] === 'multi') {
+                            $assetTable = $this->assetTrendData['table'] ?? [];
+                            $assetSymbol = $this->assetTrendData['symbol'] ?? 'NT$';
+                        } else {
+                            $assetTable = collect($this->assetTrendData)->map(fn($item) => [
+                                'label' => $item['label'],
+                                'amount' => $item['amount'],
+                                'amount_display' => ($item['symbol'] ?? 'NT$') . number_format($item['amount'], 2),
+                                'symbol' => $item['symbol'] ?? 'NT$',
+                            ])->all();
+                            $assetSymbol = $baseCurrency->symbol ?? 'NT$';
+                        }
+                    @endphp
+
                     <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
                         <table class="table table-pin-rows w-full text-sm">
                             <thead>
@@ -299,10 +340,8 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-base-200">
-                                @php
-                                    $prevAmount = null;
-                                @endphp
-                                @foreach($this->assetTrendData as $item)
+                                @php $prevAmount = null; @endphp
+                                @foreach($assetTable as $item)
                                     @php
                                         $change = $prevAmount !== null ? $item['amount'] - $prevAmount : 0;
                                         $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
@@ -311,12 +350,10 @@
                                     @endphp
                                     <tr class="hover:bg-base-200 transition-colors border-0">
                                         <td class="font-medium text-base-content/70 bg-transparent">{{ $item['label'] }}</td>
-                                        <td class="text-right font-mono font-bold text-primary bg-transparent">
-                                            {{ $item['symbol'] }}{{ number_format($item['amount'], 2) }}
-                                        </td>
+                                        <td class="text-right font-mono font-bold text-primary bg-transparent">{{ $item['amount_display'] }}</td>
                                         <td class="text-right font-mono text-sm {{ $changeClass }} bg-transparent">
                                             @if($change != 0)
-                                                {{ $changeSymbol }} {{ $item['symbol'] }}{{ number_format(abs($change), 2) }}
+                                                {{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 2) }}
                                             @else
                                                 —
                                             @endif
@@ -328,10 +365,8 @@
                     </div>
 
                     <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
-                        @php
-                            $prevAmount = null;
-                        @endphp
-                        @foreach($this->assetTrendData as $item)
+                        @php $prevAmount = null; @endphp
+                        @foreach($assetTable as $item)
                             @php
                                 $change = $prevAmount !== null ? $item['amount'] - $prevAmount : 0;
                                 $changeClass = $change > 0 ? 'text-success' : ($change < 0 ? 'text-error' : 'text-base-content/30');
@@ -342,27 +377,20 @@
                                 <div>
                                     <span class="text-sm font-medium text-base-content/70">{{ $item['label'] }}</span>
                                     @if($change != 0)
-                                        <span class="text-xs ml-2 {{ $changeClass }}">{{ $changeSymbol }} {{ number_format(abs($change), 2) }}</span>
+                                        <span class="text-xs ml-2 {{ $changeClass }}">{{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 2) }}</span>
                                     @endif
                                 </div>
-                                <span class="font-mono font-bold text-sm text-primary">
-                                    {{ $item['symbol'] }}{{ number_format($item['amount'], 2) }}
-                                </span>
+                                <span class="font-mono font-bold text-sm text-primary">{{ $item['amount_display'] }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
 
             @elseif($tab1 === 'category')
-                {{-- ============================================================ --}}
-                {{-- 分類報表列表（原有邏輯，完全不動） --}}
-                {{-- ============================================================ --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70 flex justify-between items-center">
                         <span>📋 分類數據明細 (點擊大類查看明細流水)</span>
                     </div>
-                    
-                    {{-- PC 端表格 --}}
                     <div class="hidden md:block overflow-x-auto">
                         <table class="table w-full text-sm">
                             <thead>
@@ -380,7 +408,7 @@
                                             <span>{{ $item['name'] }}</span>
                                             <x-heroicon-m-chevron-right class="w-4 h-4 text-base-content/40" />
                                         </td>
-                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">${{ $item['amount_display'] }}</td>
+                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">{{ $item['amount_display'] }}</td>
                                         <td class="text-right font-mono text-base-content/50 bg-transparent">{{ $item['percentage'] }}%</td>
                                     </tr>
                                 @empty
@@ -389,8 +417,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    {{-- 手機端卡片 --}}
                     <div class="block md:hidden divide-y divide-base-200">
                         @forelse($this->categoryData['list'] as $item)
                             <div class="p-4 flex justify-between items-center bg-transparent hover:bg-base-200 active:bg-base-300 cursor-pointer transition-all"
@@ -402,7 +428,7 @@
                                     </div>
                                     <div class="text-xs text-base-content/50 mt-0.5">佔比 {{ $item['percentage'] }}%</div>
                                 </div>
-                                <div class="font-mono font-extrabold text-md text-base-content">${{ $item['amount_display'] }}</div>
+                                <div class="font-mono font-extrabold text-md text-base-content">{{ $item['amount_display'] }}</div>
                             </div>
                         @empty
                             <div class="p-8 text-center text-sm text-base-content/40">暫無相關財務交易數據</div>
@@ -411,14 +437,10 @@
                 </div>
 
             @else
-                {{-- ============================================================ --}}
-                {{-- 趨勢報表列表（原有邏輯，完全不動） --}}
-                {{-- ============================================================ --}}
                 <div class="bg-base-100 border border-base-200 rounded-2xl backdrop-blur-md shadow-sm overflow-hidden">
                     <div class="p-4 bg-base-200 border-b border-base-200 font-bold text-xs tracking-widest text-base-content/70">
                         📅 週期趨勢明細 (時間 + 金額)
                     </div>
-                    
                     <div class="hidden md:block overflow-x-auto max-h-[400px] overflow-y-auto">
                         <table class="table table-pin-rows w-full text-sm">
                             <thead>
@@ -431,18 +453,17 @@
                                 @foreach($this->trendData as $item)
                                     <tr class="hover:bg-base-200 transition-colors border-0">
                                         <td class="font-medium text-base-content/70 bg-transparent">{{ $item['label'] }}</td>
-                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">${{ $item['amount_display'] }}</td>
+                                        <td class="text-right font-mono font-bold text-base-content bg-transparent">{{ $item['amount_display'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-
                     <div class="block md:hidden divide-y divide-base-200 max-h-[400px] overflow-y-auto">
                         @foreach($this->trendData as $item)
                             <div class="p-3.5 flex justify-between items-center bg-transparent">
                                 <span class="text-sm font-medium text-base-content/70">{{ $item['label'] }}</span>
-                                <span class="font-mono font-bold text-sm text-base-content">${{ $item['amount_display'] }}</span>
+                                <span class="font-mono font-bold text-sm text-base-content">{{ $item['amount_display'] }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -452,14 +473,11 @@
         </div>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- 交易流水 Modal --}}
-    {{-- ============================================================ --}}
     <livewire:finance.transaction-list-modal />
 </div>
 
 {{-- ============================================================ --}}
-{{-- Chart.js 渲染 Script --}}
+{{-- Chart.js 渲染 --}}
 {{-- ============================================================ --}}
 @push('scripts')
 <script>
@@ -478,86 +496,84 @@ document.addEventListener('livewire:init', function () {
     };
 
     setTimeout(function() {
-        const canvas = document.getElementById('financeChart');
-        if (!canvas) {
-            // 若初始就在 account/trend 模式，financeChart 不存在，改為等待 smallMultiplesContainer
-        }
-        
         let chartInstance = null;
         const smallMultiplesInstances = [];
 
-        // ------------------------------------------------------------
-        // 單圖表渲染（原有邏輯）
-        // ------------------------------------------------------------
         function renderChart(data) {
             const canvasEl = document.getElementById('financeChart');
-            if (!canvasEl) return; // 小倍數模式下不存在
+            if (!canvasEl) return;
             
             const ctx = canvasEl.getContext('2d');
-
-            if (chartInstance) {
-                chartInstance.destroy();
-                chartInstance = null;
-            }
-
-            const container = canvasEl.parentElement;
-            if (container) {
-                canvasEl.style.width = '100%';
-                canvasEl.style.height = '100%';
-            }
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
             const centerTotalEl = document.getElementById('chartCenterTotal');
             if (centerTotalEl && data.centerText !== undefined && data.centerText !== null) {
-                const symbol = data.symbol || '$';
+                const symbol = data.symbol || '';
                 centerTotalEl.textContent = symbol + data.centerText;
             }
 
             const palette = getSongPalette();
 
-            // 無數據狀態
-            if (!data.labels || data.labels.length === 0 || !data.values || data.values.length === 0) {
+            if (!data.labels || data.labels.length === 0 || (!data.values && !data.series)) {
                 chartInstance = new Chart(ctx, {
                     type: 'doughnut',
-                    data: {
-                        labels: ['無數據'],
-                        datasets: [{
-                            data: [1],
-                            backgroundColor: [palette.grid],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        cutout: '75%'
-                    }
+                    data: { labels: ['無數據'], datasets: [{ data: [1], backgroundColor: [palette.grid], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: false } }, cutout: '75%' }
                 });
                 return;
             }
 
-            // 判斷圖表類型
             const isPie = data.type === 'pie';
             const isLine = data.type === 'line';
-            const chartType = isPie ? 'doughnut' : (isLine ? 'line' : 'bar');
+            const isMultiLine = data.type === 'multiLine';
+            const chartType = isPie ? 'doughnut' : 'line';
+
+            let datasets = [];
+
+            if (isMultiLine) {
+                // 總資產分幣別多線
+                datasets = (data.series || []).map(s => ({
+                    label: s.name,
+                    data: s.values,
+                    borderColor: s.color,
+                    backgroundColor: s.color + '20',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 2,
+                    pointBackgroundColor: s.color,
+                }));
+            } else if (isLine) {
+                datasets = [{
+                    data: data.values,
+                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                    borderColor: '#818cf8',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#818cf8',
+                }];
+            } else if (isPie) {
+                datasets = [{
+                    data: data.values,
+                    backgroundColor: palette.pies,
+                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#141212' : '#FAF9F6',
+                    borderWidth: 1.5,
+                }];
+            } else {
+                datasets = [{
+                    data: data.values,
+                    backgroundColor: data.color || palette.primary,
+                    borderRadius: 4,
+                }];
+            }
 
             const config = {
                 type: chartType,
                 data: {
                     labels: data.labels,
-                    datasets: [{
-                        data: data.values,
-                        // 長條圖設定
-                        backgroundColor: isPie ? palette.pies : (isLine ? 'rgba(129, 140, 248, 0.1)' : (data.color || palette.primary)),
-                        borderColor: isPie ? (document.documentElement.getAttribute('data-theme') === 'dark' ? '#141212' : '#FAF9F6') : (isLine ? '#818cf8' : 'transparent'),
-                        borderWidth: isPie ? 1.5 : (isLine ? 2 : 0),
-                        borderRadius: isPie ? 0 : (isLine ? 0 : 4),
-                        // 折線圖專屬
-                        fill: isLine ? true : false,
-                        tension: isLine ? 0.4 : 0,
-                        pointRadius: isLine ? 3 : 0,
-                        pointBackgroundColor: isLine ? '#818cf8' : undefined,
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -565,11 +581,11 @@ document.addEventListener('livewire:init', function () {
                     aspectRatio: isPie ? 1 : 1.5,
                     plugins: {
                         legend: {
-                            display: isPie,
+                            display: isPie || isMultiLine,
                             position: 'bottom',
                             labels: { 
                                 boxWidth: 10, 
-                                font: { size: 11, family: 'Instrument Sans, sans-serif' },
+                                font: { size: 11 },
                                 color: palette.text,
                                 padding: 12
                             }
@@ -582,14 +598,14 @@ document.addEventListener('livewire:init', function () {
                             borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed.y || context.parsed.r || context.parsed;
+                                    const label = context.dataset.label || context.label || '';
+                                    const value = context.parsed.y ?? context.parsed.r ?? context.parsed;
                                     if (isPie) {
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                        return ` ${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                        return ` ${label}: ${data.symbol || ''}${value.toLocaleString()} (${percentage}%)`;
                                     }
-                                    return ` ${label}: $${value.toLocaleString()}`;
+                                    return ` ${label}: ${data.symbol || ''}${value.toLocaleString()}`;
                                 }
                             }
                         }
@@ -598,29 +614,24 @@ document.addEventListener('livewire:init', function () {
                 }
             };
 
-            // 長條圖/折線圖的軸設定
             if (!isPie) {
                 config.options.scales = {
-                    y: { 
+                    y: {
                         beginAtZero: false,
-                        suggestedMin: undefined,
-                        suggestedMax: undefined,
                         grid: { color: palette.grid },
                         ticks: {
                             color: palette.text + '90',
                             font: { size: 10, family: 'mono' },
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                                if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+                                return value;
                             }
                         }
                     },
-                    x: { 
+                    x: {
                         grid: { display: false },
-                        ticks: {
-                            color: palette.text + '90',
-                            font: { size: 10 },
-                            maxTicksLimit: 15,
-                        }
+                        ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 }
                     }
                 };
             }
@@ -628,14 +639,10 @@ document.addEventListener('livewire:init', function () {
             chartInstance = new Chart(ctx, config);
         }
 
-        // ------------------------------------------------------------
-        // ⬅️ 新增：小倍數圖渲染
-        // ------------------------------------------------------------
         function renderSmallMultiples(data) {
             const container = document.getElementById('smallMultiplesContainer');
             if (!container) return;
 
-            // 清除舊圖表
             smallMultiplesInstances.forEach(c => c.destroy());
             smallMultiplesInstances.length = 0;
             container.innerHTML = '';
@@ -651,7 +658,7 @@ document.addEventListener('livewire:init', function () {
                 return;
             }
 
-            const symbol = data.symbol || 'NT$';
+            const symbol = data.symbol || '';
 
             data.series.forEach((s, idx) => {
                 const card = document.createElement('div');
@@ -721,11 +728,7 @@ document.addEventListener('livewire:init', function () {
                             },
                             x: {
                                 grid: { display: false },
-                                ticks: {
-                                    color: palette.text + '60',
-                                    font: { size: 9 },
-                                    maxTicksLimit: 6,
-                                }
+                                ticks: { color: palette.text + '60', font: { size: 9 }, maxTicksLimit: 6 }
                             }
                         }
                     }
@@ -734,39 +737,25 @@ document.addEventListener('livewire:init', function () {
             });
         }
 
-        // ------------------------------------------------------------
-        // ⬅️ 新增：統一分流渲染
-        // ------------------------------------------------------------
         function renderByData(data) {
             if (!data) return;
-            if (data.isSmallMultiples) {
-                renderSmallMultiples(data);
-            } else {
-                renderChart(data);
-            }
+            if (data.isSmallMultiples) renderSmallMultiples(data);
+            else renderChart(data);
         }
 
-        // 初始渲染
         const initialData = @json($chartData ?? null);
         renderByData(initialData);
 
-        // 監聽 Livewire 事件
         Livewire.on('refreshChart', (data) => {
-            if (data && data[0]) {
-                renderByData(data[0]);
-            }
+            if (data && data[0]) renderByData(data[0]);
         });
 
-        // 監聽暗色模式切換
         const observer = new MutationObserver(() => {
             const fresh = @json($chartData ?? null);
-            if (fresh) {
-                renderByData(fresh);
-            }
+            if (fresh) renderByData(fresh);
         });
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-        // 視窗縮放重繪
         let resizeTimer;
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);

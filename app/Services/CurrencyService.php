@@ -194,4 +194,38 @@ class CurrencyService
         $this->shopId = $shopId;
         session(['current_shop_id' => $shopId]);
     }
+	
+	/**
+     * 格式化金額（委派給 Currency Model）
+     *
+     * 中文名稱：金額格式化
+     * 用途：統一對外格式化入口，避免 Component 直接碰 Model 方法
+     */
+    public function format(string|float|int $amount, ?Currency $currency = null): string
+    {
+        $currency = $currency ?? $this->getBaseCurrency();
+
+        if (!$currency) {
+            return number_format((float) $amount, 2);
+        }
+
+        return $currency->formatAmount($amount);
+    }
+
+    /**
+     * 取得幣別主題色
+     */
+    public function getThemeColor(string $code): string
+    {
+        $map = config('business.currency_theme_map', []);
+        return $map[$code] ?? 'gray';
+    }
+
+    /**
+     * 依幣別代碼取得 Currency（含快取）
+     */
+    public function findByCode(string $code): ?Currency
+    {
+        return $this->getAllCurrencies()[$code] ?? null;
+    }
 }

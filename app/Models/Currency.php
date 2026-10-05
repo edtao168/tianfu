@@ -23,6 +23,7 @@ class Currency extends Model
         'code',
         'name',
         'symbol',
+		'decimal_places',
         'rate',
         'is_base',
         'is_active',
@@ -35,6 +36,7 @@ class Currency extends Model
      */
     protected $casts = [
         'rate' => 'decimal:6',
+		'decimal_places' => 'integer', 
         'is_base' => 'boolean',
         'is_active' => 'boolean',
         'created_at' => 'datetime',
@@ -159,7 +161,30 @@ class Currency extends Model
     {
         return $this->is_base === true;
     }
+    /**
+     * 格式化金額（含正確小數位與幣別符號）
+     *
+     * 中文名稱：金額格式化
+     * 用途：將原始字串金額轉為帶符號的顯示字串
+     */
+    public function formatAmount(string|float|int $amount): string
+    {
+        $decimals = (int) ($this->decimal_places ?? 2);
+        $formatted = number_format((float) $amount, $decimals);
+        $symbol = $this->symbol ?? $this->code;
 
+        return $symbol . $formatted;
+    }
+
+    /**
+     * 取得幣別主題色（對應 config('business.currency_theme_map')）
+     */
+    public function getThemeAttribute(): string
+    {
+        $map = config('business.currency_theme_map', []);
+        return $map[$this->code] ?? 'gray';
+    }
+	
     /**
      * 判斷是否可刪除（檢查是否被帳戶使用）
      */
