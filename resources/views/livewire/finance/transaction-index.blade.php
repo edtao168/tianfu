@@ -186,12 +186,9 @@
 										{{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
 									</span>
 								</div>
-								<div class="flex items-center justify-between gap-2 mt-0.5">
-									<span class="text-sm opacity-60 truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
+								<div class="mt-0.5">
+									<span class="text-sm opacity-60 block truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
 										{{ $tx->memo ?: '無備註' }}
-									</span>
-									<span class="text-sm font-mono opacity-50 flex-shrink-0">
-										{{ date('H:i', strtotime($tx->recorded_at)) }}
 									</span>
 								</div>
 							</div>
