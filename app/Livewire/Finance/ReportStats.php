@@ -192,6 +192,21 @@ class ReportStats extends Component
     {
         return $this->currencyFilter === 'all';
     }
+	
+	/**
+     * 對 Query 套用幣別篩選（透過 from/to 賬戶）
+     *
+     * 中文名稱：幣別篩選器
+     * 用途：因 transactions 表無 currency 欄位，需透過關聯賬戶的 currency 篩選
+     */
+    private function applyCurrencyFilter($query): void
+    {
+        $code = $this->currencyFilter;
+        $query->where(function ($q) use ($code) {
+            $q->whereHas('fromAccount', fn($qq) => $qq->where('currency', $code))
+              ->orWhereHas('toAccount', fn($qq) => $qq->where('currency', $code));
+        });
+    }
 
     // ============================================================
     // 分類報表
@@ -209,7 +224,7 @@ class ReportStats extends Component
 
         // 分幣別模式：只查該幣別，不合併
         if (!$this->isConsolidated()) {
-            $query->where('currency', $this->currencyFilter);
+            $this->applyCurrencyFilter($query);
         }
 
         if ($this->dateMode === 'year') {
@@ -219,7 +234,7 @@ class ReportStats extends Component
                   ->whereMonth('recorded_at', $this->selectedMonth);
         }
 
-        $transactions = $query->with('category.parent')->get();
+            $transactions = $query->with(['category.parent', 'fromAccount', 'toAccount'])->get();
 
         $total = '0.0000';
         $categorySummary = [];
@@ -291,10 +306,10 @@ class ReportStats extends Component
                 ->whereYear('recorded_at', $this->selectedYear);
 
             if (!$this->isConsolidated()) {
-                $query->where('currency', $this->currencyFilter);
+                $this->applyCurrencyFilter($query);
             }
 
-            foreach ($query->get(['type', 'amount', 'currency', 'recorded_at']) as $tx) {
+            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
                 $m = (int) Carbon::parse($tx->recorded_at)->format('n');
                 $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx, $baseCode, $service);
             }
@@ -308,10 +323,10 @@ class ReportStats extends Component
                 ->whereYear('recorded_at', $this->selectedYear);
 
             if (!$this->isConsolidated()) {
-                $query->where('currency', $this->currencyFilter);
+                $this->applyCurrencyFilter($query);
             }
 
-            foreach ($query->get(['type', 'amount', 'currency', 'recorded_at']) as $tx) {
+            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
                 $m = (int) Carbon::parse($tx->recorded_at)->format('n');
                 $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx, $baseCode, $service);
             }
@@ -327,10 +342,10 @@ class ReportStats extends Component
                 ->whereMonth('recorded_at', $this->selectedMonth);
 
             if (!$this->isConsolidated()) {
-                $query->where('currency', $this->currencyFilter);
+                 $this->applyCurrencyFilter($query);
             }
 
-            foreach ($query->get(['type', 'amount', 'currency', 'recorded_at']) as $tx) {
+            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
                 $d = (int) Carbon::parse($tx->recorded_at)->format('j');
                 $list[$d]['amount'] = $this->calculateTrendAmount($list[$d]['amount'], $tx, $baseCode, $service);
             }
@@ -527,12 +542,14 @@ class ReportStats extends Component
         $transactionEffect = '0.0000';
         $txs = Transaction::where('shop_id', $this->shopId)
             ->whereBetween('recorded_at', [$start, $end])
+            ->with(['fromAccount', 'toAccount'])
             ->get();
 
         foreach ($txs as $tx) {
             $txAmount = (string) $tx->amount;
-            if (($tx->currency ?? $baseCode) !== $baseCode) {
-                $txAmount = $service->convertToBase($txAmount, $tx->currency);
+            $txCurrency = $tx->currency;
+            if ($txCurrency !== $baseCode) {
+                $txAmount = $service->convertToBase($txAmount, $txCurrency);
             }
             if ($tx->type === 'income') $transactionEffect = bcadd($transactionEffect, $txAmount, 4);
             if ($tx->type === 'expense') $transactionEffect = bcsub($transactionEffect, $txAmount, 4);
