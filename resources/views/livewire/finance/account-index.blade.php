@@ -183,21 +183,42 @@
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 4. 分幣別資產總計卡片 --}}
-    {{-- ============================================================ --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        @foreach($this->currencyGroups as $group)
-            <div class="flex justify-between items-center p-5 rounded-2xl bg-base-100 border border-base-200 shadow-sm transition-all duration-300 hover:border-base-content/20 hover:scale-[1.01]">
-                <div>
-                    <div class="text-[11px] font-bold opacity-60 tracking-wider uppercase">{{ $group['currency_name'] }} ({{ $group['currency'] }})</div>
-                    <div class="text-2xl font-black text-base-content font-mono mt-1">
-                        <span class="opacity-50 mr-0.5 text-lg font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($group['total_balance'], 2) }}
-                    </div>
-                </div>
-                <div class="text-2xl font-black opacity-20 font-mono tracking-widest select-none">{{ $group['currency'] }}</div>
-            </div>
-        @endforeach
-    </div>
+	{{-- 4. 分幣別資產總計卡片 --}}
+	{{-- ============================================================ --}}
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+		@foreach($this->currencyGroups as $group)
+			@php
+				$currencyTheme = $group['theme'] ?? 'blue';
+				$currencyColorMap = [
+					'blue'   => 'sky',
+					'red'    => 'rose',
+					'green'  => 'emerald',
+					'purple' => 'violet',
+					'orange' => 'orange',
+				];
+				$dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
+			@endphp
+
+			<div class="card-{{ $currencyTheme }} currency-total-card relative overflow-hidden p-5 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+				{{-- 左側主題色條 --}}
+				<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
+
+				<div class="flex justify-between items-center relative z-10">
+					<div>
+						<div class="text-[11px] font-bold opacity-60 tracking-wider uppercase">
+							{{ $group['currency_name'] }} ({{ $group['currency'] }})
+						</div>
+						<div class="text-2xl font-black font-mono mt-1">
+							<span class="opacity-50 mr-0.5 text-lg font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($group['total_balance'], 2) }}
+						</div>
+					</div>
+					<div class="text-2xl font-black opacity-20 font-mono tracking-widest select-none">
+						{{ $group['currency'] }}
+					</div>
+				</div>
+			</div>
+		@endforeach
+	</div>	
 
 	{{-- ============================================================ --}}
 	{{-- 5. 帳戶列表 --}}
@@ -246,7 +267,7 @@
 						</div>
 						
 						<div class="flex justify-between items-end mt-2 relative z-10">
-							<span class="text-xs opacity-60 font-medium">交易後實際餘額</span>
+							<span class="text-xs opacity-60 font-medium">當前餘額</span>
 							<span class="font-mono text-xl font-extrabold text-base-content truncate ml-2">
 								<span class="opacity-50 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->calculated_balance, 2) }}
 							</span>

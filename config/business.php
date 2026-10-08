@@ -3,14 +3,20 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | 幣別主題色
+    | 幣別主題色：目前只定義red、orange、green、blue、purple
+
     |--------------------------------------------------------------------------
     */
     'currency_theme_map' => [
         'TWD' => 'blue',
         'CNY' => 'red', 
-        'HKD' => 'green',
-        'USD' => 'purple',
+        'HKD' => 'orange',
+        'USD' => 'green',
+		'CAD' => 'red',
+		'EUR' => 'orange',
+		'GBP' => 'purple',
+		'AUD' => 'green',
+		'CHF' => 'purple',
     ],
 
     /*
