@@ -6,23 +6,23 @@
 
 ## 📁 檔案結構
 
-- `backup.sh`：全自動備份腳本（備份 MySQL、.env、storage/、Apache/Nginx/Supervisor 設定檔）
-- `rollback.sh`：自動化回滾與災難復原腳本（恢復 Code、.env、storage/、MySQL、權限修復與重啟服務）
+- `backup.sh`：全自動備份腳本（備份 MariaDB、.env、storage/、Apache/Nginx/Supervisor 設定檔）
+- `rollback.sh`：自動化回滾與災難復原腳本（恢復 Code、.env、storage/、MariaDB、權限修復與重啟服務）
 - `deploy.sh`：日常 Git 部署腳本（含 OCI iptables 開放與權限修復）
 
 ---
 
 ## 🚀 快速使用指南
 
-### 1. 建立自動化每日備份 (Crontab)
+### 1. 已建立的自動化每日備份 (Crontab)
 
-請在伺服器上執行 `sudo crontab -e` 並加入以下排程（每天凌晨 03:00 自動執行備份）：
+新建、修改時，請在伺服器上執行 `sudo crontab -e` 並加入以下排程（每天凌晨 03:00 自動執行備份）：
 
 ```bash
 0 3 * * * /bin/bash /var/www/html/tianfu/backup.sh >> /var/log/tianfu_backup.log 2>&1
 ```
 
-### 2. 手動執行備份
+### 2. 手動執行備份（修改後測試用）
 
 ```bash
 sudo bash backup.sh
@@ -57,25 +57,29 @@ sudo bash rollback.sh /var/backups/tianfu/tianfu_backup_20260330_120000.tar.gz
 3. **.env 安全性：** 備份檔包含 `.env`（內含 DB 密碼與 APP_KEY），請妥善保管 `/var/backups/tianfu/` 目錄。
 4.已忽略對 deploy.sh 的上傳（oci與本地不一致，已鎖定git update-index --assume-unchanged deploy.sh，解鎖需git update-index --no-assume-unchanged deploy.sh）
 
-#檢查備份執行狀況：
-	## 查看進銷存備份日誌cat /var/log/taotique_backup.log
-	## 查看記帳系統備份日誌cat /var/log/tianfu_backup.log
-如果日誌最後出現 Backup completed successfully 之類的成功提示，且備份目錄 /var/backups/taotique 與 /var/backups/tianfu 都有產生新的 .tar.gz 壓縮檔，就代表整個災難復原（DR）備份機制已經完全穩定運作了！
+---
 
-# 備份檔將自動儲存於 /var/backups/tianfu/， /var/backups/taotique/，可執行以下命令查看
-	## OCI： ls /var/backups/tianfu/
-	## 本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/tianfu/"
-	## OCI： ls  /var/backups/taotique/
-	## 本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/taotique/"
+## 例行工作
+### 檢查備份執行狀況：
+	查看進銷存備份日誌cat /var/log/taotique_backup.log
+	查看記帳系統備份日誌cat /var/log/tianfu_backup.log
 
-# 備份複製到本地，
-	## 先查找OCI備份文件目錄
-		### ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167
-		### OCI cd /var/www/html
+	如果日誌最後出現 Backup completed successfully 之類的成功提示，且備份目錄 /var/backups/taotique 與 /var/backups/tianfu 都有產生新的 .tar.gz 壓縮檔，就代表整個災難復原（DR）備份機制已經完全穩定運作了！
+
+	備份檔將自動儲存於 /var/backups/tianfu/， /var/backups/taotique/，可執行以下命令查看
+	OCI： ls /var/backups/tianfu/
+	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/tianfu/"
+	OCI： ls  /var/backups/taotique/
+	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/taotique/"
+
+### 備份複製到本地，
+	先查找OCI備份文件目錄
+		ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167
+		OCI cd /var/www/html
 		ls /var/backups/taotique/ *.tar.gz
 		exit
-	## 下載到本地（本地命令）
+	下載到本地（本地命令）
 		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*.tar.gz D:\Users\Administrator\Downloads
 		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*.tar.gz D:\Users\Administrator\Downloads
-		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*0902*.tar.gz D:\Users\Administrator\Downloads
-		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*0902*.tar.gz D:\Users\Administrator\Downloads
+		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*1009*.tar.gz D:\Users\Administrator\Downloads
+		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*1009*.tar.gz D:\Users\Administrator\Downloads

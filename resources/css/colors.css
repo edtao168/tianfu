@@ -104,45 +104,45 @@
 
 /* 亮色模式 - 漸層背景 + 邊框 */
 .card-orange.currency-total-card {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.10), rgba(251, 191, 36, 0.02));
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.60), rgba(251, 191, 36, 0.02));
     border-color: rgba(251, 191, 36, 0.25);
 }
 .card-green.currency-total-card {
-    background: linear-gradient(135deg, rgba(52, 211, 153, 0.10), rgba(52, 211, 153, 0.02));
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.60), rgba(52, 211, 153, 0.02));
     border-color: rgba(52, 211, 153, 0.25);
 }
 .card-blue.currency-total-card {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.10), rgba(56, 189, 248, 0.02));
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.60), rgba(56, 189, 248, 0.02));
     border-color: rgba(56, 189, 248, 0.25);
 }
 .card-purple.currency-total-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.10), rgba(139, 92, 246, 0.02));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.60), rgba(139, 92, 246, 0.02));
     border-color: rgba(139, 92, 246, 0.25);
 }
 .card-red.currency-total-card {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.10), rgba(244, 63, 94, 0.02));
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.60), rgba(244, 63, 94, 0.02));
     border-color: rgba(244, 63, 94, 0.25);
 }
 
 /* 暗色模式 - 加深背景 */
 [data-theme="dark"] .card-orange.currency-total-card {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(251, 191, 36, 0.01));
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.58), rgba(251, 191, 36, 0.01));
     border-color: rgba(251, 191, 36, 0.18);
 }
 [data-theme="dark"] .card-green.currency-total-card {
-    background: linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(52, 211, 153, 0.01));
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.58), rgba(52, 211, 153, 0.01));
     border-color: rgba(52, 211, 153, 0.18);
 }
 [data-theme="dark"] .card-blue.currency-total-card {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0.01));
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.58), rgba(56, 189, 248, 0.01));
     border-color: rgba(56, 189, 248, 0.18);
 }
 [data-theme="dark"] .card-purple.currency-total-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.01));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.58), rgba(139, 92, 246, 0.01));
     border-color: rgba(139, 92, 246, 0.18);
 }
 [data-theme="dark"] .card-red.currency-total-card {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.08), rgba(244, 63, 94, 0.01));
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.58), rgba(244, 63, 94, 0.01));
     border-color: rgba(244, 63, 94, 0.18);
 }
 
@@ -378,7 +378,7 @@ html {
 }
 
 .template-modal-blue .btn.bg-stone-100 {
-    background-color: rgba(162, 189, 219, 0.08);
+    background-color: rgba(162, 189, 219, 0.58);
 }
 
 .template-modal-blue .btn.bg-stone-100:hover {
