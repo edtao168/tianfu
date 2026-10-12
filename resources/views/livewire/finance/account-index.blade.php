@@ -5,13 +5,13 @@
     {{-- 1. 頂部收支統計卡片 --}}
     {{-- ============================================================ --}}
     <div class="space-y-3">
-        <div class="flex items-center justify-between">
+        <!-- div class="flex items-center justify-between">
             <h2 class="text-sm font-bold opacity-80 tracking-wider flex items-center gap-2">
                 <span class="w-1.5 h-4.5 rounded-full bg-sky-500"></span>
                 期間資產統計
                 <span class="text-xs opacity-60">點擊卡片看明細</span>
             </h2>
-        </div>
+        </div -->
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             @php
@@ -42,10 +42,10 @@
                      wire:click="showPeriodDetail('{{ $period }}')">
                     <div class="stat p-5">
                         <div class="stat-title flex items-center justify-between opacity-80 font-medium">
-                            <span class="flex items-center gap-1.5">
-                                <span class="flex h-2 w-2 rounded-full bg-teal-500/70"></span>
-                                {{ $title }}
-                            </span>
+                            <div class="text-base font-black flex items-center gap-2">    
+							<span class="animate-pulse">👆</span>
+							<span>{{ $title }}</span>
+						</div>
                             @if($currencyCount > 1)
                                 <span class="text-xs opacity-60 flex items-center gap-0.5 font-mono">
                                     ({{ $currencyCount }}種幣別)
