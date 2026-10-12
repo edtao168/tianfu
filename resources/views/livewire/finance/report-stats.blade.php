@@ -526,7 +526,9 @@ document.addEventListener('livewire:init', function () {
             const isPie = data.type === 'pie';
             const isLine = data.type === 'line';
             const isMultiLine = data.type === 'multiLine';
-            const chartType = isPie ? 'doughnut' : 'line';
+            const chartType = isPie
+				? 'doughnut'
+				: (data.type === 'bar' ? 'bar' : 'line');
 
             let datasets = [];
 

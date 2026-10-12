@@ -173,7 +173,7 @@
     {{-- ============================================================ --}}
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-base-200 pb-5">
         <div>
-            <h1 class="text-2xl font-bold text-base-content">淨資產帳戶總覽</h1>
+            <h1 class="text-2xl font-bold text-base-content">資產帳戶總覽</h1>
             <p class="text-sm opacity-70 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
@@ -206,7 +206,7 @@
 				<div class="flex justify-between items-center relative z-10">
 					<div>
 						<div class="text-[11px] font-bold opacity-60 tracking-wider uppercase">
-							{{ $group['currency_name'] }} ({{ $group['currency'] }})
+							{{ $group['currency_name'] }} ({{ $group['currency'] }})資產合計
 						</div>
 						<div class="text-2xl font-black font-mono mt-1">
 							<span class="opacity-50 mr-0.5 text-lg font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($group['total_balance'], 2) }}
@@ -239,7 +239,7 @@
 		<div class="space-y-3 pt-2 animate-fadeIn">
 			<h2 class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2">
 				<span class="w-1.5 h-4.5 rounded-full bg-{{ $dotColor }}-500"></span> 
-				{{ $group['currency_name'] }}資產明細
+				{{ $group['currency_name'] }}帳戶資產
 				<span class="text-xs opacity-50">點擊卡片看明細</span>
 			</h2>
 			
