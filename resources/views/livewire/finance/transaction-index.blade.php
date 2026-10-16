@@ -4,8 +4,11 @@
     <div class="sticky top-0 z-10 backdrop-blur-md bg-base-100/80 pt-2 pb-4 border-b border-base-200">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
-                <p class="text-sm opacity-70 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
+                {{-- 🎯 使用 hidden sm:block 讓抬頭與輔助標題在手機上隱藏，桌機上保留 --}}
+                <div class="hidden sm:block">
+                    <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
+                    <p class="text-sm opacity-70 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <x-button label="資產帳戶" icon="o-wallet" class="btn-ghost border border-base-300" link="{{ route('finance.accounts') }}" />
