@@ -5,16 +5,16 @@
     {{-- 頂部篩選與第一層分頁（視覺對齊：彈性均分列） --}}
     {{-- ============================================================ --}}
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-base-300/60 pb-5">
-        
-        {{-- 第一層分頁：彈性佔滿，各按鈕自動均分 --}}
-        <div class="flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300/70 backdrop-blur-md w-full lg:w-auto shadow-sm">
-            <button class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+
+        {{-- 第一層分頁：內容自然撐開，支援橫向滑動 --}}
+        <div class="flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300/70 backdrop-blur-md w-full lg:w-auto shadow-sm overflow-x-auto">
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'category')">📊 類別</button>
-            <button class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'trend')">📈 收支</button>
-            <button class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'account')">💼 賬戶</button>
-            <button class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center {{ $showAssetTrend ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $showAssetTrend ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}" 
                     wire:click="$set('tab1', 'asset')">🏦 總資產</button>
         </div>
 
@@ -37,7 +37,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 bg-base-200/50 p-3 rounded-2xl border border-base-300/60">
             <span class="text-xs font-bold text-base-content/60 tracking-wider px-1">幣別篩選</span>
             <div class="flex gap-1.5 p-1 bg-base-100 rounded-xl border border-base-300/60 backdrop-blur-sm flex-wrap flex-1">
-                <button class="flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}"
+                <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}"
                         wire:click="$set('currencyFilter', 'all')">
                     🌐 全部（合併）
                 </button>
@@ -52,7 +52,7 @@
                             default => 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm',
                         };
                     @endphp
-                    <button class="flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
+                    <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
                             wire:click="$set('currencyFilter', '{{ $currency->code }}')">
                        {{ $currency->code }}
                     </button>
