@@ -1,13 +1,13 @@
 /* resources/css/app.css */
 
 @import "tailwindcss";
-@import "./colors.css"; 
+@import "./colors.css";
 
 /* --------------------------------------------------------------------------
 | DaisyUI v5 外掛配置 (自動感應系統 Light/Dark 主題)
 | -------------------------------------------------------------------------- */
 @plugin "daisyui" {
-    themes: light, dark; 
+    themes: light, dark;
 }
 
 /* --------------------------------------------------------------------------
@@ -27,6 +27,29 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* ==========================================================================
+   字體大小偏好
+   ========================================================================== */
+
+html[data-font-size="sm"] {
+    --font-size-base: 14px;
+}
+
+html[data-font-size="base"] {
+    --font-size-base: 16px;
+}
+
+html[data-font-size="lg"] {
+    --font-size-base: 18px;
+}
+
+html {
+    font-size: var(--font-size-base);
+}
+
+/* ==========================================================================
+   全域元素樣式
+   ========================================================================== */
 
 body {
     background-color: var(--song-bg);
@@ -55,6 +78,7 @@ body {
     border-color: var(--song-border);
 }
 
+/* number input 的 spinner 定位 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     position: absolute;
@@ -64,4 +88,91 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 input[type="number"] {
     position: relative;
+}
+
+/* ==========================================================================
+   文字截斷與版面工具
+   ========================================================================== */
+
+/* 交易標題響應式截斷 */
+.transaction-title {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px; /* 手機版預設寬度 */
+}
+
+/* 手機版（< 640px）保持截斷 */
+@media (max-width: 639px) {
+    .transaction-title {
+        max-width: 100px;
+    }
+}
+
+/* 平板（640px - 767px）稍微放寬 */
+@media (min-width: 640px) and (max-width: 767px) {
+    .transaction-title {
+        max-width: 200px;
+    }
+}
+
+/* 電腦版（>= 768px）顯示完整 */
+@media (min-width: 768px) {
+    .transaction-title {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
+/* 帳戶名稱截斷 - 原生 select 強制截斷 */
+select.truncate,
+select.truncate option {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* 防止 flex/grid 子元素撐開導致 truncate 失效 */
+.min-w-0 {
+    min-width: 0;
+}
+
+/* 暗色模式下 option 背景色確保可讀 */
+[data-theme="dark"] select option {
+    background-color: var(--song-bg);
+    color: var(--song-text);
+}
+
+/* ==========================================================================
+   全站互動回饋（按下微縮）
+   - 使用 scale 獨立屬性，避免與其它 transform 衝突
+   - 保留 DaisyUI .btn 的 :active 變色，形成「同時變色又縮小」
+   - transition 只針對 scale，顏色過渡交給 .btn-* 的 transition-colors
+   ========================================================================== */
+
+:where(button, [role="button"], .clickable-card) {
+    cursor: pointer;
+    transition: scale 120ms ease;
+}
+
+:where(button, [role="button"]):active {
+    scale: 0.98;
+}
+
+.clickable-card:active {
+    scale: 0.99;
+}
+
+/* 尊重使用者的減少動態效果設定：連縮放都不做 */
+@media (prefers-reduced-motion: reduce) {
+    :where(button, [role="button"], .clickable-card) {
+        transition: none;
+    }
+    :where(button, [role="button"], .clickable-card):active {
+        scale: none;
+    }
 }

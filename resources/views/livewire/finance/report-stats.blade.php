@@ -330,7 +330,7 @@
                             $assetTable = collect($this->assetTrendData)->map(fn($item) => [
                                 'label' => $item['label'] ?? '',
                                 'amount' => $item['amount'] ?? 0,
-                                'amount_display' => ($item['symbol'] ?? 'NT$') . number_format($item['amount'] ?? 0, 2),
+                                'amount_display' => ($item['symbol'] ?? 'NT$') . number_format($item['amount'] ?? 0, 0),
                                 'symbol' => $item['symbol'] ?? 'NT$',
                             ])->all();
                         }
@@ -360,7 +360,7 @@
                                         <td class="text-right font-mono font-bold text-primary bg-transparent">{{ $item['amount_display'] ?? '0.00' }}</td>
                                         <td class="text-right font-mono text-sm {{ $changeClass }} bg-transparent">
                                             @if($change != 0)
-                                                {{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 2) }}
+                                                {{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 0) }}
                                             @else
                                                 —
                                             @endif
@@ -387,7 +387,7 @@
                                 <div>
                                     <span class="text-sm font-medium text-base-content/80">{{ $item['label'] ?? '' }}</span>
                                     @if($change != 0)
-                                        <span class="text-xs ml-2 {{ $changeClass }}">{{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 2) }}</span>
+                                        <span class="text-xs ml-2 {{ $changeClass }}">{{ $changeSymbol }} {{ $assetSymbol }}{{ number_format(abs($change), 0) }}</span>
                                     @endif
                                 </div>
                                 <span class="font-mono font-bold text-sm text-primary">{{ $item['amount_display'] ?? '0.00' }}</span>
@@ -414,7 +414,7 @@
                             </thead>
                             <tbody class="divide-y divide-base-200">
                                 @forelse($this->categoryData['list'] as $item)
-                                    <tr class="hover:bg-base-200/50 cursor-pointer transition-colors border-0"
+                                    <tr class="clickable-card hover:bg-base-200/50 cursor-pointer transition-colors border-0"
                                         wire:click="openCategoryTransactions({{ $item['id'] }}, '{{ addslashes($item['name']) }}')">
                                         <td class="font-bold text-base-content bg-transparent flex items-center gap-2">
                                             <span>{{ $item['name'] }}</span>

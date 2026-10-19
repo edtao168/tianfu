@@ -30,7 +30,7 @@
                     $theme = $periodThemeMap[$period] ?? 'blue';
                 @endphp
             
-                <div class="stats shadow-sm bg-base-100 border border-base-300 rounded-2xl hover:border-base-content/25 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group" 
+                <div class="clickable-card stats shadow-sm bg-base-100 border border-base-300 rounded-2xl hover:border-base-content/25 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group" 
                      wire:click="showPeriodDetail('{{ $period }}')">
                     <div class="stat p-5">
                         <div class="stat-title flex items-center justify-between opacity-80 font-medium">
@@ -246,7 +246,7 @@
                     @endphp
 
                     <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/25 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
+                         class="clickable-card card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/25 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
                         
                         <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 

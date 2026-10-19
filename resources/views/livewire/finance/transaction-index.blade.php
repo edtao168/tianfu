@@ -156,7 +156,7 @@
                             $shouldShowAccount = !$isTransfer && $acc;
                         @endphp
                         
-                        <div class="card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
+                        <div class="clickable-card card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
                              wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })">
                             <span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
                             
