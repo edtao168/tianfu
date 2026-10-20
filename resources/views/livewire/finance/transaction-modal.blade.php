@@ -118,7 +118,7 @@
                     />
                 </div>
                 
-                {{-- 帳戶選擇重構區塊 --}}
+                {{-- 帳戶選擇區塊 --}}
                 @if($type === 'transfer')
                     {{-- 轉帳模式 --}}
                     <div class="grid grid-cols-5 gap-3 mb-4 items-end">
@@ -197,7 +197,7 @@
                     @endphp
                     <div class="grid grid-cols-3 gap-3 mb-4">
                         <div class="col-span-1">
-                            <div class="aspect-square rounded-2xl border border-base-300 transition-all cursor-pointer flex flex-col items-center justify-center p-1 relative overflow-hidden bg-base-200 hover:bg-base-300" wire:click="openCategoryPicker(false)">
+                            <div class="clickable-card aspect-square rounded-2xl border border-base-300 transition-all cursor-pointer flex flex-col items-center justify-center p-1 relative overflow-hidden bg-base-200 hover:bg-base-300" wire:click="openCategoryPicker(false)">
                                 @if($categoryId && $selectedCategory && $selectedCategory->type === $type)
                                     <div class="text-3xl mb-1 flex justify-center">
                                         <x-dynamic-component :component="'heroicon-o-' . ($selectedCategory->icon ?? 'folder')" class="w-10 h-10 {{ $signColor }}" />
@@ -230,7 +230,7 @@
                         </div>
                     </div>
                     
-                    {{-- 非轉帳模式：帳戶選擇重構 --}}
+                    {{-- 非轉帳模式：帳戶選擇 --}}
                     <div class="mb-4">
                         <x-account-select 
                             model="fromAccountId" 
@@ -417,7 +417,7 @@
                 <div class="grid grid-cols-6 gap-3 mb-4">
                     <div class="col-span-2">
                         @if($templateType !== 'transfer')
-                            <div class="aspect-square bg-base-200 rounded-2xl border border-base-300
+                            <div class="clickable-card aspect-square bg-base-200 rounded-2xl border border-base-300
                                         hover:border-base-content/40 transition-all cursor-pointer 
                                         flex flex-col items-center justify-center p-1 relative overflow-hidden"
                                  wire:click="openCategoryPicker(true)">
@@ -486,7 +486,7 @@
                     </div>
                 </div>
 
-                {{-- 範本帳戶選擇重構 --}}
+                {{-- 範本帳戶選擇 --}}
                 <div class="mb-4">
                     <x-account-select 
                         model="templateFromAccountId" 
@@ -495,7 +495,7 @@
                     />
                 </div>
 
-                {{-- 範本轉帳目標帳戶重構 --}}
+                {{-- 範本轉帳目標帳戶 --}}
                 @if($templateType === 'transfer')
                     <div class="mb-4">
                         <x-account-select 
@@ -549,7 +549,7 @@
                     };
                 @endphp
                 <div class="flex items-center justify-between p-3 bg-base-200 rounded-xl hover:bg-base-300 transition-colors">
-                    <div class="flex-1 cursor-pointer " wire:click="applyTemplate({{ $template['id'] }})">
+                    <div class="clickable-card flex-1 cursor-pointer " wire:click="applyTemplate({{ $template['id'] }})">
                         <div class="font-medium {{ $templateTypeColor }}">{{ $template['name'] }}</div>
                         <div class="text-sm text-base-content/60">
                             {{ match($template['type'] ?? 'expense') { 'expense' => '支出', 'income' => '收入', 'transfer' => '轉帳', default => $template['type'] } }} · {{ number_format($template['amount'], 2) }}
