@@ -1,9 +1,5 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
-      x-data="appSettings"
-      x-bind:class="currentTheme === 'dark' ? 'dark' : ''"
-      x-bind:data-theme="currentTheme"
-      x-bind:data-font-size="fontSize"
       class="bg-base-200 text-base-content antialiased selection:bg-teal-800 selection:text-teal-100">
 <head>
     <meta charset="utf-8">
@@ -107,7 +103,11 @@
         });
     </script>
 </head>
-<body class="min-h-screen pb-28 md:pb-32 bg-base-200 text-base-content">
+<body class="min-h-screen pb-28 md:pb-32 bg-base-200 text-base-content"
+	x-data="appSettings"
+    x-bind:class="currentTheme === 'dark' ? 'dark' : ''"
+    x-bind:data-theme="currentTheme"
+    x-bind:data-font-size="fontSize">
 
     <header class="sticky top-0 z-40 backdrop-blur-md bg-base-100/80 px-6 py-4 flex items-center justify-between border-b border-base-200">
 		{{-- 替換原標題為圖形樣式 --}}

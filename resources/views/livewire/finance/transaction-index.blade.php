@@ -11,8 +11,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <x-button label="資產帳戶" icon="o-wallet" class="btn-ghost border border-base-300" link="{{ route('finance.accounts') }}" />
-                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-neutral' : 'btn-ghost border border-base-300' }}" wire:click="$toggle('showFilters')" />
+                <x-button label="資產帳戶" icon="o-wallet" class="btn-blue border border-base-300" link="{{ route('finance.accounts') }}" />
+                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-neutral' : 'btn-purple border border-base-300' }}" wire:click="$toggle('showFilters')" />
             </div>
         </div>
 

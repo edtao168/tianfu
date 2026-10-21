@@ -114,7 +114,7 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 }
 
 /* ==========================================================================
-   幣別資產總計卡片 - 主題色背景與邊框
+   幣別資產總計卡片
    ========================================================================== */
 
 .currency-total-card {
@@ -252,8 +252,7 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 }
 
 /* ==========================================================================
-   宋式按鈕配色系統 - 淡雅版本
-   （transition 改為 transition-colors，scale 交給 app.css 的互動回饋統一處理）
+   宋式按鈕配色系統
    ========================================================================== */
 
 .btn-red,
@@ -358,7 +357,7 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 }
 
 /* ==========================================================================
-   交易類型語意色彩 - 完整版（含背景透明度）
+   交易類型語意色彩
    ========================================================================== */
 
 @layer utilities {
@@ -421,4 +420,32 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
     .badge-tx-transfer {
         @apply bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/50;
     }
+}
+
+/* ==========================================================================
+   收支統計卡片
+   ========================================================================== */
+
+.stat-ribbon {
+    background-color: rgb(var(--ribbon) / 0.06);
+}
+[data-theme="dark"] .stat-ribbon {
+    background-color: rgb(var(--ribbon) / 0.09);
+}
+
+.stat-ribbon-line {
+    background: linear-gradient(to right, rgb(var(--ribbon) / 0.30), transparent);
+}
+[data-theme="dark"] .stat-ribbon-line {
+    background: linear-gradient(to right, rgb(var(--ribbon) / 0.25), transparent);
+}
+
+/* 三主題窯色對應 */
+.stat-ribbon-blue   { --ribbon: 56 189 248; }   /* 汝窯天青 */
+.stat-ribbon-green  { --ribbon: 52 211 153; }   /* 龍泉青瓷 */
+.stat-ribbon-purple { --ribbon: 139 92 246; }   /* 暮山煙紫 */
+
+/* 緞帶斜切（純 CSS，不依賴 Tailwind arbitrary value） */
+.stat-ribbon-clip {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
 }

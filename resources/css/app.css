@@ -176,32 +176,3 @@ select.truncate option {
         scale: none;
     }
 }
-
-/* ==========================================================================
-   手機版 Modal 鍵盤彈出與捲動優化
-   ========================================================================== */
-
-.modal-box {
-    /* 限制 Modal 最大高度，避免超出手機畫面 */
-    max-height: 85vh !important;
-    /* 啟用彈性盒模型，讓內部上下結構可以妥善分配空間 */
-    display: flex !important;
-    flex-direction: column !important;
-    /* 避免內部元素溢出邊框 */
-    overflow: hidden !important;
-}
-
-/* 針對 DaisyUI / Mary UI 的 Modal 內容區塊進行捲動優化 */
-.modal-box form, 
-.modal-box .modal-action,
-.modal-box > div {
-    /* 確保表單區域如果過長可以順暢捲動 */
-    box-sizing: border-box;
-}
-
-/* 讓 Modal 內部主體內容支援上下滑動，並在底部留白防止被鍵盤完全遮擋 */
-.modal-box {
-    overflow-y: auto !important;
-    /* 透過安全距離與額外 padding 確保鍵盤彈出時可滑動到底部 */
-    padding-bottom: max(env(safe-area-inset-bottom), 2rem) !important;
-}

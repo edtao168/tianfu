@@ -31,37 +31,58 @@
                 @endphp
             
                 <div class="clickable-card stats shadow-sm bg-base-100 border border-base-300 rounded-2xl hover:border-base-content/25 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group" 
-                     wire:click="showPeriodDetail('{{ $period }}')">
-                    <div class="stat p-5">
-                        <div class="stat-title flex items-center justify-between opacity-80 font-medium">
-                            <div class="text-sm font-bold flex items-center gap-1.5 text-base-content/90 group-hover:text-primary transition-colors">    
-                                <span class="animate-pulse text-xs opacity-70">👆</span>
-                                <span>{{ $title }}</span>
-                            </div>
-                            @if($currencyCount > 1)
-                                <span class="text-[11px] opacity-60 flex items-center gap-0.5 font-mono">
-                                    ({{ $currencyCount }}種幣別)
-                                </span>
-                            @endif
-                        </div>
-                        <div class="mt-4 space-y-2.5">
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-tx-income font-medium">收入</span>
-                                <span class="font-bold font-mono text-tx-income">+{{ $baseSymbol }} {{ $income }}</span>
-                            </div>
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-tx-expense font-medium">支出</span>
-                                <span class="font-bold font-mono text-tx-expense">-{{ $baseSymbol }} {{ $expense }}</span>
-                            </div>
-                            <div class="flex justify-between items-center pt-2.5 border-t border-base-200/60">
-                                <span class="text-sm font-bold opacity-80">差額</span>
-                                <span class="text-base font-black font-mono {{ $isProfitNegative ? 'text-tx-expense' : 'text-base-content' }}">
-                                    {{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+     wire:click="showPeriodDetail('{{ $period }}')">
+					<div class="stat p-0">
+
+						{{-- 斜切緞帶標題層 --}}
+						<div class="relative h-12">
+
+							{{-- 斜切色塊 --}}
+							<div class="absolute inset-0 stat-ribbon stat-ribbon-{{ $theme }} stat-ribbon-clip"></div>
+
+							{{-- 髮絲下緣線 --}}
+							<div class="absolute inset-x-0 top-12 h-px stat-ribbon-line"></div>
+
+							{{-- 標題文字層（浮在緞帶上，不吃斜切遮罩） --}}
+							<div class="relative flex items-center justify-between h-12 pl-5 pr-7">
+								<div class="flex items-center gap-1.5 min-w-0">
+									<span class="text-xs opacity-50 group-hover:opacity-80 transition-opacity">👆</span>
+									<span class="text-sm font-bold tracking-wide
+												 text-{{ $theme }}-700 dark:text-{{ $theme }}-300
+												 truncate">
+										{{ $title }}
+									</span>
+								</div>
+								@if($currencyCount > 1)
+									<span class="text-[10px] font-mono flex-shrink-0
+												 px-1.5 py-0.5 rounded
+												 bg-{{ $theme }}-500/10
+												 text-{{ $theme }}-700 dark:text-{{ $theme }}-300">
+										{{ $currencyCount }}種
+									</span>
+								@endif
+							</div>
+						</div>
+
+						{{-- 收支數字區 --}}
+						<div class="px-5 pb-5 pt-3 space-y-2.5">
+							<div class="flex justify-between items-center text-sm">
+								<span class="text-tx-income font-medium">收入</span>
+								<span class="font-bold font-mono text-tx-income">+{{ $baseSymbol }} {{ $income }}</span>
+							</div>
+							<div class="flex justify-between items-center text-sm">
+								<span class="text-tx-expense font-medium">支出</span>
+								<span class="font-bold font-mono text-tx-expense">-{{ $baseSymbol }} {{ $expense }}</span>
+							</div>
+							<div class="flex justify-between items-center pt-2.5 border-t border-base-200/60">
+								<span class="text-sm font-bold opacity-80">差額</span>
+								<span class="text-base font-black font-mono {{ $isProfitNegative ? 'text-tx-expense' : 'text-base-content' }}">
+									{{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
             @endforeach
         </div>
     </div>
