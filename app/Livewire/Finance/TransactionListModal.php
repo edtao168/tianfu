@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Services\CurrencyService;
+use App\Services\MoneyCalculator;
 use App\Traits\WithDateNavigation;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
@@ -127,19 +129,21 @@ class TransactionListModal extends Component
 
         // 設定帳戶與幣別
         if ($this->accountId) {
-            $account = FinancialAccount::find($this->accountId);
-            if (!$account) {
-                $this->toast(type: 'error', title: '找不到該帳戶');
-                return;
-            }
-            $this->currentAccount = $account;
-            $this->currencySymbol = $account->currencySymbol ?? 'NT$';
-        } else {
-            $baseCurrency = Currency::where('shop_id', $this->shopId)
-                ->where('is_base', true)
-                ->first();
-            $this->currencySymbol = $baseCurrency?->symbol ?? 'NT$';
-        }
+			$account = FinancialAccount::find($this->accountId);
+			if (!$account) {
+				$this->toast(type: 'error', title: '找不到該帳戶');
+				return;
+			}
+			$this->currentAccount = $account;
+
+			// 用 Service 明確取該帳戶幣別符號，找不到才 fallback
+			$currencySymbol = app(CurrencyService::class)
+				->getCurrency($account->currency)?->symbol;
+
+			$this->currencySymbol = $currencySymbol ?? 'NT$';
+		} else {
+			$this->currencySymbol = app(CurrencyService::class)->getBaseCurrencySymbol();
+		}
 
         $this->loadTransactions();
         $this->showModal = true;
@@ -300,70 +304,121 @@ class TransactionListModal extends Component
         }
         return $currencies;
     }
+	
+	/**
+	 * 解析顯示幣別
+	 *
+	 * 帳戶模式：強制跟隨帳戶幣別（單一幣別視圖）
+	 * 期間模式：交易 → 來源帳戶 → 目的帳戶 → 本幣
+	 */
+	private function resolveDisplayCurrency($tx, string $baseCode): string
+	{
+		if ($this->accountId && $this->currentAccount) {
+			return $this->currentAccount->currency;
+		}
+
+		return $tx->currency
+			?? $tx->fromAccount?->currency
+			?? $tx->toAccount?->currency
+			?? $baseCode;
+	}
 
     private function buildTransactionList(
-        $transactions,
-        $categories,
-        $accounts,
-        array $currencies
-    ): array {
-        $totalIncome = '0.0000';
-        $totalExpense = '0.0000';
-        $formattedList = [];
+		$transactions,
+		$categories,
+		$accounts,
+		array $currencies
+	): array {
+		$totalIncome   = '0.0000';
+		$totalExpense  = '0.0000';
+		$formattedList = [];
 
-        foreach ($transactions as $tx) {
-            // 判斷交易類型
-            $isTransfer = ($tx->type === 'transfer');
-            [$isIncome, $isExpense] = $this->determineIncomeExpense($tx);
+		// 幣別服務（含快取）
+		$currencyService = app(CurrencyService::class);
+		$baseCode        = $currencyService->getBaseCurrencyCode();
 
-            // 獲取金額
-            $rawAmount = (string) $tx->amount;
+		// 帳戶模式：單一幣別，不需換算；期間模式：需換算成本幣
+		$needsConversion = !$this->accountId;
 
-            // 統計用金額（直接使用原始金額，不做匯率換算）
-            if ($isIncome) {
-                $totalIncome = bcadd($totalIncome, $rawAmount, 4);
-            } elseif ($isExpense) {
-                $totalExpense = bcadd($totalExpense, $rawAmount, 4);
-            }
+		foreach ($transactions as $tx) {
+			// 判斷交易類型
+			$isTransfer = ($tx->type === 'transfer');
+			[$isIncome, $isExpense] = $this->determineIncomeExpense($tx);
 
-            // 獲取帳戶主題色
-            $accountTypeTheme = $this->getAccountTheme($tx);
+			// 原始金額（顯示用）
+			$rawAmount = (string) $tx->amount;
 
-            // 分類資訊
-            [$categoryIcon, $categoryName] = $this->getCategoryInfo($tx, $categories, $isTransfer);
+			// ============================================================
+			// 統計用金額：換算成本幣
+			// 幣別來源比照 AccountIndex：交易 → 來源帳戶 → 目的帳戶 → 本幣
+			// ============================================================
+			$code = $tx->currency
+				?? $tx->fromAccount?->currency
+				?? $tx->toAccount?->currency
+				?? $baseCode;
 
-            // 帳戶名稱
-            $accountName = $this->getAccountDisplayName($tx, $accounts);
+			$amountInBase = null;
 
-            // 幣別符號
-            $txCurrencySymbol = $currencies[$tx->currency]['symbol'] ?? 'NT$';
+			if ($needsConversion) {
+				$currency = $currencyService->getCurrency($code);
 
-            $formattedList[] = [
-                'id'                  => $tx->id,
-                'type'                => $tx->type,
-                'amount'              => $tx->amount,
-                'recorded_at'         => $tx->recorded_at,
-                'memo'                => $tx->memo,
-                'category_id'         => $tx->category_id,
-                'from_account_id'     => $tx->from_account_id,
-                'to_account_id'       => $tx->to_account_id,
-                'currency'            => $tx->currency,
-                'currency_symbol'     => $txCurrencySymbol,
-                'display_amount'      => $rawAmount,
-                'is_income'           => $isIncome,
-                'is_expense'          => $isExpense,
-                'is_transfer'         => $isTransfer,
-                'category_icon'       => $categoryIcon,
-                'category_name'       => $categoryName,
-                'from_account_name'   => $accounts[$tx->from_account_id]->name ?? null,
-                'to_account_name'     => $accounts[$tx->to_account_id]->name ?? null,
-                'account_name'        => $accountName,
-                'account_type_theme'  => $accountTypeTheme,
-            ];
-        }
+				// 找不到幣別：照 AccountIndex 語意跳過統計（不 fallback 成 rate=1）
+				if ($currency) {
+					$amountInBase = $currency->is_base
+						? $rawAmount
+						: $currencyService->convertToBase($rawAmount, $code);
+				}
+			} else {
+				// 帳戶模式：直接使用原值（該帳戶單一幣別）
+				$amountInBase = $rawAmount;
+			}
 
-        return [$formattedList, $totalIncome, $totalExpense];
-    }
+			// 累加統計（使用換算後金額）
+			if ($amountInBase !== null) {
+				if ($isIncome) {
+					$totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
+				} elseif ($isExpense) {
+					$totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
+				}
+			}
+
+			// ============================================================
+			// 以下為顯示用資料（全部使用原始金額 $rawAmount）
+			// ============================================================
+			$accountTypeTheme = $this->getAccountTheme($tx);
+			[$categoryIcon, $categoryName] = $this->getCategoryInfo($tx, $categories, $isTransfer);
+			$accountName = $this->getAccountDisplayName($tx, $accounts);
+
+			// 顯示幣別：帳戶模式強制跟隨帳戶幣別，期間模式按 fallback 解析
+			$displayCode = $this->resolveDisplayCurrency($tx, $baseCode);
+			$txCurrencySymbol = $currencies[$displayCode]['symbol'] ?? 'NT$';
+
+			$formattedList[] = [
+				'id'                  => $tx->id,
+				'type'                => $tx->type,
+				'amount'              => $tx->amount,
+				'recorded_at'         => $tx->recorded_at,
+				'memo'                => $tx->memo,
+				'category_id'         => $tx->category_id,
+				'from_account_id'     => $tx->from_account_id,
+				'to_account_id'       => $tx->to_account_id,
+				'currency'            => $displayCode,
+				'currency_symbol'     => $txCurrencySymbol,
+				'display_amount'      => $rawAmount,
+				'is_income'           => $isIncome,
+				'is_expense'          => $isExpense,
+				'is_transfer'         => $isTransfer,
+				'category_icon'       => $categoryIcon,
+				'category_name'       => $categoryName,
+				'from_account_name'   => $accounts[$tx->from_account_id]->name ?? null,
+				'to_account_name'     => $accounts[$tx->to_account_id]->name ?? null,
+				'account_name'        => $accountName,
+				'account_type_theme'  => $accountTypeTheme,
+			];
+		}
+
+		return [$formattedList, $totalIncome, $totalExpense];
+	}
 
     private function determineIncomeExpense($tx): array
     {

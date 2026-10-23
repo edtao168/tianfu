@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Services\CurrencyService;
+use App\Services\MoneyCalculator;
 use App\Traits\WithDateNavigation;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -49,7 +51,10 @@ class TransactionIndex extends Component
         return Currency::where('shop_id', $this->shopId)->where('is_base', true)->first();
     }
 
-    public function render()
+    /**
+     * 渲染組件視圖
+     */
+	public function render()
     {
         $parsedDate = $this->parseCurrentDate();
 
@@ -93,17 +98,41 @@ class TransactionIndex extends Component
 
         // 高精度當月金額累加 (bcadd / bcsub)
         $monthTransactions = (clone $query)->orderBy('recorded_at', 'desc')->get();
-        $totalIncome = '0.0000';
-        $totalExpense = '0.0000';
+		
+		// 預先載入匯率表（避免 N+1）
+		$currencyService = app(CurrencyService::class);
+$baseCode = $currencyService->getBaseCurrencyCode();
 
-        foreach ($monthTransactions as $tx) {
-            $amount = (string) $tx->amount;
-            if ($tx->type === 'income') {
-                $totalIncome = bcadd($totalIncome, $amount, 4);
-            } elseif ($tx->type === 'expense') {
-                $totalExpense = bcadd($totalExpense, $amount, 4);
-            }
+$totalIncome  = '0.0000';
+$totalExpense = '0.0000';
+$needsConversion = !$this->searchAccountId;
+
+foreach ($monthTransactions as $tx) {
+    $amount = (string) $tx->amount;
+
+    $code = $tx->currency
+        ?? $tx->fromAccount?->currency
+        ?? $tx->toAccount?->currency
+        ?? $baseCode;
+
+    if ($needsConversion) {
+        $currency = $currencyService->getCurrency($code);
+        if (!$currency) {
+            continue;
         }
+        $amountInBase = $currency->is_base
+            ? $amount
+            : $currencyService->convertToBase($amount, $code);  // 內部用 MoneyCalculator
+    } else {
+        $amountInBase = $amount;
+    }
+
+    if ($tx->type === 'income') {
+        $totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
+    } elseif ($tx->type === 'expense') {
+        $totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
+    }
+}
 
         // 按日期（Y-m-d）分組
         $groupedTransactions = $monthTransactions->groupBy(function ($item) {

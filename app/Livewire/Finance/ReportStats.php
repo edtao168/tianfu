@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Services\CurrencyService;
+use App\Services\MoneyCalculator;
 use App\Traits\WithDateNavigation;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
@@ -212,174 +213,175 @@ class ReportStats extends Component
     // 分類報表
     // ============================================================
 
-    #[Computed]
-    public function categoryData()
-    {
-        $service = app(CurrencyService::class);
-        $baseCode = $this->baseCurrency->code ?? 'TWD';
+    /**
+	 * 解析交易幣別：交易 → 來源帳戶 → 目的帳戶 → 本幣
+	 */
+	private function resolveTransactionCurrency($tx, string $baseCode): string
+	{
+		return $tx->currency
+			?? $tx->fromAccount?->currency
+			?? $tx->toAccount?->currency
+			?? $baseCode;
+	}
 
-        $query = Transaction::query()
-            ->where('shop_id', $this->shopId)
-            ->where('type', $this->tab2);
+	#[Computed]
+	public function categoryData()
+	{
+		$service = app(CurrencyService::class);
+		$baseCode = $this->baseCurrency->code ?? 'TWD';
 
-        // 分幣別模式：只查該幣別，不合併
-        if (!$this->isConsolidated()) {
-            $this->applyCurrencyFilter($query);
-        }
+		$query = Transaction::query()
+			->where('shop_id', $this->shopId)
+			->where('type', $this->tab2)
+			->with(['category.parent', 'fromAccount:id,currency', 'toAccount:id,currency']);
 
-        if ($this->dateMode === 'year') {
-            $query->whereYear('recorded_at', $this->selectedYear);
-        } else {
-            $query->whereYear('recorded_at', $this->selectedYear)
-                  ->whereMonth('recorded_at', $this->selectedMonth);
-        }
+		if (!$this->isConsolidated()) {
+			$this->applyCurrencyFilter($query);
+		}
 
-            $transactions = $query->with(['category.parent', 'fromAccount', 'toAccount'])->get();
+		if ($this->dateMode === 'year') {
+			$query->whereYear('recorded_at', $this->selectedYear);
+		} else {
+			$query->whereYear('recorded_at', $this->selectedYear)
+				  ->whereMonth('recorded_at', $this->selectedMonth);
+		}
 
-        $total = '0.0000';
-        $categorySummary = [];
+		$transactions = $query->get();
 
-        foreach ($transactions as $tx) {
-            if (!$tx->category_id) continue;
+		$total = '0.0000';
+		$categorySummary = [];
 
-            $txAmount = (string) $tx->amount;
+		foreach ($transactions as $tx) {
+			if (!$tx->category_id) continue;
 
-            // 只在合併模式換算
-            if ($this->isConsolidated() && ($tx->currency ?? $baseCode) !== $baseCode) {
-                $txAmount = $service->convertToBase($txAmount, $tx->currency);
-            }
+			$txAmount = (string) $tx->amount;
+			$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
 
-            $mainCategory = $tx->category->parent_id ? $tx->category->parent : $tx->category;
-            $catId = $mainCategory->id;
-            $catName = $mainCategory->name;
+			if ($this->isConsolidated() && $txCurrency !== $baseCode) {
+				$txAmount = $service->convertToBase($txAmount, $txCurrency);
+			}
 
-            if (!isset($categorySummary[$catId])) {
-                $categorySummary[$catId] = [
-                    'id' => $catId,
-                    'name' => $catName,
-                    'amount' => '0.0000',
-                ];
-            }
+			$mainCategory = $tx->category->parent_id ? $tx->category->parent : $tx->category;
+			$catId = $mainCategory->id;
+			$catName = $mainCategory->name;
 
-            $total = bcadd($total, $txAmount, 4);
-            $categorySummary[$catId]['amount'] = bcadd($categorySummary[$catId]['amount'], $txAmount, 4);
-        }
+			if (!isset($categorySummary[$catId])) {
+				$categorySummary[$catId] = [
+					'id' => $catId,
+					'name' => $catName,
+					'amount' => '0.0000',
+				];
+			}
 
-        $activeCurrency = $this->activeCurrency;
+			$total = MoneyCalculator::add($total, $txAmount, 4);
+			$categorySummary[$catId]['amount'] = MoneyCalculator::add(
+				$categorySummary[$catId]['amount'], $txAmount, 4
+			);
+		}
 
-        foreach ($categorySummary as $id => $data) {
-            $percentage = bccomp($total, '0.0000', 4) > 0
-                ? bcdiv(bcmul($data['amount'], '100', 4), $total, 2)
-                : '0.00';
+		$activeCurrency = $this->activeCurrency;
 
-            $categorySummary[$id]['percentage'] = $percentage;
-            $categorySummary[$id]['amount_display'] = $service->format($data['amount'], $activeCurrency);
-        }
+		foreach ($categorySummary as $id => $data) {
+			$percentage = bccomp($total, '0.0000', 4) > 0
+				? bcdiv(bcmul($data['amount'], '100', 4), $total, 2)
+				: '0.00';
 
-        uasort($categorySummary, fn($a, $b) => bccomp($b['amount'], $a['amount'], 4));
+			$categorySummary[$id]['percentage'] = $percentage;
+			$categorySummary[$id]['amount_display'] = $service->format($data['amount'], $activeCurrency);
+		}
 
-        return [
-            'total' => $service->format($total, $activeCurrency),
-            'total_raw' => $total,
-            'list' => array_values($categorySummary),
-        ];
-    }
+		uasort($categorySummary, fn($a, $b) => bccomp($b['amount'], $a['amount'], 4));
+
+		return [
+			'total' => $service->format($total, $activeCurrency),
+			'total_raw' => $total,
+			'list' => array_values($categorySummary),
+		];
+	}
 
     // ============================================================
     // 收支趨勢
     // ============================================================
 
     #[Computed]
-    public function trendData()
-    {
-        $service = app(CurrencyService::class);
-        $baseCode = $this->baseCurrency->code ?? 'TWD';
-        $list = [];
+	public function trendData()
+	{
+		$service = app(CurrencyService::class);
+		$baseCode = $this->baseCurrency->code ?? 'TWD';
+		$list = [];
 
-        if ($this->dateMode === 'year') {
-            for ($m = 1; $m <= 12; $m++) {
-                $list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
-            }
+		if ($this->dateMode === 'year' || $this->tab3 === 'month') {
+			for ($m = 1; $m <= 12; $m++) {
+				$list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
+			}
 
-            $query = Transaction::query()
-                ->where('shop_id', $this->shopId)
-                ->whereYear('recorded_at', $this->selectedYear);
+			$query = Transaction::query()
+				->where('shop_id', $this->shopId)
+				->whereYear('recorded_at', $this->selectedYear)
+				->with(['fromAccount:id,currency', 'toAccount:id,currency']);
 
-            if (!$this->isConsolidated()) {
-                $this->applyCurrencyFilter($query);
-            }
+			if (!$this->isConsolidated()) {
+				$this->applyCurrencyFilter($query);
+			}
 
-            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
-                $m = (int) Carbon::parse($tx->recorded_at)->format('n');
-                $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx, $baseCode, $service);
-            }
-        } elseif ($this->tab3 === 'month') {
-            for ($m = 1; $m <= 12; $m++) {
-                $list[$m] = ['label' => $m . '月', 'amount' => '0.0000'];
-            }
+			foreach ($query->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
+				$m = (int) Carbon::parse($tx->recorded_at)->format('n');
+				$list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx, $baseCode, $service);
+			}
+		} else {
+			$daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
+			for ($d = 1; $d <= $daysInMonth; $d++) {
+				$list[$d] = ['label' => $d . '日', 'amount' => '0.0000'];
+			}
 
-            $query = Transaction::query()
-                ->where('shop_id', $this->shopId)
-                ->whereYear('recorded_at', $this->selectedYear);
+			$query = Transaction::query()
+				->where('shop_id', $this->shopId)
+				->whereYear('recorded_at', $this->selectedYear)
+				->whereMonth('recorded_at', $this->selectedMonth)
+				->with(['fromAccount:id,currency', 'toAccount:id,currency']);
 
-            if (!$this->isConsolidated()) {
-                $this->applyCurrencyFilter($query);
-            }
+			if (!$this->isConsolidated()) {
+				$this->applyCurrencyFilter($query);
+			}
 
-            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
-                $m = (int) Carbon::parse($tx->recorded_at)->format('n');
-                $list[$m]['amount'] = $this->calculateTrendAmount($list[$m]['amount'], $tx, $baseCode, $service);
-            }
-        } else {
-            $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
-            for ($d = 1; $d <= $daysInMonth; $d++) {
-                $list[$d] = ['label' => $d . '日', 'amount' => '0.0000'];
-            }
+			foreach ($query->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
+				$d = (int) Carbon::parse($tx->recorded_at)->format('j');
+				$list[$d]['amount'] = $this->calculateTrendAmount($list[$d]['amount'], $tx, $baseCode, $service);
+			}
+		}
 
-            $query = Transaction::query()
-                ->where('shop_id', $this->shopId)
-                ->whereYear('recorded_at', $this->selectedYear)
-                ->whereMonth('recorded_at', $this->selectedMonth);
+		$activeCurrency = $this->activeCurrency;
 
-            if (!$this->isConsolidated()) {
-                 $this->applyCurrencyFilter($query);
-            }
-
-            foreach ($query->with(['fromAccount', 'toAccount'])->get(['id', 'type', 'amount', 'recorded_at', 'from_account_id', 'to_account_id']) as $tx) {
-                $d = (int) Carbon::parse($tx->recorded_at)->format('j');
-                $list[$d]['amount'] = $this->calculateTrendAmount($list[$d]['amount'], $tx, $baseCode, $service);
-            }
-        }
-
-        $activeCurrency = $this->activeCurrency;
-
-        return array_map(fn($item) => [
-            'label' => $item['label'],
-            'amount' => $item['amount'],
-            'amount_display' => $service->format($item['amount'], $activeCurrency),
-        ], array_values($list));
-    }
+		return array_map(fn($item) => [
+			'label' => $item['label'],
+			'amount' => $item['amount'],
+			'amount_display' => $service->format($item['amount'], $activeCurrency),
+		], array_values($list));
+	}
 
     private function calculateTrendAmount(
-        string $currentAmount,
-        $tx,
-        string $baseCode,
-        CurrencyService $service
-    ): string {
-        $txAmount = (string) $tx->amount;
+		string $currentAmount,
+		$tx,
+		string $baseCode,
+		CurrencyService $service
+	): string {
+		$txAmount = (string) $tx->amount;
+		$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
 
-        if ($this->isConsolidated() && ($tx->currency ?? $baseCode) !== $baseCode) {
-            $txAmount = $service->convertToBase($txAmount, $tx->currency);
-        }
+		if ($this->isConsolidated() && $txCurrency !== $baseCode) {
+			$txAmount = $service->convertToBase($txAmount, $txCurrency);
+		}
 
-        if ($this->tab2 === 'balance') {
-            if ($tx->type === 'income') return bcadd($currentAmount, $txAmount, 4);
-            if ($tx->type === 'expense') return bcsub($currentAmount, $txAmount, 4);
-            return $currentAmount;
-        }
+		if ($this->tab2 === 'balance') {
+			if ($tx->type === 'income') return MoneyCalculator::add($currentAmount, $txAmount, 4);
+			if ($tx->type === 'expense') return MoneyCalculator::sub($currentAmount, $txAmount, 4);
+			return $currentAmount;
+		}
 
-        return $tx->type === $this->tab2 ? bcadd($currentAmount, $txAmount, 4) : $currentAmount;
-    }
+		return $tx->type === $this->tab2
+			? MoneyCalculator::add($currentAmount, $txAmount, 4)
+			: $currentAmount;
+	}
 
     // ============================================================
     // 總資產趨勢（合併單線 / 分幣別多線）
@@ -546,14 +548,16 @@ class ReportStats extends Component
             ->get();
 
         foreach ($txs as $tx) {
-            $txAmount = (string) $tx->amount;
-            $txCurrency = $tx->currency;
-            if ($txCurrency !== $baseCode) {
-                $txAmount = $service->convertToBase($txAmount, $txCurrency);
-            }
-            if ($tx->type === 'income') $transactionEffect = bcadd($transactionEffect, $txAmount, 4);
-            if ($tx->type === 'expense') $transactionEffect = bcsub($transactionEffect, $txAmount, 4);
-        }
+			$txAmount = (string) $tx->amount;
+			$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
+
+			if ($txCurrency !== $baseCode) {
+				$txAmount = $service->convertToBase($txAmount, $txCurrency);
+			}
+
+			if ($tx->type === 'income') $transactionEffect = MoneyCalculator::add($transactionEffect, $txAmount, 4);
+			if ($tx->type === 'expense') $transactionEffect = MoneyCalculator::sub($transactionEffect, $txAmount, 4);
+		}
 
         $totalChange = bcsub($endTotal, $startTotal, 4);
         $fxEffect = bcsub($totalChange, $transactionEffect, 4);
@@ -877,28 +881,51 @@ class ReportStats extends Component
     // ============================================================
     // 渲染
     // ============================================================
-    private function getAccountBalanceAt(int $accountId, Carbon $until): string
-    {
-        $account = FinancialAccount::where('shop_id', $this->shopId)->find($accountId);
-        if (!$account) return '0.0000';
+    /**
+	 * 取得某帳戶在指定時間點的餘額（優化版）
+	 *
+	 * 保留原語意：初始 balance + 期間內 from 為支出、to 為收入的淨額。
+	 * 注意：此方法被多次呼叫（時序圖），呼叫端應避免在迴圈內反覆 find()。
+	 */
+	private function getAccountBalanceAt(int $accountId, Carbon $until): string
+	{
+		static $accountCache = [];
+		static $balanceCache = [];
 
-        $initialBalance = (string) ($account->balance ?? '0.0000');
-        $transactions = Transaction::where('shop_id', $this->shopId)
-            ->where(function ($query) use ($accountId) {
-                $query->where('from_account_id', $accountId)->orWhere('to_account_id', $accountId);
-            })
-            ->where('recorded_at', '<=', $until)
-            ->get();
+		if (!isset($accountCache[$accountId])) {
+			$accountCache[$accountId] = FinancialAccount::where('shop_id', $this->shopId)
+				->select(['id', 'balance'])
+				->find($accountId);
+		}
+		$account = $accountCache[$accountId];
+		if (!$account) return '0.0000';
 
-        $netChange = '0.0000';
-        foreach ($transactions as $tx) {
-            $txAmount = (string) $tx->amount;
-            if ($tx->from_account_id == $accountId) $netChange = bcsub($netChange, $txAmount, 4);
-            if ($tx->to_account_id == $accountId) $netChange = bcadd($netChange, $txAmount, 4);
-        }
+		$cacheKey = $accountId . '|' . $until->timestamp;
+		if (isset($balanceCache[$cacheKey])) {
+			return $balanceCache[$cacheKey];
+		}
 
-        return bcadd($initialBalance, $netChange, 4);
-    }
+		$initialBalance = (string) ($account->balance ?? '0.0000');
+
+		$netChange = '0.0000';
+		$transactions = Transaction::where('shop_id', $this->shopId)
+			->where(function ($q) use ($accountId) {
+				$q->where('from_account_id', $accountId)
+				  ->orWhere('to_account_id', $accountId);
+			})
+			->where('recorded_at', '<=', $until)
+			->get(['from_account_id', 'to_account_id', 'amount']);
+
+		foreach ($transactions as $tx) {
+			$txAmount = (string) $tx->amount;
+			if ($tx->from_account_id == $accountId) $netChange = MoneyCalculator::sub($netChange, $txAmount, 4);
+			if ($tx->to_account_id == $accountId)   $netChange = MoneyCalculator::add($netChange, $txAmount, 4);
+		}
+
+		$result = MoneyCalculator::add($initialBalance, $netChange, 4);
+		$balanceCache[$cacheKey] = $result;
+		return $result;
+	}
 	
     public function render()
     {
