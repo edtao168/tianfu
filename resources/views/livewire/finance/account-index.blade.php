@@ -43,28 +43,35 @@
 							{{-- 髮絲下緣線 --}}
 							<div class="absolute inset-x-0 top-12 h-px stat-ribbon-line"></div>
 
-							{{-- 標題文字層（浮在緞帶上，不吃斜切遮罩） --}}
-							<div class="relative flex items-center justify-between h-12 pl-5 pr-7">
+							{{-- 標題文字層(浮在緞帶上,不吃斜切遮罩) --}}
+							<div class="relative flex items-center justify-between h-12 pl-5 pr-5">
 								<div class="flex items-center gap-1.5 min-w-0">
-									<span class="text-xs opacity-50 group-hover:opacity-80 transition-opacity">👆</span>
+									
 									<span class="text-sm font-bold tracking-wide
 												 text-{{ $theme }}-700 dark:text-{{ $theme }}-300
 												 truncate">
 										{{ $title }}
 									</span>
 								</div>
-								@if($currencyCount > 1)
-									<span class="text-[10px] font-mono flex-shrink-0
-												 px-1.5 py-0.5 rounded
-												 bg-{{ $theme }}-500/10
-												 text-{{ $theme }}-700 dark:text-{{ $theme }}-300">
-										{{ $currencyCount }}種
-									</span>
-								@endif
+								<div class="flex items-center gap-2 flex-shrink-0">
+									@if($currencyCount > 1)
+										<span class="text-[10px] font-mono
+													 px-1.5 py-0.5 rounded
+													 bg-{{ $theme }}-500/10
+													 text-{{ $theme }}-700 dark:text-{{ $theme }}-300">
+											{{ $currencyCount }}種
+										</span>
+									@endif
+									{{-- 【新增】可點擊箭頭指示 --}}
+									<svg class="click-arrow w-4 h-4 opacity-40 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all"
+										 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+									</svg>
+								</div>
 							</div>
 						</div>
 
-						{{-- 收支數字區 --}}
+						{{-- 收支數字區(保持原樣) --}}
 						<div class="px-5 pb-5 pt-3 space-y-2.5">
 							<div class="flex justify-between items-center text-sm">
 								<span class="text-tx-income font-medium">收入</span>
@@ -267,27 +274,35 @@
                     @endphp
 
                     <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="clickable-card card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/25 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
-                        
-                        <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
+						 class="clickable-card group card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/25 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
+						
+						<span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 
-                        <div class="flex justify-between items-start relative z-10">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 opacity-60" />
-                                <span class="font-bold text-base-content text-base truncate">{{ $account->name }}</span>
-                            </div>
-                            <span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md font-mono flex-shrink-0 ml-2">
-                                {{ $typeConfig['name'] }}
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between items-end mt-2 relative z-10">
-                            <span class="text-xs opacity-60 font-medium">當前餘額</span>
-                            <span class="font-mono text-xl font-extrabold text-base-content truncate ml-2">
-                                <span class="opacity-50 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->calculated_balance, 2) }}
-                            </span>
-                        </div>
-                    </div>
+						<div class="flex justify-between items-start relative z-10">
+							<div class="flex items-center gap-2 min-w-0">
+								<x-dynamic-component :component="$icon" class="w-5 h-5 flex-shrink-0 opacity-60" />
+								<span class="font-bold text-base-content text-base truncate">{{ $account->name }}</span>
+							</div>
+							<span class="account-badge px-2 py-0.5 text-[10px] font-semibold rounded-md font-mono flex-shrink-0 ml-2">
+								{{ $typeConfig['name'] }}
+							</span>
+						</div>
+						
+						<div class="flex justify-between items-end mt-2 relative z-10">
+							<span class="text-xs opacity-60 font-medium">當前餘額</span>
+							<div class="flex items-center gap-1.5 ml-2 min-w-0">
+								<span class="font-mono text-xl font-extrabold text-base-content truncate">
+									<span class="opacity-50 mr-0.5 text-base font-bold">{{ $group['currency_symbol'] }}</span>{{ number_format($account->calculated_balance, 2) }}
+								</span>
+								{{-- 【新增】可點擊箭頭指示 --}}
+								<svg class="click-arrow w-4 h-4 opacity-30 group-hover:opacity-70 group-hover:translate-x-0.5 transition-all flex-shrink-0"
+									 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+								</svg>
+							</div>
+						</div>
+					</div>
+
                 @endforeach
             </div>
         </div>

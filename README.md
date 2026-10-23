@@ -60,26 +60,34 @@ sudo bash rollback.sh /var/backups/tianfu/tianfu_backup_20260330_120000.tar.gz
 ---
 
 ## 例行工作
+
 ### 檢查備份執行狀況：
+
 	查看進銷存備份日誌cat /var/log/taotique_backup.log
 	查看記帳系統備份日誌cat /var/log/tianfu_backup.log
 
 	如果日誌最後出現 Backup completed successfully 之類的成功提示，且備份目錄 /var/backups/taotique 與 /var/backups/tianfu 都有產生新的 .tar.gz 壓縮檔，就代表整個災難復原（DR）備份機制已經完全穩定運作了！
 
 	備份檔將自動儲存於 /var/backups/tianfu/， /var/backups/taotique/，可執行以下命令查看
-	OCI： ls /var/backups/tianfu/
+	
+	OCI： ls /var/backups/tianfu/	
 	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/tianfu/"
-	OCI： ls  /var/backups/taotique/
+	
+	OCI： ls  /var/backups/taotique/	
 	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/taotique/"
 
 ### 備份複製到本地，
+
 	先查找OCI備份文件目錄
 		ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167
 		OCI cd /var/www/html
 		ls /var/backups/taotique/ *.tar.gz
 		exit
-	下載到本地（本地命令）
+		
+	**下載所有備份到本地（本地命令）**
 		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*.tar.gz D:\Users\Administrator\Downloads
 		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*.tar.gz D:\Users\Administrator\Downloads
-		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*1009*.tar.gz D:\Users\Administrator\Downloads
-		（指定日期）scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*1009*.tar.gz D:\Users\Administrator\Downloads
+		
+	**下載指定日期到本地（本地命令）**
+		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*1022*.tar.gz D:\Users\Administrator\Downloads
+		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*1022*.tar.gz D:\Users\Administrator\Downloads

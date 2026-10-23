@@ -154,25 +154,104 @@ select.truncate option {
    - transition 只針對 scale，顏色過渡交給 .btn-* 的 transition-colors
    ========================================================================== */
 
+/* --------------------------------------------------------------------------
+| 【1】按鈕與可點擊元素的基礎游標與過渡
+| -------------------------------------------------------------------------- */
 :where(button, [role="button"], .clickable-card) {
     cursor: pointer;
     transition: scale 120ms ease;
 }
 
+/* --------------------------------------------------------------------------
+| 【2】按鈕按下回饋（全站統一）
+| -------------------------------------------------------------------------- */
 :where(button, [role="button"]):active {
+    scale: 0.95;
+}
+
+/* --------------------------------------------------------------------------
+| 【3】可點擊卡片按下回饋（比按鈕更輕微，避免版面跳動感）
+| -------------------------------------------------------------------------- */
+.clickable-card:active {
     scale: 0.98;
 }
 
-.clickable-card:active {
-    scale: 0.99;
+/* --------------------------------------------------------------------------
+| 【4】Clickable Card 互動強化（桌面 hover 上浮 + 手機箭頭常駐）
+|      - hover 位移使用 translate 獨立屬性，與上方 scale 互不衝突
+|      - transition 重新宣告時需保留 scale，否則會覆蓋【1】的縮放過渡
+| -------------------------------------------------------------------------- */
+.clickable-card {
+    -webkit-tap-highlight-color: transparent;
+    transition: scale 120ms ease, translate 200ms ease, box-shadow 200ms ease;
 }
 
-/* 尊重使用者的減少動態效果設定：連縮放都不做 */
+@media (hover: hover) {
+    .clickable-card:hover {
+        translate: 0 -2px;
+        box-shadow: 0 4px 12px -2px hsl(var(--bc) / 0.08),
+                    0 2px 6px -1px hsl(var(--bc) / 0.05);
+    }
+}
+
+/* 無 hover 裝置（手機/平板觸控）：箭頭常駐顯示 */
+@media (hover: none) {
+    .clickable-card .click-arrow {
+        opacity: 0.5;
+    }
+}
+
+/* --------------------------------------------------------------------------
+| 【4-1】箭頭脈動提示（一次性 3 下後靜止，避免持續閃爍干擾）
+|        - 進入頁面時播放，提示「這裡可點」
+|        - 播放完畢停在 opacity 0.5（手機）或 0.4（桌面）
+| -------------------------------------------------------------------------- */
+@keyframes arrow-pulse-once {
+    0%, 100% { opacity: 0.4; translate: 0 0; }
+    50%      { opacity: 0.85; translate: 2px 0; }
+}
+
+.clickable-card .click-arrow {
+    animation: arrow-pulse-once 1.2s ease-in-out 3;  /* 播放 3 次後停止 */
+    animation-fill-mode: forwards;
+}
+
+/* --------------------------------------------------------------------------
+| 【4-2】Hover 時箭頭再次脈動（桌面限定，手機無 hover 不受影響）
+| -------------------------------------------------------------------------- */
+@media (hover: hover) {
+    .clickable-card:hover .click-arrow {
+        animation: arrow-pulse-once 1.2s ease-in-out infinite;
+    }
+}
+
+/* --------------------------------------------------------------------------
+| 【5】尊重使用者的減少動態效果設定
+| -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
     :where(button, [role="button"], .clickable-card) {
         transition: none;
     }
     :where(button, [role="button"], .clickable-card):active {
         scale: none;
+    }
+    .clickable-card {
+        transition: none;
+    }
+    .clickable-card:active {
+        scale: none;
+    }
+    @media (hover: hover) {
+        .clickable-card:hover {
+            translate: none;
+            box-shadow: none;
+        }
+    }
+	/* 關閉箭頭脈動動畫 */
+    .clickable-card .click-arrow,
+    @media (hover: hover) {
+        .clickable-card:hover .click-arrow {
+            animation: none;
+        }
     }
 }
