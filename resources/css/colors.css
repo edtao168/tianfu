@@ -5,12 +5,21 @@
    ========================================================================== */
 
 :root {
+    /* 原有底色 */
     --song-bg: #FAF9F6;
     --song-text: #292524;
     --song-border: rgba(231, 229, 228, 0.7);
     --song-card-bg: rgba(255, 255, 255, 0.75);
     --song-modal-bg: rgba(250, 249, 246, 0.98);
     --song-input-bg: rgba(255, 255, 255, 0.95);
+
+    /* 宋色語意（新增，合併於此） */
+    --song-rose:   #A64B4B;  /* 鈞窯海棠紅 — 支出 */
+    --song-jade:   #5E7A6B;  /* 龍泉青瓷 — 收入 */
+    --song-sky:    #6E8CA0;  /* 汝窯天青 — 轉帳 */
+    --song-violet: #7A6B85;  /* 暮山煙紫 — 特殊 */
+    --song-ink:    #2E2A26;  /* 松煙墨 — 主操作 */
+    --song-gold:   #D6C5A6;  /* 緗色 — 點綴 */
 }
 
 [data-theme="dark"] {
@@ -20,6 +29,14 @@
     --song-card-bg: rgba(28, 25, 23, 0.7);
     --song-modal-bg: rgba(20, 18, 18, 0.98);
     --song-input-bg: rgba(41, 37, 36, 0.95);
+
+    /* 宋色語意 dark 對應（新增） */
+    --song-rose:   #C0736F;
+    --song-jade:   #7A9484;
+    --song-sky:    #8FA9B8;
+    --song-violet: #958AA0;
+    --song-ink:    #E7E5E4;  /* dark 下「墨」反轉為淺，供文字用 */
+    --song-gold:   #D6C5A6;
 }
 
 /* 表單容器與輸入框邊框優化 */
@@ -357,68 +374,45 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 }
 
 /* ==========================================================================
-   交易類型語意色彩
+   交易類型語意色彩 — 宋色版（覆蓋 Tailwind 原色）
+   依賴上方 :root / [data-theme="dark"] 的 --song-* 變數
    ========================================================================== */
 
 @layer utilities {
-    /* 支出 - 鈞窯海棠紅 */
-    .text-tx-expense {
-        @apply text-rose-600 dark:text-rose-400;
-    }
-    .bg-tx-expense {
-        @apply bg-rose-600 dark:bg-rose-500;
-    }
-    .bg-tx-expense\/10 {
-        @apply bg-rose-500/10 dark:bg-rose-400/10;
-    }
-    .bg-tx-expense\/20 {
-        @apply bg-rose-500/20 dark:bg-rose-400/20;
-    }
-    .border-tx-expense {
-        @apply border-rose-200 dark:border-rose-800/50;
-    }
+    /* 支出 — 鈞窯海棠紅 */
+    .text-tx-expense { color: var(--song-rose); }
+    .bg-tx-expense   { background-color: var(--song-rose); }
+    .bg-tx-expense\/10 { background-color: color-mix(in srgb, var(--song-rose) 10%, transparent); }
+    .bg-tx-expense\/20 { background-color: color-mix(in srgb, var(--song-rose) 20%, transparent); }
+    .border-tx-expense { border-color: color-mix(in srgb, var(--song-rose) 35%, transparent); }
     .badge-tx-expense {
-        @apply bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50;
+        background-color: color-mix(in srgb, var(--song-rose) 12%, var(--song-bg));
+        color: var(--song-rose);
+        border-color: color-mix(in srgb, var(--song-rose) 30%, transparent);
     }
 
-    /* 收入 - 龍泉青瓷 */
-    .text-tx-income {
-        @apply text-emerald-600 dark:text-emerald-400;
-    }
-    .bg-tx-income {
-        @apply bg-emerald-600 dark:bg-emerald-500;
-    }
-    .bg-tx-income\/10 {
-        @apply bg-emerald-500/10 dark:bg-emerald-400/10;
-    }
-    .bg-tx-income\/20 {
-        @apply bg-emerald-500/20 dark:bg-emerald-400/20;
-    }
-    .border-tx-income {
-        @apply border-emerald-200 dark:border-emerald-800/50;
-    }
+    /* 收入 — 龍泉青瓷 */
+    .text-tx-income { color: var(--song-jade); }
+    .bg-tx-income   { background-color: var(--song-jade); }
+    .bg-tx-income\/10 { background-color: color-mix(in srgb, var(--song-jade) 10%, transparent); }
+    .bg-tx-income\/20 { background-color: color-mix(in srgb, var(--song-jade) 20%, transparent); }
+    .border-tx-income { border-color: color-mix(in srgb, var(--song-jade) 35%, transparent); }
     .badge-tx-income {
-        @apply bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50;
+        background-color: color-mix(in srgb, var(--song-jade) 12%, var(--song-bg));
+        color: var(--song-jade);
+        border-color: color-mix(in srgb, var(--song-jade) 30%, transparent);
     }
 
-    /* 轉帳 - 汝窯天青 */
-    .text-tx-transfer {
-        @apply text-sky-600 dark:text-sky-400;
-    }
-    .bg-tx-transfer {
-        @apply bg-sky-600 dark:bg-sky-500;
-    }
-    .bg-tx-transfer\/10 {
-        @apply bg-sky-500/10 dark:bg-sky-400/10;
-    }
-    .bg-tx-transfer\/20 {
-        @apply bg-sky-500/20 dark:bg-sky-400/20;
-    }
-    .border-tx-transfer {
-        @apply border-sky-200 dark:border-sky-800/50;
-    }
+    /* 轉帳 — 汝窯天青 */
+    .text-tx-transfer { color: var(--song-sky); }
+    .bg-tx-transfer   { background-color: var(--song-sky); }
+    .bg-tx-transfer\/10 { background-color: color-mix(in srgb, var(--song-sky) 10%, transparent); }
+    .bg-tx-transfer\/20 { background-color: color-mix(in srgb, var(--song-sky) 20%, transparent); }
+    .border-tx-transfer { border-color: color-mix(in srgb, var(--song-sky) 35%, transparent); }
     .badge-tx-transfer {
-        @apply bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/50;
+        background-color: color-mix(in srgb, var(--song-sky) 12%, var(--song-bg));
+        color: var(--song-sky);
+        border-color: color-mix(in srgb, var(--song-sky) 30%, transparent);
     }
 }
 
@@ -448,4 +442,41 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 /* 緞帶斜切（純 CSS，不依賴 Tailwind arbitrary value） */
 .stat-ribbon-clip {
     clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
+}
+
+/* ==========================================================================
+   墨荷綠總資產卡（宋式虛實相生 - 汝窯天青微光版）
+   ========================================================================== */
+
+.assets-card {
+    /* 右上角融入 汝窯天青 rgba(110, 140, 160) 的微茫清透光暈 */
+    background:
+        radial-gradient(120% 85% at 85% -10%, rgba(110, 140, 160, 0.16) 0%, transparent 65%),
+        radial-gradient(100% 100% at 10% 110%, rgba(214, 197, 166, 0.12) 0%, transparent 70%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 242, 235, 0.90) 100%);
+    
+    /* 邊框同步微調為淡淡的天青弦紋 */
+    border: 1px solid rgba(110, 140, 160, 0.20);
+    
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 12px 32px -12px rgba(110, 140, 160, 0.12);
+        
+    border-radius: 12px; 
+    letter-spacing: 0.03em;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+[data-theme="dark"] .assets-card {
+    /* 暗色模式：天青色在古墨背景下，呈現幽靜的月影微茫 */
+    background:
+        radial-gradient(130% 90% at 85% -10%, rgba(143, 169, 184, 0.22) 10%, transparent 65%),
+        radial-gradient(100% 100% at 10% 110%, rgba(214, 197, 166, 0.05) 0%, transparent 60%),
+        linear-gradient(145deg, rgba(28, 25, 23, 0.85) 0%, rgba(20, 18, 18, 0.95) 100%);
+        
+    border-color: rgba(143, 169, 184, 0.22);
+    
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5);
 }

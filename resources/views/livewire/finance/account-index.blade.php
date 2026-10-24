@@ -94,103 +94,143 @@
         </div>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- 2. 總資產卡片 --}}
-    {{-- ============================================================ --}}
-    <div class="relative" wire:key="total-assets-card">
-        {{-- Loading 狀態 --}}
-        <div wire:loading wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop" 
-             class="absolute inset-0 z-10 bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center border border-transparent backdrop-blur-sm bg-opacity-90">
-            <div class="flex flex-col items-center gap-3">
-                <div class="loading loading-spinner loading-lg text-white/80"></div>
-                <span class="text-white/80 text-sm font-medium tracking-wide">計算總資產中...</span>
-            </div>
-        </div>
-        
-        {{-- 總資產卡片本體 --}}
-        <div wire:loading.remove wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop"
-             class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 border border-transparent rounded-2xl p-6 md:p-8 text-white shadow-xl">
-            
-            {{-- 背景裝飾 --}}
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
-            
-            <div class="relative z-10">
-                {{-- 標題列 --}}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-white/85 text-sm font-semibold tracking-wider">
-                        <span>📊</span>
-                        <span>總資產（{{ $this->totalAssets['base_code'] }}）</span>
-                        <span class="hidden sm:inline text-xs text-white/60 font-normal ml-1">所有幣別換算後加總</span>
-                    </div>
-                    
-                    {{-- 自動刷新控制 --}}
-                    <div class="flex items-center gap-2.5 bg-black/15 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                        <span class="text-[10px] text-white/70 flex items-center gap-1.5">
-                            <span class="inline-block w-2 h-2 rounded-full {{ $autoRefresh ? 'bg-emerald-400 animate-pulse' : 'bg-white/30' }}"></span>
-                            {{ $autoRefresh ? '自動更新中' : '已暫停' }}
-                        </span>
-                        
-                        <button wire:click="refreshTotalAssets" 
-                                class="text-white/60 hover:text-white transition-colors text-sm px-1.5 py-0.5 rounded hover:bg-white/10"
-                                title="立即重新整理">
-                            ⟳
-                        </button>
-                        
-                        <button wire:click="$toggle('autoRefresh')" 
-                                class="text-white/60 hover:text-white transition-colors text-xs px-2 py-0.5 rounded border border-white/20 hover:border-white/40"
-                                title="{{ $autoRefresh ? '暫停自動更新' : '開啟自動更新' }}">
-                            {{ $autoRefresh ? '⏸' : '▶' }}
-                        </button>
-                    </div>
-                </div>
-                
-                {{-- 總金額 --}}
-                <div class="mt-4">
-                    <div class="text-3xl md:text-4xl font-black font-mono tracking-tight text-white drop-shadow-sm">
-                        {{ $this->totalAssets['base_symbol'] }} {{ number_format($this->totalAssets['total'], 2) }}
-                    </div>
-                    @if(!$this->totalAssets['has_assets'])
-                        <div class="mt-1 text-sm text-white/60">尚無資產記錄</div>
-                    @endif
-                </div>
-                
-                {{-- 幣別明細 --}}
-                @if(count($this->totalAssets['breakdown']) > 0)
-					<div class="mt-6 pt-5 border-t border-white/20">
+	{{-- ============================================================ --}}
+	{{-- 2. 總資產卡片 --}}
+	{{-- ============================================================ --}}
+	<div class="relative" wire:key="total-assets-card">
+		{{-- Loading 狀態 --}}
+		<div wire:loading wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop" 
+			 class="absolute inset-0 z-10 assets-card rounded-2xl flex items-center justify-center border border-base-content/10 backdrop-blur-sm">
+			<div class="flex flex-col items-center gap-3 text-base-content">
+				<div class="loading loading-spinner loading-lg opacity-80"></div>
+				<span class="text-sm font-medium tracking-wide opacity-80">計算總資產中...</span>
+			</div>
+		</div>
+		
+		{{-- 總資產卡片本體 --}}
+		<div wire:loading.remove wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop"
+			 class="relative overflow-hidden assets-card border border-base-content/10 rounded-2xl p-6 md:p-8 text-base-content shadow-xl">
+			
+			{{-- 背景裝飾：極淡暖光暈 --}}
+			<div class="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
+				 style="background: radial-gradient(circle, rgba(214,197,166,0.10) 0%, transparent 70%);"></div>
+			
+			{{-- 背景裝飾 2：大尺寸古銅錢浮水印（單一寬厚外緣、仿開元通寶樣式） --}}
+			<svg class="absolute -top-40 -right-40 w-72 h-72 md:w-96 md:h-96 opacity-[0.10] dark:opacity-[0.15] pointer-events-none select-none text-base-content transition-all" 
+				 viewBox="0 0 100 100" fill="none" stroke="currentColor">
+				
+				{{-- 寬而厚實的外緣圓框（模擬真實古錢厚重邊道） --}}
+				<circle cx="50" cy="50" r="44" stroke-width="6" />
+				
+				{{-- 中間方孔（帶有適度厚度的內郭框） --}}
+				<rect x="36" y="36" width="28" height="28" rx="1" stroke-width="2" />
+
+				{{-- 「開元通寶」四字佈局：上開、下元、右通、左寶 --}}
+				<g fill="currentColor" stroke="none" class="font-serif font-black select-none opacity-95 text-[20px]">
+					{{-- 上：開 --}}
+					<text x="50" y="24" text-anchor="middle" dominant-baseline="central">開</text>
+					{{-- 下：元 --}}
+					<text x="50" y="76" text-anchor="middle" dominant-baseline="central">元</text>
+					{{-- 右：通 --}}
+					<text x="76" y="50" text-anchor="middle" dominant-baseline="central">通</text>
+					{{-- 左：寶 --}}
+					<text x="24" y="50" text-anchor="middle" dominant-baseline="central">寶</text>
+				</g>
+			</svg>
+			
+			<div class="relative z-10">
+				{{-- 標題列 --}}
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-2 text-base-content font-semibold tracking-wider text-sm">
+						{{-- 銅錢 SVG --}}
+						<svg class="w-4 h-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25">
+							<circle cx="12" cy="12" r="8"/>
+							<rect x="9.5" y="9.5" width="5" height="5" rx="0.5"/>
+						</svg>
+						<span>總資產（{{ $this->totalAssets['base_code'] }}）</span>
+						<span class="hidden sm:inline text-xs opacity-50 font-normal ml-1">所有幣別換算後加總</span>
+					</div>
+					
+					{{-- 自動刷新控制 --}}
+					<div class="flex items-center gap-2.5 bg-base-content/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-base-content/10">
+						<span class="text-[10px] opacity-70 flex items-center gap-1.5">
+							<span class="inline-block w-2 h-2 rounded-full {{ $autoRefresh ? 'bg-emerald-400 animate-pulse' : 'bg-base-content/30' }}"></span>
+							{{ $autoRefresh ? '自動更新中' : '已暫停' }}
+						</span>
+						
+						{{-- 重新整理 SVG --}}
+						<button wire:click="refreshTotalAssets" 
+								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10"
+								title="立即重新整理">
+							<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4"/>
+							</svg>
+						</button>
+						
+						{{-- 播放／暫停 SVG --}}
+						<button wire:click="$toggle('autoRefresh')" 
+								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10 border border-base-content/10 hover:border-base-content/30"
+								title="{{ $autoRefresh ? '暫停自動更新' : '開啟自動更新' }}">
+							@if($autoRefresh)
+								<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M9 5v14M15 5v14"/>
+								</svg>
+							@else
+								<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M8 5v14l11-7z"/>
+								</svg>
+							@endif
+						</button>
+					</div>
+				</div>
+				
+				{{-- 總金額 --}}
+				<div class="mt-4">
+					<div class="text-3xl md:text-4xl font-black font-mono tracking-tight drop-shadow-sm">
+						{{ $this->totalAssets['base_symbol'] }} {{ number_format($this->totalAssets['total'], 2) }}
+					</div>
+					@if(!$this->totalAssets['has_assets'])
+						<div class="mt-1 text-sm opacity-60">尚無資產記錄</div>
+					@endif
+				</div>
+				
+				{{-- 幣別明細 --}}
+				@if(count($this->totalAssets['breakdown']) > 0)
+					<div class="mt-6 pt-5 border-t border-base-content/15">
 						<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
 							@foreach($this->totalAssets['breakdown'] as $item)
-								<div class="flex flex-col gap-1 bg-white/10 backdrop-blur-md rounded-xl px-3 py-2 border border-white/15 hover:bg-white/20 transition-all shadow-sm min-w-0">
+								<div class="flex flex-col gap-1 bg-base-content/[0.03] backdrop-blur-md rounded-xl px-3 py-2 border border-base-content/10 hover:bg-base-content/[0.06] transition-all shadow-sm min-w-0">
 									<div class="flex items-center justify-between gap-1">
-										<span class="text-xs font-bold text-white">{{ $item['code'] }}</span>
+										<span class="text-xs font-bold">{{ $item['code'] }}</span>
 										@if($item['is_base'])
-											<span class="text-xs bg-emerald-400/20 text-emerald-200 px-1 py-0.5 rounded font-medium flex-shrink-0">👑本幣</span>
+											{{-- 小朱印 --}}
+											<span class="text-[10px] px-1 py-0.5 rounded-sm bg-[#9E2B25]/80 text-white font-medium flex-shrink-0 tracking-wider">本</span>
 										@endif
 									</div>
-									<span class="text-sm text-white/95 font-mono font-bold truncate">
+									<span class="text-sm font-mono font-bold truncate opacity-95">
 										{{ $item['symbol'] }} {{ number_format($item['balance'], 0) }}
 									</span>
 									@if(!$item['is_base'])
-										<span class="text-[10px] text-white/55 font-mono truncate">
-											→ {{ number_format($item['converted'], 0) }}
+										<span class="text-[10px] opacity-55 font-mono truncate">
+											→ {{ $this->totalAssets['base_symbol'] }} {{ number_format($item['converted'], 0) }}
 										</span>
 									@endif
 								</div>
 							@endforeach
 						</div>
 					</div>
-                @else
-                    <div class="mt-5 pt-4 border-t border-white/20 text-white/60 text-sm">
-                        尚無任何資產，請先新增您的第一個帳戶。
-                    </div>
-                @endif
-                
-                @if($autoRefresh)
-                    <div wire:poll.visible.30s="refreshTotalAssets" class="hidden"></div>
-                @endif
-            </div>
-        </div>
-    </div>
+				@else
+					<div class="mt-5 pt-4 border-t border-white/20 text-sm opacity-60">
+						尚無任何資產，請先新增您的第一個帳戶。
+					</div>
+				@endif
+				
+				@if($autoRefresh)
+					<div wire:poll.visible.30s="refreshTotalAssets" class="hidden"></div>
+				@endif
+			</div>
+		</div>
+	</div>
 
     {{-- ============================================================ --}}
     {{-- 3. 操作標題列 --}}
@@ -224,22 +264,22 @@
 
         <div class="space-y-3.5 pt-2 animate-fadeIn">
             {{-- 分幣別標題列：幣別 + 代碼 + 點線 + 合計 --}}
-            <div class="flex items-baseline gap-2">
-                <span class="flex items-center gap-2 min-w-0">
-                    <span class="w-1.5 h-4 rounded-full bg-{{ $dotColor }}-500 flex-shrink-0"></span>
-                    <span class="text-sm font-bold text-base-content truncate">
-                        {{ $group['currency_name'] }}帳戶資產
-                    </span>
-                    <span class="text-xs opacity-50 font-mono font-normal flex-shrink-0">{{ $group['currency'] }}</span>
-                </span>
+			<div class="flex items-center gap-2">
+				<span class="flex items-center gap-2 min-w-0">
+					<span class="w-1.5 h-4 rounded-full bg-{{ $dotColor }}-500 flex-shrink-0"></span>
+					<span class="text-sm font-bold text-base-content truncate">
+						{{ $group['currency_name'] }}帳戶資產
+					</span>
+					<span class="text-xs opacity-50 font-mono font-normal flex-shrink-0">{{ $group['currency'] }}</span>
+				</span>
 
-                {{-- 引導點線 --}}
-                <span class="flex-1 border-b border-dotted border-base-content/20 mb-1 min-w-[1rem]"></span>
+				{{-- 引導點線 --}}
+				<span class="flex-1 border-b border-dotted border-base-content/20 min-w-[1rem]"></span>
 
-                <span class="text-xs sm:text-sm font-mono font-bold text-base-content flex-shrink-0">
-                    <span class="opacity-50">{{ $group['currency_symbol'] }}</span>{{ number_format($group['total_balance'], 2) }}
-                </span>
-            </div>
+				<span class="text-sm font-bold text-base-content flex-shrink-0 whitespace-nowrap">
+					<span class="opacity-50">{{ $group['currency_symbol'] }}</span>{{ number_format($group['total_balance'], 2) }}
+				</span>
+			</div>
 
             {{-- 帳戶卡片 --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -23,8 +23,9 @@
 | 字體與設計系統擴充
 | -------------------------------------------------------------------------- */
 @theme default {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:  'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Noto Serif TC', 'Source Han Serif TC', serif;
+    --font-mono:  'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* ==========================================================================
@@ -202,7 +203,7 @@ select.truncate option {
 }
 
 /* --------------------------------------------------------------------------
-| 【4-1】箭頭脈動提示（一次性 3 下後靜止，避免持續閃爍干擾）
+| 【4-1】箭頭脈動提示（一次性 1 下後靜止，避免持續閃爍干擾）
 |        - 進入頁面時播放，提示「這裡可點」
 |        - 播放完畢停在 opacity 0.5（手機）或 0.4（桌面）
 | -------------------------------------------------------------------------- */
@@ -212,8 +213,14 @@ select.truncate option {
 }
 
 .clickable-card .click-arrow {
-    animation: arrow-pulse-once 1.2s ease-in-out 3;  /* 播放 3 次後停止 */
+    animation: arrow-pulse-once 1.2s ease-in-out 1;
     animation-fill-mode: forwards;
+}
+@media (hover: hover) {
+    .clickable-card:hover .click-arrow {
+        /* 移除無限脈動，只保留位移 */
+        animation: none;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -247,11 +254,13 @@ select.truncate option {
             box-shadow: none;
         }
     }
-	/* 關閉箭頭脈動動畫 */
-    .clickable-card .click-arrow,
-    @media (hover: hover) {
-        .clickable-card:hover .click-arrow {
-            animation: none;
-        }
+    /* 關閉箭頭脈動動畫（拆成兩條獨立規則） */
+    .clickable-card .click-arrow {
+        animation: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) and (hover: hover) {
+    .clickable-card:hover .click-arrow {
+        animation: none;
     }
 }
