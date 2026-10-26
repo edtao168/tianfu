@@ -122,36 +122,47 @@
                 
                 {{-- 帳戶選擇區塊 --}}
                 @if($type === 'transfer')
-                    {{-- 轉帳模式 --}}
-                    <div class="grid grid-cols-5 gap-3 mb-4 items-end">
-                        <div class="col-span-2 min-w-0">
-                            <x-account-select 
-                                model="fromAccountId" 
-                                label="轉出賬戶" 
-                                :accounts="$this->accounts" 
-                                :selectedAccountId="$fromAccountId" 
-                                :showBalance="false"
-								class="min-w-0"
-                            />
+                    {{-- 轉帳模式：轉出賬戶 + 餘額 / 轉入賬戶 + 餘額 --}}
+                    <div class="space-y-3 mb-4">
+                        {{-- 轉出列 --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
+                            <div class="sm:col-span-6 min-w-0">
+                                <x-account-select 
+                                    model="fromAccountId" 
+                                    label="轉出賬戶" 
+                                    :accounts="$this->accounts" 
+                                    :selectedAccountId="$fromAccountId" 
+                                    :showBalance="false"
+                                />
+                            </div>
                         </div>
 
-                        <div class="col-span-1 flex justify-center pb-1">
-                            <button type="button" wire:click="swapAccounts" class="p-2 rounded-full hover:bg-base-200 text-base-content" title="切換帳戶">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        {{-- 切換按鈕 --}}
+                        <div class="flex justify-center my-1">
+							<button type="button" 
+									wire:click="swapAccounts" 
+									class="btn btn-blue btn-sm btn-circle" 
+									title="切換轉出／轉入賬戶">
+								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+								</svg>
+
                             </button>
                         </div>
 
-                        <div class="col-span-2 min-w-0">
-                            <x-account-select 
-                                model="toAccountId" 
-                                label="轉入賬戶" 
-                                placeholder="選擇目標帳戶"
-                                :accounts="$this->accounts" 
-                                :selectedAccountId="$toAccountId" 
-                                :excludeId="$fromAccountId" 
-                                :showBalance="false"
-								class="min-w-0"
-                            />
+                        {{-- 轉入列 --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
+                            <div class="sm:col-span-6 min-w-0">
+                                <x-account-select 
+                                    model="toAccountId" 
+                                    label="轉入賬戶" 
+                                    placeholder="選擇目標帳戶"
+                                    :accounts="$this->accounts" 
+                                    :selectedAccountId="$toAccountId" 
+                                    :excludeId="$fromAccountId" 
+                                    :showBalance="false"
+                                />
+                            </div>
                         </div>
                     </div>
                     
@@ -200,7 +211,7 @@
                         $signColor = match($type) { 'expense' => 'text-tx-expense', 'income' => 'text-tx-income', default => 'text-tx-transfer', };
                     @endphp
                     <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="col-span-1">
+                        <div class="col-span-1 min-w-0">
                             <div class="clickable-card aspect-square rounded-2xl border border-base-300 transition-all cursor-pointer flex flex-col items-center justify-center p-1 relative overflow-hidden bg-base-200 hover:bg-base-300" wire:click="openCategoryPicker(false)">
                                 @if($categoryId && $selectedCategory && $selectedCategory->type === $type)
                                     <div class="text-3xl mb-1 flex justify-center">
@@ -219,7 +230,7 @@
                             </div>
                         </div>
 
-                        <div class="col-span-2 flex items-center">
+                        <div class="col-span-2 min-w-0 flex items-center">
                             <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
                                 <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
                                 <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" 
@@ -235,12 +246,11 @@
                     </div>
                     
                     {{-- 非轉帳模式：帳戶選擇 --}}
-                    <div class="mb-4">
+                    <div class="mb-4 min-w-0">
                         <x-account-select 
                             model="fromAccountId" 
                             :accounts="$this->accounts" 
-                            :selectedAccountId="$fromAccountId"
-							class="min-w-0"
+                            :selectedAccountId="$fromAccountId" 
                         />
                     </div>
                 @endif
@@ -487,18 +497,17 @@
                 </div>
 
                 {{-- 範本帳戶選擇 --}}
-                <div class="mb-4">
+                <div class="mb-4 min-w-0">
                     <x-account-select 
                         model="templateFromAccountId" 
                         :accounts="$this->accounts" 
-                        :selectedAccountId="$templateFromAccountId"
-						class="min-w-0"
+                        :selectedAccountId="$templateFromAccountId" 
                     />
                 </div>
 
                 {{-- 範本轉帳目標帳戶 --}}
                 @if($templateType === 'transfer')
-                    <div class="mb-4">
+                    <div class="mb-4 min-w-0">
                         <x-account-select 
                             model="templateToAccountId" 
                             label="轉入賬戶" 
@@ -507,7 +516,6 @@
                             :selectedAccountId="$templateToAccountId" 
                             :excludeId="$templateFromAccountId" 
                             :showBalance="false" 
-							class="min-w-0"
                         />
                     </div>
                 @endif
@@ -550,13 +558,13 @@
                     };
                 @endphp
                 <div class="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-[var(--song-border)] hover:bg-base-200 hover:border-base-content/20 transition-colors">
-                    <div class="clickable-card flex-1 cursor-pointer" wire:click="applyTemplate({{ $template['id'] }})">
-                        <div class="font-medium {{ $templateTypeColor }}">{{ $template['name'] }}</div>
-                        <div class="text-sm text-base-content/60">
+                    <div class="clickable-card flex-1 cursor-pointer min-w-0" wire:click="applyTemplate({{ $template['id'] }})">
+                        <div class="font-medium {{ $templateTypeColor }} truncate">{{ $template['name'] }}</div>
+                        <div class="text-sm text-base-content/60 truncate">
                             {{ match($template['type'] ?? 'expense') { 'expense' => '支出', 'income' => '收入', 'transfer' => '轉帳', default => $template['type'] } }} · {{ number_format($template['amount'], 2) }}
                         </div>
                     </div>
-                    <div class="flex gap-1">
+                    <div class="flex gap-1 shrink-0 ml-2">
                         <button wire:click="editTemplate({{ $template['id'] }})" 
                                 class="p-1.5 text-base-content/60 hover:text-base-content transition-colors rounded-lg hover:bg-base-300"
                                 title="編輯範本">

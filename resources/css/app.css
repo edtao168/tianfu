@@ -79,6 +79,54 @@ body {
     border-color: var(--song-border);
 }
 
+/* Choices.js 強制填滿容器 */
+.choices {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.choices__inner {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.choices__list--single {
+    width: 100%;
+    min-width: 0;
+    padding-right: 1.5rem; /* 留給下拉箭頭 */
+}
+
+.choices__list--single .choices__item {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 暗色模式背景 */
+[data-theme="dark"] .choices__inner {
+    background-color: var(--song-input-bg);
+    border-color: var(--song-border);
+}
+
+[data-theme="dark"] .choices__list--dropdown {
+    background-color: var(--song-bg);
+    border-color: var(--song-border);
+}
+
+[data-theme="dark"] .choices__item--choice {
+    color: var(--song-text);
+}
+
+[data-theme="dark"] .choices__item--choice.is-highlighted {
+    background-color: var(--song-card-bg);
+}
+
 /* number input 的 spinner 定位 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -263,35 +311,4 @@ select.truncate option {
     .clickable-card:hover .click-arrow {
         animation: none;
     }
-}
-
-/* ==========================================================================
-   原生 select 文字截斷（Mary UI x-select / x-account-select 通用）
-   - 原生 select 不支援 text-overflow，靠「限制寬度 + overflow:hidden」讓
-     Chrome 自動顯示省略號；Firefox 對 select 截斷支援較好
-   - 關鍵：父層 flex/grid 必須 min-w-0，否則 select intrinsic width 會撐開
-   ========================================================================== */
-
-/* Mary UI 的 select wrapper（class 為 .select，內含原生 select） */
-.select {
-    min-width: 0;
-    max-width: 100%;
-}
-
-.select > select,
-select.truncate,
-select.truncate option {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* 防止 grid/flex 子項被 select 的 intrinsic width 撐開 */
-.select,
-[class*="col-span-"] > .select,
-.flex > .select {
-    min-width: 0;
 }
