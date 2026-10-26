@@ -351,9 +351,9 @@
         <div class="py-4">
             <x-form wire:submit="saveAccount" class="space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
-                    <x-select label="帳戶類型" wire:model.live="accountType" :options="$accountTypeOptions" icon="o-tag" required />
-                </div>
+    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
+    <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
+</div>
 
                 <div class="space-y-2">
                     <label class="label p-0 flex items-center gap-1">

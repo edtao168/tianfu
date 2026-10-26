@@ -96,9 +96,11 @@
                 $currentType = $this->type ?? 'expense';
             @endphp
             <div class="grid grid-cols-4 gap-1.5 mb-5">
-                <button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content">
-                    <span class="mr-1">📋</span> 範本
-                </button>
+                {{-- 主 Modal 頂部「範本」按鈕 --}}
+				<button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content flex items-center justify-center gap-1.5">
+					<x-icon name="o-clipboard-document-list" class="w-4 h-4" />
+					<span>範本</span>
+				</button>
                 @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
                     <button type="button" wire:click="$set('type', '{{ $value }}')" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 {{ $currentType === $value ? $typeClasses[$value] . ' shadow-md' : 'bg-base-200 hover:bg-base-300 text-base-content' }}">
                         {{ $label }}
@@ -286,6 +288,7 @@
              separator 
              persistent
              size="lg"
+             box-class="border border-[var(--song-border)] bg-[var(--song-modal-bg)] bg-gradient-to-br from-amber-500/[0.04] to-transparent"
              x-on:click.stop>
              
         @if($showCategoryPicker && $categoryPickerReturnTo === 'template')
@@ -304,7 +307,7 @@
             @endphp
             <div class="w-full flex flex-col" style="height: 420px;">
                 <div class="flex flex-col h-full">
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-base-300 shrink-0">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--song-border)] shrink-0">
                         <div class="flex items-center gap-2">
                             <span class="w-1 h-5 rounded-full {{ $themeBg }}"></span>
                             <span class="text-sm font-bold tracking-wider {{ $themeText }}">
@@ -314,10 +317,8 @@
                         
                         <button type="button" 
                                 wire:click="$set('showCategoryPicker', false)"
-                                class="p-1.5 rounded-lg bg-base-300 text-base-content transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
+                                class="p-1.5 rounded-lg hover:bg-base-200 text-base-content transition-colors">
+                            <x-icon name="o-x-mark" class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -364,14 +365,14 @@
                             </div>
                         @else
                             <div class="flex flex-col items-center justify-center h-full py-12">
-                                <div class="text-5xl mb-4">📂</div>
+                                <x-icon name="o-folder-open" class="w-12 h-12 mb-4 text-base-content/40" />
                                 <p class="text-base-content/70 font-medium text-sm">還沒有建立對應分類</p>
                                 <p class="text-xs text-base-content/50 mt-1">請先到後台建立相符的分類</p>
                             </div>
                         @endif
                     </div>
 
-                    <div class="px-4 py-3 border-t border-base-300 shrink-0">
+                    <div class="px-4 py-3 border-t border-[var(--song-border)] shrink-0">
                         <button type="button"
                                 wire:click="$set('showCategoryPicker', false)"
                                 class="w-full py-2.5 rounded-xl font-medium text-base-content bg-base-200 hover:bg-base-300 transition-colors text-sm">
@@ -415,7 +416,7 @@
                 <div class="grid grid-cols-6 gap-3 mb-4">
                     <div class="col-span-2">
                         @if($templateType !== 'transfer')
-                            <div class="clickable-card aspect-square bg-base-200 rounded-2xl border border-base-300
+                            <div class="clickable-card aspect-square bg-base-200 rounded-2xl border border-[var(--song-border)]
                                         hover:border-base-content/40 transition-all cursor-pointer 
                                         flex flex-col items-center justify-center p-1 relative overflow-hidden"
                                  wire:click="openCategoryPicker(true)">
@@ -516,7 +517,7 @@
                 </div>
 
                 <x-slot:actions>
-                    <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300">
+                    <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
                         <x-button label="取消" type="button" @click="$wire.showTemplateModal = false; $wire.resetTemplateForm()" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content" />
                         <x-button label="{{ $editingTemplateId ? '更新' : '儲存' }}" type="submit" class="btn-sm rounded-xl btn-green" />
                     </div>
@@ -530,7 +531,8 @@
              title="選擇範本" 
              separator 
              persistent
-             size="lg">
+             size="lg"
+             box-class="border border-[var(--song-border)] bg-[var(--song-modal-bg)] bg-gradient-to-br from-amber-500/[0.04] to-transparent">
         
         <div class="space-y-2 max-h-96 overflow-y-auto">
             @forelse($templates as $template)
@@ -542,21 +544,30 @@
                         default    => 'text-base-content',
                     };
                 @endphp
-                <div class="flex items-center justify-between p-3 bg-base-200 rounded-xl hover:bg-base-300 transition-colors">
-                    <div class="clickable-card flex-1 cursor-pointer " wire:click="applyTemplate({{ $template['id'] }})">
+                <div class="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-[var(--song-border)] hover:bg-base-200 hover:border-base-content/20 transition-colors">
+                    <div class="clickable-card flex-1 cursor-pointer" wire:click="applyTemplate({{ $template['id'] }})">
                         <div class="font-medium {{ $templateTypeColor }}">{{ $template['name'] }}</div>
                         <div class="text-sm text-base-content/60">
                             {{ match($template['type'] ?? 'expense') { 'expense' => '支出', 'income' => '收入', 'transfer' => '轉帳', default => $template['type'] } }} · {{ number_format($template['amount'], 2) }}
                         </div>
                     </div>
                     <div class="flex gap-1">
-                        <button wire:click="editTemplate({{ $template['id'] }})" class="p-1.5 text-base-content/60 hover:text-base-content"> ✏️ </button>
-                        <button wire:click="deleteTemplate({{ $template['id'] }})" wire:confirm="確定要刪除此範本嗎？" class="p-1.5 text-tx-expense hover:opacity-80"> 🗑️ </button>
+                        <button wire:click="editTemplate({{ $template['id'] }})" 
+                                class="p-1.5 text-base-content/60 hover:text-base-content transition-colors rounded-lg hover:bg-base-300"
+                                title="編輯範本">
+                            <x-icon name="o-pencil" class="w-4 h-4" />
+                        </button>
+                        <button wire:click="deleteTemplate({{ $template['id'] }})" 
+                                wire:confirm="確定要刪除此範本嗎？" 
+                                class="p-1.5 text-tx-expense hover:opacity-80 transition-colors rounded-lg hover:bg-tx-expense/10"
+                                title="刪除範本">
+                            <x-icon name="o-trash" class="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             @empty
                 <div class="text-center py-8 text-base-content/60">
-                    <div class="text-4xl mb-2">📭</div>
+                    <x-icon name="o-inbox" class="w-12 h-12 mx-auto mb-2 text-base-content/40" />
                     <p>尚無範本</p>
                     <button wire:click="openTemplateModalFromList" class="mt-3 text-sm text-tx-transfer hover:opacity-80"> 建立第一個範本 → </button>
                 </div>
@@ -564,7 +575,7 @@
         </div>
         
         <x-slot:actions>
-            <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300">
+            <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
                 <x-button label="取消" type="button" @click="$wire.showTemplateListModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content" />
                 <x-button label="新增範本" type="button" wire:click="openTemplateModalFromList" class="btn-sm rounded-xl btn-green" />
             </div>
