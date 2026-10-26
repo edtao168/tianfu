@@ -13,13 +13,27 @@
     --song-modal-bg: rgba(250, 249, 246, 0.98);
     --song-input-bg: rgba(255, 255, 255, 0.95);
 
-    /* 宋色語意（新增，合併於此） */
-    --song-rose:   #A64B4B;  /* 鈞窯海棠紅 — 支出 */
-    --song-jade:   #5E7A6B;  /* 龍泉青瓷 — 收入 */
-    --song-sky:    #6E8CA0;  /* 汝窯天青 — 轉帳 */
-    --song-violet: #7A6B85;  /* 暮山煙紫 — 特殊 */
-    --song-ink:    #2E2A26;  /* 松煙墨 — 主操作 */
-    --song-gold:   #D6C5A6;  /* 緗色 — 點綴 */
+    /* 宋色語意 */
+    --song-rose:   #A64B4B;
+    --song-jade:   #5E7A6B;
+    --song-sky:    #6E8CA0;
+    --song-violet: #7A6B85;
+    --song-ink:    #2E2A26;
+    --song-gold:   #D6C5A6;
+
+    /* 卡片識別色（RGB 三元組，供 rgb(var(--card-color) / alpha) 使用） */
+    --card-orange-rgb: 251 191 36;
+    --card-green-rgb:  52 211 153;
+    --card-blue-rgb:   56 189 248;
+    --card-purple-rgb: 139 92 246;
+    --card-red-rgb:    244 63 94;
+
+    /* 卡片識別色（純色，供 btn/badge 文字用） */
+    --card-orange: rgb(var(--card-orange-rgb));
+    --card-green:  rgb(var(--card-green-rgb));
+    --card-blue:   rgb(var(--card-blue-rgb));
+    --card-purple: rgb(var(--card-purple-rgb));
+    --card-red:    rgb(var(--card-red-rgb));
 }
 
 [data-theme="dark"] {
@@ -30,246 +44,179 @@
     --song-modal-bg: rgba(20, 18, 18, 0.98);
     --song-input-bg: rgba(41, 37, 36, 0.95);
 
-    /* 宋色語意 dark 對應（新增） */
     --song-rose:   #C0736F;
     --song-jade:   #7A9484;
     --song-sky:    #8FA9B8;
     --song-violet: #958AA0;
-    --song-ink:    #E7E5E4;  /* dark 下「墨」反轉為淺，供文字用 */
+    --song-ink:    #E7E5E4;
     --song-gold:   #D6C5A6;
 }
 
-/* 表單容器與輸入框邊框優化 */
-.input, .select, .textarea,
+/* ==========================================================================
+   表單容器與輸入框邊框統一優化
+   ========================================================================== */
+
+/* 1. 亮色模式 */
+html:not([data-theme="dark"]) .input,
+html:not([data-theme="dark"]) .select,
+html:not([data-theme="dark"]) select,
+html:not([data-theme="dark"]) .textarea,
+html:not([data-theme="dark"]) textarea {
+    border-color: rgba(203, 213, 225, 0.9);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+html:not([data-theme="dark"]) .input:focus,
+html:not([data-theme="dark"]) .input:focus-within,
+html:not([data-theme="dark"]) .select:focus,
+html:not([data-theme="dark"]) select:focus,
+html:not([data-theme="dark"]) .textarea:focus,
+html:not([data-theme="dark"]) textarea:focus {
+    border-color: color-mix(in srgb, var(--song-sky) 60%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--song-sky) 15%, transparent);
+    outline: none;
+}
+
+/* 2. 暗色模式 */
+[data-theme="dark"] .input,
+[data-theme="dark"] .select,
+[data-theme="dark"] select,
+[data-theme="dark"] .textarea,
+[data-theme="dark"] textarea {
+    border-color: var(--song-border);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .input:focus,
+[data-theme="dark"] .input:focus-within,
+[data-theme="dark"] .select:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] .textarea:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: color-mix(in srgb, var(--song-sky) 50%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--song-sky) 15%, transparent);
+    outline: none;
+}
+
+/* Modal 框線維持宋式邊框 */
 .modal-box .border-base-300 {
     border-color: var(--song-border);
 }
 
-/* 確保原生 select 與各類下拉選單在 Light Mode 下有清晰邊框 */
-html:not([data-theme="dark"]) .select,
-html:not([data-theme="dark"]) select,
-html:not([data-theme="dark"]) .modal-box .border-base-300 {
-    border-color: rgba(203, 213, 225, 0.9); /* 加深 slate 邊框色彩 */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-}
-
-/* 針對 Dark Mode 下的 select 選擇器邊框保證可見度 */
-[data-theme="dark"] .select,
-[data-theme="dark"] select {
-    border-color: var(--song-border);
-}
-
 /* ==========================================================================
-   卡片側邊條識別
+   卡片識別色系統（統一由 --card-color 變數驅動）
    ========================================================================== */
 
-/* 側邊條 - 亮色模式 */
-.card-orange .account-left-bar {
-    background-color: rgba(251, 191, 36, 0.6);
-}
-.card-green .account-left-bar {
-    background-color: rgba(52, 211, 153, 0.6);
-}
-.card-blue .account-left-bar {
-    background-color: rgba(56, 189, 248, 0.6);
-}
-.card-purple .account-left-bar {
-    background-color: rgba(139, 92, 246, 0.6);
-}
-.card-red .account-left-bar {
-    background-color: rgba(244, 63, 94, 0.6);
+/* 1. 每個 card-* 只宣告一個 RGB 三元組 */
+.card-orange { --card-color: var(--card-orange-rgb); --card-solid: var(--card-orange); }
+.card-green  { --card-color: var(--card-green-rgb);  --card-solid: var(--card-green); }
+.card-blue   { --card-color: var(--card-blue-rgb);   --card-solid: var(--card-blue); }
+.card-purple { --card-color: var(--card-purple-rgb); --card-solid: var(--card-purple); }
+.card-red    { --card-color: var(--card-red-rgb);    --card-solid: var(--card-red); }
+
+/* 2. 側邊條 */
+.card-orange .account-left-bar,
+.card-green  .account-left-bar,
+.card-blue   .account-left-bar,
+.card-purple .account-left-bar,
+.card-red    .account-left-bar {
+    background-color: rgb(var(--card-color) / 0.6);
+    transition: background-color 0.2s ease-in-out;
 }
 
-/* 側邊條 - 暗色模式 */
-[data-theme="dark"] .card-orange .account-left-bar {
-    background-color: rgba(251, 191, 36, 0.4);
-}
-[data-theme="dark"] .card-green .account-left-bar {
-    background-color: rgba(52, 211, 153, 0.4);
-}
-[data-theme="dark"] .card-blue .account-left-bar {
-    background-color: rgba(56, 189, 248, 0.4);
-}
-[data-theme="dark"] .card-purple .account-left-bar {
-    background-color: rgba(139, 92, 246, 0.4);
-}
-[data-theme="dark"] .card-red .account-left-bar {
-    background-color: rgba(244, 63, 94, 0.4);
+.card-orange:hover .account-left-bar,
+.card-green:hover  .account-left-bar,
+.card-blue:hover   .account-left-bar,
+.card-purple:hover .account-left-bar,
+.card-red:hover    .account-left-bar {
+    background-color: rgb(var(--card-color) / 0.85);
 }
 
-/* hover 時側邊條加深 */
-.card-orange:hover .account-left-bar {
-    background-color: rgba(251, 191, 36, 0.85);
-}
-.card-green:hover .account-left-bar {
-    background-color: rgba(52, 211, 153, 0.85);
-}
-.card-blue:hover .account-left-bar {
-    background-color: rgba(56, 189, 248, 0.85);
-}
-.card-purple:hover .account-left-bar {
-    background-color: rgba(139, 92, 246, 0.85);
-}
-.card-red:hover .account-left-bar {
-    background-color: rgba(244, 63, 94, 0.85);
+[data-theme="dark"] .card-orange .account-left-bar,
+[data-theme="dark"] .card-green  .account-left-bar,
+[data-theme="dark"] .card-blue   .account-left-bar,
+[data-theme="dark"] .card-purple .account-left-bar,
+[data-theme="dark"] .card-red    .account-left-bar {
+    background-color: rgb(var(--card-color) / 0.4);
 }
 
-[data-theme="dark"] .card-orange:hover .account-left-bar {
-    background-color: rgba(251, 191, 36, 0.6);
-}
-[data-theme="dark"] .card-green:hover .account-left-bar {
-    background-color: rgba(52, 211, 153, 0.6);
-}
-[data-theme="dark"] .card-blue:hover .account-left-bar {
-    background-color: rgba(56, 189, 248, 0.6);
-}
-[data-theme="dark"] .card-purple:hover .account-left-bar {
-    background-color: rgba(139, 92, 246, 0.6);
-}
-[data-theme="dark"] .card-red:hover .account-left-bar {
-    background-color: rgba(244, 63, 94, 0.6);
+[data-theme="dark"] .card-orange:hover .account-left-bar,
+[data-theme="dark"] .card-green:hover  .account-left-bar,
+[data-theme="dark"] .card-blue:hover   .account-left-bar,
+[data-theme="dark"] .card-purple:hover .account-left-bar,
+[data-theme="dark"] .card-red:hover    .account-left-bar {
+    background-color: rgb(var(--card-color) / 0.6);
 }
 
-/* ==========================================================================
-   幣別資產總計卡片
-   ========================================================================== */
-
+/* 3. 幣別資產總計卡片 */
 .currency-total-card {
     background-color: var(--song-card-bg);
     border-color: var(--song-border);
 }
 
-/* 亮色模式 - 漸層背景 + 邊框 */
-.card-orange.currency-total-card {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.60), rgba(251, 191, 36, 0.02));
-    border-color: rgba(251, 191, 36, 0.25);
-}
-.card-green.currency-total-card {
-    background: linear-gradient(135deg, rgba(52, 211, 153, 0.60), rgba(52, 211, 153, 0.02));
-    border-color: rgba(52, 211, 153, 0.25);
-}
-.card-blue.currency-total-card {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.60), rgba(56, 189, 248, 0.02));
-    border-color: rgba(56, 189, 248, 0.25);
-}
-.card-purple.currency-total-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.60), rgba(139, 92, 246, 0.02));
-    border-color: rgba(139, 92, 246, 0.25);
-}
+.card-orange.currency-total-card,
+.card-green.currency-total-card,
+.card-blue.currency-total-card,
+.card-purple.currency-total-card,
 .card-red.currency-total-card {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.60), rgba(244, 63, 94, 0.02));
-    border-color: rgba(244, 63, 94, 0.25);
+    background: linear-gradient(135deg,
+        rgb(var(--card-color) / 0.60),
+        rgb(var(--card-color) / 0.02));
+    border-color: rgb(var(--card-color) / 0.25);
 }
 
-/* 暗色模式 - 加深背景 */
-[data-theme="dark"] .card-orange.currency-total-card {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.58), rgba(251, 191, 36, 0.01));
-    border-color: rgba(251, 191, 36, 0.18);
-}
-[data-theme="dark"] .card-green.currency-total-card {
-    background: linear-gradient(135deg, rgba(52, 211, 153, 0.58), rgba(52, 211, 153, 0.01));
-    border-color: rgba(52, 211, 153, 0.18);
-}
-[data-theme="dark"] .card-blue.currency-total-card {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.58), rgba(56, 189, 248, 0.01));
-    border-color: rgba(56, 189, 248, 0.18);
-}
-[data-theme="dark"] .card-purple.currency-total-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.58), rgba(139, 92, 246, 0.01));
-    border-color: rgba(139, 92, 246, 0.18);
-}
-[data-theme="dark"] .card-red.currency-total-card {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.58), rgba(244, 63, 94, 0.01));
-    border-color: rgba(244, 63, 94, 0.18);
-}
-
-/* hover 時邊框加深 */
-.card-orange.currency-total-card:hover {
-    border-color: rgba(251, 191, 36, 0.45);
-}
-.card-green.currency-total-card:hover {
-    border-color: rgba(52, 211, 153, 0.45);
-}
-.card-blue.currency-total-card:hover {
-    border-color: rgba(56, 189, 248, 0.45);
-}
-.card-purple.currency-total-card:hover {
-    border-color: rgba(139, 92, 246, 0.45);
-}
+.card-orange.currency-total-card:hover,
+.card-green.currency-total-card:hover,
+.card-blue.currency-total-card:hover,
+.card-purple.currency-total-card:hover,
 .card-red.currency-total-card:hover {
-    border-color: rgba(244, 63, 94, 0.45);
+    border-color: rgb(var(--card-color) / 0.45);
 }
 
-[data-theme="dark"] .card-orange.currency-total-card:hover {
-    border-color: rgba(251, 191, 36, 0.35);
+[data-theme="dark"] .card-orange.currency-total-card,
+[data-theme="dark"] .card-green.currency-total-card,
+[data-theme="dark"] .card-blue.currency-total-card,
+[data-theme="dark"] .card-purple.currency-total-card,
+[data-theme="dark"] .card-red.currency-total-card {
+    background: linear-gradient(135deg,
+        rgb(var(--card-color) / 0.58),
+        rgb(var(--card-color) / 0.01));
+    border-color: rgb(var(--card-color) / 0.18);
 }
-[data-theme="dark"] .card-green.currency-total-card:hover {
-    border-color: rgba(52, 211, 153, 0.35);
-}
-[data-theme="dark"] .card-blue.currency-total-card:hover {
-    border-color: rgba(56, 189, 248, 0.35);
-}
-[data-theme="dark"] .card-purple.currency-total-card:hover {
-    border-color: rgba(139, 92, 246, 0.35);
-}
+
+[data-theme="dark"] .card-orange.currency-total-card:hover,
+[data-theme="dark"] .card-green.currency-total-card:hover,
+[data-theme="dark"] .card-blue.currency-total-card:hover,
+[data-theme="dark"] .card-purple.currency-total-card:hover,
 [data-theme="dark"] .card-red.currency-total-card:hover {
-    border-color: rgba(244, 63, 94, 0.35);
+    border-color: rgb(var(--card-color) / 0.35);
 }
 
-/* ==========================================================================
-   帳戶類型 Badge 背景色與文字色彩
-   ========================================================================== */
-
+/* 4. 帳戶類型 Badge */
 .account-badge {
     transition: all 0.2s ease-in-out;
 }
 
-/* 亮色模式 Badge 配色 */
-.card-orange .account-badge {
-    background-color: rgba(251, 191, 36, 0.15);
-    color: #b45309;
-}
-.card-green .account-badge {
-    background-color: rgba(52, 211, 153, 0.15);
-    color: #047857;
-}
-.card-blue .account-badge {
-    background-color: rgba(56, 189, 248, 0.15);
-    color: #0369a1;
-}
-.card-purple .account-badge {
-    background-color: rgba(139, 92, 246, 0.15);
-    color: #6d28d9;
-}
-.card-red .account-badge {
-    background-color: rgba(244, 63, 94, 0.15);
-    color: #be123c;
+.card-orange .account-badge,
+.card-green  .account-badge,
+.card-blue   .account-badge,
+.card-purple .account-badge,
+.card-red    .account-badge {
+    background-color: rgb(var(--card-color) / 0.15);
+    color: color-mix(in srgb, rgb(var(--card-color)) 70%, #1c1917);
 }
 
-/* 暗色模式 Badge 配色 */
-[data-theme="dark"] .card-orange .account-badge {
-    background-color: rgba(251, 191, 36, 0.2);
-    color: #fcd34d;
-}
-[data-theme="dark"] .card-green .account-badge {
-    background-color: rgba(52, 211, 153, 0.2);
-    color: #6ee7b7;
-}
-[data-theme="dark"] .card-blue .account-badge {
-    background-color: rgba(56, 189, 248, 0.2);
-    color: #7dd3fc;
-}
-[data-theme="dark"] .card-purple .account-badge {
-    background-color: rgba(139, 92, 246, 0.2);
-    color: #c4b5fd;
-}
-[data-theme="dark"] .card-red .account-badge {
-    background-color: rgba(244, 63, 94, 0.2);
-    color: #fda4af;
+[data-theme="dark"] .card-orange .account-badge,
+[data-theme="dark"] .card-green  .account-badge,
+[data-theme="dark"] .card-blue   .account-badge,
+[data-theme="dark"] .card-purple .account-badge,
+[data-theme="dark"] .card-red    .account-badge {
+    background-color: rgb(var(--card-color) / 0.2);
+    color: color-mix(in srgb, rgb(var(--card-color)) 60%, #fafaf9);
 }
 
 /* ==========================================================================
-   宋式按鈕配色系統
+   宋式按鈕配色系統（含輕擬物與 Dark 模式）
    ========================================================================== */
 
 .btn-red,
@@ -279,103 +226,162 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
 .btn-purple,
 .btn-dark,
 .btn-light {
-    @apply rounded-xl transition-colors duration-200;
+    @apply rounded-xl transition-all duration-200 font-medium;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-/* 鈞窯海棠紅 (危險/刪除/支出) */
+[data-theme="dark"] .btn-red,
+[data-theme="dark"] .btn-orange,
+[data-theme="dark"] .btn-green,
+[data-theme="dark"] .btn-blue,
+[data-theme="dark"] .btn-purple,
+[data-theme="dark"] .btn-dark,
+[data-theme="dark"] .btn-light {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 1. 鈞窯海棠紅 */
 .btn-red {
-    @apply bg-rose-50/60 text-rose-800 border border-rose-200/50 hover:bg-rose-100/50 hover:border-rose-300/60 focus:ring-rose-300/30;
+    background-color: color-mix(in srgb, var(--song-rose) 15%, transparent);
+    color: var(--song-rose);
+    border: 1px solid color-mix(in srgb, var(--song-rose) 30%, transparent);
+}
+.btn-red:hover {
+    background-color: color-mix(in srgb, var(--song-rose) 25%, transparent);
+    border-color: color-mix(in srgb, var(--song-rose) 45%, transparent);
+}
+[data-theme="dark"] .btn-red {
+    background-color: color-mix(in srgb, var(--song-rose) 20%, transparent);
+    color: #F87171;
+    border-color: color-mix(in srgb, var(--song-rose) 35%, transparent);
+}
+[data-theme="dark"] .btn-red:hover {
+    background-color: color-mix(in srgb, var(--song-rose) 32%, transparent);
+    border-color: color-mix(in srgb, var(--song-rose) 55%, transparent);
 }
 
-/* 柿染赭石 (警告/編輯/修改) */
+/* 2. 柿染赭石（改用 --card-orange 變數，與卡片識別色一致） */
 .btn-orange {
-    @apply bg-amber-50/60 text-amber-800 border border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-300/60 focus:ring-amber-300/30;
+    background-color: rgb(var(--card-orange-rgb) / 0.15);
+    color: color-mix(in srgb, rgb(var(--card-orange-rgb)) 70%, #1c1917);
+    border: 1px solid rgb(var(--card-orange-rgb) / 0.3);
+}
+.btn-orange:hover {
+    background-color: rgb(var(--card-orange-rgb) / 0.25);
+    border-color: rgb(var(--card-orange-rgb) / 0.45);
+}
+[data-theme="dark"] .btn-orange {
+    background-color: rgb(var(--card-orange-rgb) / 0.18);
+    color: #FCD34D;
+    border-color: rgb(var(--card-orange-rgb) / 0.3);
+}
+[data-theme="dark"] .btn-orange:hover {
+    background-color: rgb(var(--card-orange-rgb) / 0.28);
+    border-color: rgb(var(--card-orange-rgb) / 0.45);
 }
 
-/* 龍泉青瓷 (成功/新增/收入) */
+/* 3. 龍泉青瓷 */
 .btn-green {
-    @apply bg-emerald-50/60 text-emerald-800 border border-emerald-200/50 hover:bg-emerald-100/50 hover:border-emerald-300/60 focus:ring-emerald-300/30;
+    background-color: color-mix(in srgb, var(--song-jade) 15%, transparent);
+    color: var(--song-jade);
+    border: 1px solid color-mix(in srgb, var(--song-jade) 30%, transparent);
+}
+.btn-green:hover {
+    background-color: color-mix(in srgb, var(--song-jade) 25%, transparent);
+    border-color: color-mix(in srgb, var(--song-jade) 45%, transparent);
+}
+[data-theme="dark"] .btn-green {
+    background-color: color-mix(in srgb, var(--song-jade) 20%, transparent);
+    color: #34D399;
+    border-color: color-mix(in srgb, var(--song-jade) 35%, transparent);
+}
+[data-theme="dark"] .btn-green:hover {
+    background-color: color-mix(in srgb, var(--song-jade) 32%, transparent);
+    border-color: color-mix(in srgb, var(--song-jade) 55%, transparent);
 }
 
-/* 汝窯天青 (資訊/連結/次要操作) */
+/* 4. 汝窯天青 */
 .btn-blue {
-    @apply bg-sky-50/60 text-sky-800 border border-sky-200/50 hover:bg-sky-100/50 hover:border-sky-300/60 focus:ring-sky-300/30;
+    background-color: color-mix(in srgb, var(--song-sky) 15%, transparent);
+    color: var(--song-sky);
+    border: 1px solid color-mix(in srgb, var(--song-sky) 30%, transparent);
+}
+.btn-blue:hover {
+    background-color: color-mix(in srgb, var(--song-sky) 25%, transparent);
+    border-color: color-mix(in srgb, var(--song-sky) 45%, transparent);
+}
+[data-theme="dark"] .btn-blue {
+    background-color: color-mix(in srgb, var(--song-sky) 20%, transparent);
+    color: #38BDF8;
+    border-color: color-mix(in srgb, var(--song-sky) 35%, transparent);
+}
+[data-theme="dark"] .btn-blue:hover {
+    background-color: color-mix(in srgb, var(--song-sky) 32%, transparent);
+    border-color: color-mix(in srgb, var(--song-sky) 55%, transparent);
 }
 
-/* 暮山煙紫 (特殊/進階/報表) */
+/* 5. 暮山煙紫（改用 --card-purple 變數，與卡片識別色一致） */
 .btn-purple {
-    @apply bg-purple-50/60 text-purple-800 border border-purple-200/50 hover:bg-purple-100/50 hover:border-purple-300/60 focus:ring-purple-300/30;
+    background-color: rgb(var(--card-purple-rgb) / 0.15);
+    color: color-mix(in srgb, rgb(var(--card-purple-rgb)) 70%, #1c1917);
+    border: 1px solid rgb(var(--card-purple-rgb) / 0.3);
+}
+.btn-purple:hover {
+    background-color: rgb(var(--card-purple-rgb) / 0.25);
+    border-color: rgb(var(--card-purple-rgb) / 0.45);
+}
+[data-theme="dark"] .btn-purple {
+    background-color: rgb(var(--card-purple-rgb) / 0.2);
+    color: #C4B5FD;
+    border-color: rgb(var(--card-purple-rgb) / 0.35);
+}
+[data-theme="dark"] .btn-purple:hover {
+    background-color: rgb(var(--card-purple-rgb) / 0.32);
+    border-color: rgb(var(--card-purple-rgb) / 0.55);
 }
 
-/* 松煙墨色 - 主要操作 (儲存/提交) */
+/* 6. 松煙墨色 */
 .btn-dark {
-    @apply bg-stone-800/90 text-stone-50 border border-stone-700/80 hover:bg-stone-700/90 focus:ring-stone-500/30 font-medium tracking-wider shadow-sm;
+    background-color: var(--song-ink);
+    color: var(--song-bg);
+    border: 1px solid var(--song-border);
+    letter-spacing: 0.05em;
+}
+.btn-dark:hover {
+    opacity: 0.9;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+[data-theme="dark"] .btn-dark {
+    background-color: #E7E5E4;
+    color: #141212;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+[data-theme="dark"] .btn-dark:hover {
+    background-color: #FAFAF9; /* 用 stone-50 取代純白，避免過曝 */
 }
 
-/* 定窯牙白 - Ghost (取消/關閉) */
+/* 7. 定窯牙白 Ghost */
 .btn-light {
-    @apply bg-stone-100/60 text-stone-600 border border-stone-200/60 hover:bg-stone-200/60 hover:text-stone-700 focus:ring-stone-300/30;
-}
-
-/* ==========================================================================
-   範本 Modal - 宋式汝窯天青主題
-   ========================================================================== */
-
-.template-modal-blue .modal-box {
-    background: linear-gradient(145deg, rgba(232, 240, 254, 0.6), rgba(212, 226, 247, 0.5));
-    backdrop-filter: blur(16px);
-    border-color: rgba(162, 189, 219, 0.25);
-    box-shadow: 0 20px 40px -12px rgba(100, 140, 190, 0.12);
-}
-
-.template-modal-blue .modal-box select,
-.template-modal-blue .modal-box .select select {
-    background-color: var(--song-input-bg);
-    backdrop-filter: blur(4px);
-}
-
-.template-modal-blue .modal-box select option {
-    background-color: var(--song-bg);
+    background-color: rgba(255, 255, 255, 0.6);
     color: var(--song-text);
+    border: 1px solid var(--song-border);
 }
-
-.template-modal-blue .input,
-.template-modal-blue .select,
-.template-modal-blue .textarea {
-    background-color: var(--song-input-bg);
-    border-color: rgba(162, 189, 219, 0.25);
+.btn-light:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: color-mix(in srgb, var(--song-border) 150%, transparent);
 }
-
-.template-modal-blue .input:focus,
-.template-modal-blue .select:focus,
-.template-modal-blue .textarea:focus {
-    border-color: rgba(162, 189, 219, 0.5);
-    box-shadow: 0 0 0 3px rgba(162, 189, 219, 0.1);
+[data-theme="dark"] .btn-light {
+    background-color: rgba(41, 37, 36, 0.6);
+    color: var(--song-text);
+    border-color: var(--song-border);
 }
-
-.template-modal-blue .border-t {
-    border-color: rgba(162, 189, 219, 0.12);
-}
-
-.template-modal-blue .btn.bg-stone-100 {
-    background-color: rgba(162, 189, 219, 0.58);
-}
-
-.template-modal-blue .btn.bg-stone-100:hover {
-    background-color: rgba(162, 189, 219, 0.15);
-}
-
-.template-modal-blue .bg-stone-50 {
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-.template-modal-blue .bg-stone-50:hover {
-    background-color: rgba(255, 255, 255, 0.5);
+[data-theme="dark"] .btn-light:hover {
+    background-color: rgba(41, 37, 36, 0.9);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ==========================================================================
-   交易類型語意色彩 — 宋色版（覆蓋 Tailwind 原色）
-   依賴上方 :root / [data-theme="dark"] 的 --song-* 變數
+   交易類型語意色彩 — 宋色版
    ========================================================================== */
 
 @layer utilities {
@@ -434,48 +440,39 @@ html:not([data-theme="dark"]) .modal-box .border-base-300 {
     background: linear-gradient(to right, rgb(var(--ribbon) / 0.25), transparent);
 }
 
-/* 三主題窯色對應 */
-.stat-ribbon-blue   { --ribbon: 56 189 248; }   /* 汝窯天青 */
-.stat-ribbon-green  { --ribbon: 52 211 153; }   /* 龍泉青瓷 */
-.stat-ribbon-purple { --ribbon: 139 92 246; }   /* 暮山煙紫 */
+/* 三主題窯色對應 — 直接綁定 --song-* 變數，避免重複硬編碼 */
+.stat-ribbon-blue   { --ribbon: var(--card-blue-rgb); }   /* 汝窯天青 */
+.stat-ribbon-green  { --ribbon: var(--card-green-rgb); }  /* 龍泉青瓷 */
+.stat-ribbon-purple { --ribbon: var(--card-purple-rgb); } /* 暮山煙紫 */
 
-/* 緞帶斜切（純 CSS，不依賴 Tailwind arbitrary value） */
 .stat-ribbon-clip {
     clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
 }
 
 /* ==========================================================================
-   墨荷綠總資產卡（宋式虛實相生 - 汝窯天青微光版）
+   總資產卡（宋式虛實相生 - 汝窯天青微光版）
    ========================================================================== */
 
 .assets-card {
-    /* 右上角融入 汝窯天青 rgba(110, 140, 160) 的微茫清透光暈 */
     background:
         radial-gradient(120% 85% at 85% -10%, rgba(110, 140, 160, 0.16) 0%, transparent 65%),
         radial-gradient(100% 100% at 10% 110%, rgba(214, 197, 166, 0.12) 0%, transparent 70%),
         linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 242, 235, 0.90) 100%);
-    
-    /* 邊框同步微調為淡淡的天青弦紋 */
     border: 1px solid rgba(110, 140, 160, 0.20);
-    
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.6),
         0 12px 32px -12px rgba(110, 140, 160, 0.12);
-        
-    border-radius: 12px; 
+    border-radius: 12px;
     letter-spacing: 0.03em;
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 [data-theme="dark"] .assets-card {
-    /* 暗色模式：天青色在古墨背景下，呈現幽靜的月影微茫 */
     background:
         radial-gradient(130% 90% at 85% -10%, rgba(143, 169, 184, 0.22) 10%, transparent 65%),
         radial-gradient(100% 100% at 10% 110%, rgba(214, 197, 166, 0.05) 0%, transparent 60%),
         linear-gradient(145deg, rgba(28, 25, 23, 0.85) 0%, rgba(20, 18, 18, 0.95) 100%);
-        
     border-color: rgba(143, 169, 184, 0.22);
-    
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 40px -15px rgba(0, 0, 0, 0.5);

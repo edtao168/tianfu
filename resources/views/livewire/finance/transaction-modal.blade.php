@@ -155,8 +155,8 @@
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label class="block text-xs font-bold mb-1 text-base-content">轉出金額</label>
-                            <div class="relative w-full flex items-center px-3 py-2 rounded-xl border border-base-300 bg-base-200/50">
-                                <span class="text-lg font-bold shrink-0 mr-1 text-tx-expense">-</span>
+                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                <span class="text-lg font-bold shrink-0 text-tx-expense">-</span>
                                 <input 
                                     type="text" 
                                     inputmode="decimal" 
@@ -177,15 +177,15 @@
 									x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
                                     placeholder="0" 
                                     autocomplete="off" 
-                                    class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-base-content text-lg text-tx-expense" 
+                                    class="grow min-w-0 bg-transparent outline-none text-right font-bold text-lg caret-base-content text-tx-expense" 
                                 />
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-bold mb-1 text-base-content">轉入金額 (估算)</label>
-                            <div class="w-full px-3 py-2 rounded-xl border border-base-300 bg-base-200/50">
+                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
                                 <span class="text-lg font-bold text-tx-income">+</span>
-                                <span class="text-lg font-bold text-tx-income">{{ $amount ?? 0 }}</span>
+                                <span class="grow text-right text-lg font-bold text-tx-income">{{ $amount ?? 0 }}</span>
                             </div>
                         </div>
                     </div>
@@ -216,15 +216,15 @@
                         </div>
 
                         <div class="col-span-2 flex items-center">
-                            <div class="relative w-full flex items-center px-3 py-2 rounded-xl border border-base-300 bg-base-200/50">
-                                <span class="text-2xl font-bold shrink-0 mr-1 {{ $signColor }}">{{ $sign }}</span>
+                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
                                 <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" 
     x-data="{ shouldFocus: false }" 
     x-init=" $watch('shouldFocus', value => { if (value) { $nextTick(() => { $el.focus(); $el.select(); shouldFocus = false; }); } }) " 
     x-on:focus-amount-input.window="shouldFocus = true"
     x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
     placeholder="0" autocomplete="off" 
-    class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded text-right caret-base-content text-4xl {{ $signColor }}" />
+    class="grow min-w-0 bg-transparent outline-none text-right font-bold text-4xl caret-base-content {{ $signColor }}" />
                             </div>
                             @error('amount') <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
@@ -257,9 +257,7 @@
                         </label>
                     </div>
                     <div class="col-span-3">
-                        <div class="relative w-full h-full min-h-[80px] px-3 py-2 rounded-xl border border-base-300 bg-base-200/50">
-                            <textarea wire:model="memo" placeholder="請輸入備註" class="w-full h-full bg-transparent text-base-content placeholder:text-base-content/40 focus:outline-none placeholder:font-medium resize-none text-sm" style="min-height: 60px;"></textarea>
-                        </div>
+                        <textarea wire:model="memo" placeholder="請輸入備註" class="textarea w-full h-full min-h-[80px] resize-none placeholder:font-medium"></textarea>
                     </div>
                 </div>
 
@@ -466,17 +464,15 @@
                         };
                     @endphp
                     <div class="col-span-4 flex items-center">
-                        <div class="relative w-full flex items-center bg-base-200/50 px-3 py-2 rounded-xl border border-base-300">
-                            <span class="text-2xl font-bold shrink-0 mr-1 {{ $signColor }}">{{ $sign }}</span>
+                        <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                            <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
                             <input type="text"
 								   inputmode="decimal"
 								   wire:model.live.debounce.500ms="amount"
 								   x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
 								   placeholder="0"
 								   autocomplete="off"
-								   class="w-full pl-1 pr-6 font-bold bg-transparent focus:outline-none focus:ring-2 focus:ring-sky-500/20 rounded
-										  placeholder:text-base-content/40 text-right
-										  caret-base-content {{ $signColor }}"
+								   class="grow min-w-0 bg-transparent outline-none text-right font-bold placeholder:text-base-content/40 caret-base-content {{ $signColor }}"
 								   style="font-size: 2.25rem; height: 3rem; margin: 0;"
 							/>
                         </div>
@@ -512,12 +508,10 @@
 
                 <div class="grid grid-cols-5 gap-3 mb-4">
                     <div class="col-span-5">
-                        <div class="relative w-full bg-base-200/50 px-3 py-2 rounded-xl border border-base-300">
-                            <textarea wire:model="templateMemo"
-                                      placeholder="請輸入備註"
-                                      rows="3"
-                                      class="w-full bg-transparent focus:outline-none text-base-content placeholder:text-base-content/40 font-medium resize-none text-sm"></textarea>
-                        </div>
+                        <textarea wire:model="templateMemo"
+                                  placeholder="請輸入備註"
+                                  rows="3"
+                                  class="textarea w-full resize-none placeholder:font-medium"></textarea>
                     </div>
                 </div>
 
@@ -576,4 +570,4 @@
             </div>
         </x-slot:actions>
     </x-modal>
-</div> 
+</div>

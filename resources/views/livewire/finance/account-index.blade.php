@@ -115,8 +115,8 @@
 			<div class="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
 				 style="background: radial-gradient(circle, rgba(214,197,166,0.10) 0%, transparent 70%);"></div>
 			
-			{{-- 背景裝飾 2：大尺寸古銅錢浮水印（單一寬厚外緣、仿開元通寶樣式） --}}
-			<svg class="absolute -top-40 -right-40 w-72 h-72 md:w-96 md:h-96 opacity-[0.10] dark:opacity-[0.15] pointer-events-none select-none text-base-content transition-all" 
+			{{-- 背景裝飾 2：大尺寸古銅錢浮水印 --}}
+			<svg class="absolute -top-28 -right-30 w-72 h-72 md:w-96 md:h-96 opacity-[0.05] dark:opacity-[0.15] pointer-events-none select-none text-base-content transition-all" 
 				 viewBox="0 0 100 100" fill="none" stroke="currentColor">
 				
 				{{-- 寬而厚實的外緣圓框（模擬真實古錢厚重邊道） --}}
@@ -142,7 +142,7 @@
 				{{-- 標題列 --}}
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-2 text-base-content font-semibold tracking-wider text-sm">
-						{{-- 銅錢 SVG --}}
+						{{-- 小銅錢 SVG --}}
 						<svg class="w-4 h-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25">
 							<circle cx="12" cy="12" r="8"/>
 							<rect x="9.5" y="9.5" width="5" height="5" rx="0.5"/>
@@ -152,7 +152,7 @@
 					</div>
 					
 					{{-- 自動刷新控制 --}}
-					<div class="flex items-center gap-2.5 bg-base-content/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-base-content/10">
+					<div class="flex items-center gap-2.5 bg-base-content/2 backdrop-blur-sm px-3 py-1.5 rounded-full border border-base-content/10">
 						<span class="text-[10px] opacity-70 flex items-center gap-1.5">
 							<span class="inline-block w-2 h-2 rounded-full {{ $autoRefresh ? 'bg-emerald-400 animate-pulse' : 'bg-base-content/30' }}"></span>
 							{{ $autoRefresh ? '自動更新中' : '已暫停' }}
@@ -204,7 +204,7 @@
 										<span class="text-xs font-bold">{{ $item['code'] }}</span>
 										@if($item['is_base'])
 											{{-- 小朱印 --}}
-											<span class="text-[10px] px-1 py-0.5 rounded-sm bg-[#9E2B25]/80 text-white font-medium flex-shrink-0 tracking-wider">本</span>
+											<span class="text-[10px] px-1 py-0.5 rounded-sm bg-[#9E2B25]/80 text-white font-medium flex-shrink-0 tracking-wider">本幣</span>
 										@endif
 									</div>
 									<span class="text-sm font-mono font-bold truncate opacity-95">
@@ -324,7 +324,7 @@
         </div>
     @endforeach
 
-    {{-- ============================================================ --}}
+{{-- ============================================================ --}}
     {{-- 5. 新增/編輯帳戶 Modal --}}
     {{-- ============================================================ --}}
     <x-modal 

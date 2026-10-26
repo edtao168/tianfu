@@ -42,7 +42,7 @@ return [
             'theme' => 'green',
         ],
         'securities' => [
-            'name'  => '證券帳戶',
+            'name'  => '證券',
             'icon'  => 'heroicon-o-arrow-trending-up',
             'theme' => 'purple',
         ],
