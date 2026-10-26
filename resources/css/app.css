@@ -264,3 +264,34 @@ select.truncate option {
         animation: none;
     }
 }
+
+/* ==========================================================================
+   原生 select 文字截斷（Mary UI x-select / x-account-select 通用）
+   - 原生 select 不支援 text-overflow，靠「限制寬度 + overflow:hidden」讓
+     Chrome 自動顯示省略號；Firefox 對 select 截斷支援較好
+   - 關鍵：父層 flex/grid 必須 min-w-0，否則 select intrinsic width 會撐開
+   ========================================================================== */
+
+/* Mary UI 的 select wrapper（class 為 .select，內含原生 select） */
+.select {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.select > select,
+select.truncate,
+select.truncate option {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 防止 grid/flex 子項被 select 的 intrinsic width 撐開 */
+.select,
+[class*="col-span-"] > .select,
+.flex > .select {
+    min-width: 0;
+}

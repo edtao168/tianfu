@@ -130,7 +130,8 @@
                                 label="轉出賬戶" 
                                 :accounts="$this->accounts" 
                                 :selectedAccountId="$fromAccountId" 
-                                :showBalance="false" 
+                                :showBalance="false"
+								class="min-w-0"
                             />
                         </div>
 
@@ -148,7 +149,8 @@
                                 :accounts="$this->accounts" 
                                 :selectedAccountId="$toAccountId" 
                                 :excludeId="$fromAccountId" 
-                                :showBalance="false" 
+                                :showBalance="false"
+								class="min-w-0"
                             />
                         </div>
                     </div>
@@ -237,7 +239,8 @@
                         <x-account-select 
                             model="fromAccountId" 
                             :accounts="$this->accounts" 
-                            :selectedAccountId="$fromAccountId" 
+                            :selectedAccountId="$fromAccountId"
+							class="min-w-0"
                         />
                     </div>
                 @endif
@@ -488,7 +491,8 @@
                     <x-account-select 
                         model="templateFromAccountId" 
                         :accounts="$this->accounts" 
-                        :selectedAccountId="$templateFromAccountId" 
+                        :selectedAccountId="$templateFromAccountId"
+						class="min-w-0"
                     />
                 </div>
 
@@ -503,6 +507,7 @@
                             :selectedAccountId="$templateToAccountId" 
                             :excludeId="$templateFromAccountId" 
                             :showBalance="false" 
+							class="min-w-0"
                         />
                     </div>
                 @endif
