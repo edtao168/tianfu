@@ -102,6 +102,33 @@
             Livewire.dispatch('toggle-settings-drawer');
         });
     </script>
+	
+	<!-- 引入 SweetAlert2 CDN -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+	<!-- 3. 全域監聽 WithAlert 派發的彈窗事件 -->
+	<script>
+		window.addEventListener('swal:alert', event => {
+			// 相容 Livewire 3 的 event.detail 結構
+			const data = event.detail[0] || event.detail;
+
+			Swal.fire({
+				icon: data.icon,
+				title: data.title,
+				text: data.text,
+				confirmButtonText: data.confirmButtonText || '確定',
+				allowOutsideClick: data.allowOutsideClick ?? false,
+				buttonsStyling: false,
+				customClass: {
+					// 直接對應 colors.css 中的宋式變數
+					popup: 'rounded-2xl border border-[var(--song-border)] bg-[var(--song-modal-bg)] shadow-xl p-6',
+					title: 'text-lg font-bold text-base-content tracking-wide',
+					htmlContainer: 'text-sm text-base-content/80 mt-2',
+					confirmButton: 'btn btn-sm btn-dark rounded-xl px-6 py-2 transition-all duration-200 mt-4'
+				}
+			});
+		});
+	</script>
 </head>
 <body class="min-h-screen pb-28 md:pb-32 bg-base-200 text-base-content"
 	x-data="appSettings"

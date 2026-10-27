@@ -1,93 +1,41 @@
-﻿# Tianfu 系統備份與災難復原 (Disaster Recovery) 說明文件
+﻿# 添富記帳系統｜tianfu
+> 一套以 Laravel 開發、重視隱私與資料自主的個人/小團體記帳系統
 
-本打包工具包含完整針對 OCI (Oracle Cloud Infrastructure) Ubuntu 伺服器運行的 Laravel 專案所設計的備份與回滾腳本。
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
+## ✨ 專案介紹
+添富記帳是一套開源記帳系統，主打**資料自主掌控**：
+- 無廣告、不追蹤使用者行為
+- 原始碼完全公開，任何人可以審查程式邏輯
+- 支援收支記錄、分類管理、預算規劃、報表統計、CSV 匯入匯出
+- 適合個人記帳、家庭共用、小型工作室簡易收支管理
+
+> 重要理念：
+> 你永遠擁有自己的帳務資料。你可以自行部署、完整匯出資料，不受平台綁定。
 
 ---
 
-## 📁 檔案結構
+## 🧩 兩種使用方式
+### 1. 自託管（免費，推薦懂技術的使用者）
+你可以自由下載原始碼、自行部署在自己的伺服器上，**完全免費使用**，遵守 AGPLv3 授權規範即可。
 
-- `backup.sh`：全自動備份腳本（備份 MariaDB、.env、storage/、Apache/Nginx/Supervisor 設定檔）
-- `rollback.sh`：自動化回滾與災難復原腳本（恢復 Code、.env、storage/、MariaDB、權限修復與重啟服務）
-- `deploy.sh`：日常 Git 部署腳本（含 OCI iptables 開放與權限修復）
+✅ 適合：會架站、想把帳務資料放在自己伺服器、重視隱私的使用者
+⚠️ 目前狀態：本專案為 Laravel 專案，**尚未提供 Docker 一鍵包**，需自行準備 PHP / MySQL 環境，依照安裝文件部署。
+> 後續會規劃 Docker Compose 簡化部署流程。
 
----
+📌 自託管環境需求（Laravel）
+- PHP 8.3+
+- MySQL / MariaDB
+- Composer
+- Node.js（編譯前端資源）
+> 本專案未依賴 Redis，不需要安裝
 
-## 🚀 快速使用指南
-
-### 1. 已建立的自動化每日備份 (Crontab)
-
-新建、修改時，請在伺服器上執行 `sudo crontab -e` 並加入以下排程（每天凌晨 03:00 自動執行備份）：
-
+> 安裝步驟
 ```bash
-0 3 * * * /bin/bash /var/www/html/tianfu/backup.sh >> /var/log/tianfu_backup.log 2>&1
-```
-
-### 2. 手動執行備份（修改後測試用）
-
-```bash
-sudo bash backup.sh
-```
-
-備份檔將自動儲存於 `/var/backups/tianfu/tianfu_backup_YYYYMMDD_HHMMSS.tar.gz`。
-
----
-
-## 🔄 執行回滾 / 災難復原
-
-當系統崩潰或更新出錯需要退回上一版本時：
-
-### 情況 A：自動尋找最新備份檔並回滾
-
-```bash
-sudo bash rollback.sh
-```
-
-### 情況 B：指定特定的歷史備份檔進行還原
-
-```bash
-sudo bash rollback.sh /var/backups/tianfu/tianfu_backup_20260330_120000.tar.gz
-```
-
----
-
-## 🛡️ OCI 專屬注意事項
-
-1. **iptables 防火牆：** OCI Ubuntu 預設封鎖 80/443 port，`backup.sh` 與 `deploy.sh` 已包含自動修復規則。
-2. **權限問題：** 腳本執行完成後會自動將 `storage/` 及 `bootstrap/cache/` 設定為 `www-data:www-data` 並給予 `775` 權限，避免 500 錯誤。
-3. **.env 安全性：** 備份檔包含 `.env`（內含 DB 密碼與 APP_KEY），請妥善保管 `/var/backups/tianfu/` 目錄。
-4.已忽略對 deploy.sh 的上傳（oci與本地不一致，已鎖定git update-index --assume-unchanged deploy.sh，解鎖需git update-index --no-assume-unchanged deploy.sh）
-
----
-
-## 例行工作
-
-### 檢查備份執行狀況：
-
-	查看進銷存備份日誌cat /var/log/taotique_backup.log
-	查看記帳系統備份日誌cat /var/log/tianfu_backup.log
-
-	如果日誌最後出現 Backup completed successfully 之類的成功提示，且備份目錄 /var/backups/taotique 與 /var/backups/tianfu 都有產生新的 .tar.gz 壓縮檔，就代表整個災難復原（DR）備份機制已經完全穩定運作了！
-
-	備份檔將自動儲存於 /var/backups/tianfu/， /var/backups/taotique/，可執行以下命令查看
-	
-	OCI： ls /var/backups/tianfu/	
-	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/tianfu/"
-	
-	OCI： ls  /var/backups/taotique/	
-	本地：ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167 "ls -l /var/backups/taotique/"
-
-### 備份複製到本地，
-
-	先查找OCI備份文件目錄
-		ssh -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167
-		OCI cd /var/www/html
-		ls /var/backups/taotique/ *.tar.gz
-		exit
-		
-	**下載所有備份到本地（本地命令）**
-		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*.tar.gz D:\Users\Administrator\Downloads
-		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*.tar.gz D:\Users\Administrator\Downloads
-		
-	**下載指定日期到本地（本地命令）**
-		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/tianfu/*1022*.tar.gz D:\Users\Administrator\Downloads
-		scp -i "C:\laragon\www\keys\ssh-key-2026-03-07.key" ubuntu@158.101.10.167:/var/backups/taotique/*1022*.tar.gz D:\Users\Administrator\Downloads
+git clone https://github.com/edtao168/tianfu.git
+cd tianfu
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm install && npm run build

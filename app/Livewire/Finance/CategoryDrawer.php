@@ -4,13 +4,14 @@
 namespace App\Livewire\Finance;
 
 use App\Models\Category;
+use App\Traits\WithAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 
 class CategoryDrawer extends Component
 {
-    use WithPagination;
+    use WithPagination, WithAlert;
 
     public bool $isOpen = false;
     public string $activeTab = 'expense';
@@ -172,9 +173,9 @@ class CategoryDrawer extends Component
     {
         $category = Category::findOrFail($id);
         
-        // 預設分類不可編輯
         if ($category->is_default) {
-            $this->dispatch('notify', message: '系統預設分類不可編輯', type: 'error');
+            // 改用阻斷式錯誤對話框
+            $this->showErrorAlert('操作限制', '系統預設分類不可編輯');
             return;
         }
         
@@ -275,18 +276,18 @@ class CategoryDrawer extends Component
 			
 			// 1. 檢查是否為預設分類
 			if ($category->is_default) {
-				$this->dispatch('notify', message: '系統預設分類不可刪除', type: 'error');
-				$this->confirmingDeletion = null;
-				return;
-			}
+                $this->showErrorAlert('操作限制', '系統預設分類不可刪除');
+                $this->confirmingDeletion = null;
+                return;
+            }
 			
 			// 2. 檢查是否有子分類
 			$childrenCount = $category->children()->count();
 			if ($childrenCount > 0) {
-				$this->dispatch('notify', message: "無法刪除：該分類下仍有 {$childrenCount} 個子分類項目！", type: 'error');
-				$this->confirmingDeletion = null;
-				return;
-			}
+                $this->showErrorAlert('操作限制', "無法刪除：該分類下仍有 {$childrenCount} 個子分類項目！");
+                $this->confirmingDeletion = null;
+                return;
+            }
 			
 			// 3. 檢查是否有交易記錄（使用更安全的方式）
 			$recordsCount = 0;
@@ -295,22 +296,22 @@ class CategoryDrawer extends Component
 			}
 			
 			if ($recordsCount > 0) {
-				$this->dispatch('notify', message: "無法刪除：已有 {$recordsCount} 筆記帳明細綁定此分類！", type: 'error');
-				$this->confirmingDeletion = null;
-				return;
-			}
+                $this->showErrorAlert('操作限制', "無法刪除：已有 {$recordsCount} 筆記帳明細綁定此分類！");
+                $this->confirmingDeletion = null;
+                return;
+            }
 			
 			// 4. 執行刪除
 			$categoryName = $category->name;
 			$category->delete();
 			
 			$this->confirmingDeletion = null;
-			$this->dispatch('notify', message: "分類「{$categoryName}」已成功移除", type: 'success');
-			
-		} catch (\Exception $e) {
-			$this->dispatch('notify', message: '刪除失敗：' . $e->getMessage(), type: 'error');
-			$this->confirmingDeletion = null;
-		}
+			$this->showSuccess("分類「{$categoryName}」已成功移除");
+            
+        } catch (\Exception $e) {
+            $this->showErrorAlert('刪除失敗', $e->getMessage());
+            $this->confirmingDeletion = null;
+        }
 	}
 
     // 獲取當前層級的分類

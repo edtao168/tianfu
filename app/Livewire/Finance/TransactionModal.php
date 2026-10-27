@@ -6,11 +6,11 @@ namespace App\Livewire\Finance;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
-use Mary\Traits\Toast;
 use App\Models\FinancialAccount;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionTemplate;
+use App\Traits\WithAlert;
 use App\Traits\WithDateNavigation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +19,7 @@ use Carbon\Carbon;
 
 class TransactionModal extends Component
 {
-    use WithFileUploads, WithDateNavigation, Toast;
+    use WithFileUploads, WithDateNavigation, WithAlert;
 
     public bool $showTransactionModal = false;
     public bool $showTemplateModal = false;
@@ -88,7 +88,7 @@ class TransactionModal extends Component
                 ->find($transactionId);
 
             if (!$transaction) {
-                $this->error('交易記錄不存在');
+                $this->showErrorAlert('操作錯誤', '交易記錄不存在');
                 $this->showTransactionModal = false;
                 return;
             }
@@ -354,14 +354,14 @@ class TransactionModal extends Component
         $this->memo = $template->memo ?? '';
 
         $this->showTemplateListModal = false;
-        $this->success('已套用範本：' . $template->name);
+        $this->showSuccess('已套用範本：' . $template->name);
     }
 
     public function deleteTemplate($templateId)
     {
         $template = TransactionTemplate::findOrFail($templateId);
         $template->delete();
-        $this->success('範本已刪除');
+        $this->showSuccess('範本已刪除');
     }
 
     public function editTemplate($templateId)
@@ -399,13 +399,13 @@ class TransactionModal extends Component
 
         $userId = Auth::id();
         if (!$userId) {
-            $this->error('請先登入才能儲存範本');
+            $this->showErrorAlert('權限錯誤', '請先登入才能儲存範本');
             return;
         }
 
         $amount = (float) $this->amount;
         if ($amount < 0) {
-            $this->error('金額必須大於 0');
+            $this->showErrorAlert('操作錯誤', '金額必須大於 0');
             return;
         }
 
@@ -423,10 +423,10 @@ class TransactionModal extends Component
 
         if ($this->editingTemplateId) {
             TransactionTemplate::findOrFail($this->editingTemplateId)->update($templateData);
-            $this->success('範本已更新！');
+            $this->showSuccess('範本已更新！');
         } else {
             TransactionTemplate::create($templateData);
-            $this->success('範本已儲存！');
+            $this->showSuccess('範本已儲存！');
         }
 
         $this->showTemplateModal = false;
@@ -506,7 +506,7 @@ class TransactionModal extends Component
                         '「%s」餘額不足，目前可用 %s，需要 %s',
                         $fromAccount->name,
                         number_format((float) $availableBalance, 2),
-                        number_format((float) $this->amount, 2),
+                        number_format((float) $this->amount, 2)
                     ));
                 }
 
@@ -573,14 +573,14 @@ class TransactionModal extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e; // 驗證錯誤交還給 Livewire 顯示在欄位上
         } catch (\Exception $e) {
-            $this->error($e->getMessage());
+            $this->showErrorAlert('操作錯誤', $e->getMessage());
             return;
         }
 
         $this->showTransactionModal = false;
         $this->dispatch('refresh-data');
         $this->dispatch('refresh-transaction-list');
-        $this->success('交易已成功儲存！');
+        $this->showSuccess('交易已成功儲存！');
     }
 
     public function saveAndKeepOpen()
@@ -590,7 +590,7 @@ class TransactionModal extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            $this->error($e->getMessage());
+            $this->showErrorAlert('操作錯誤', $e->getMessage());
             return;
         }
 
@@ -615,7 +615,7 @@ class TransactionModal extends Component
 
         $this->dispatch('refresh-data');
         $this->dispatch('refresh-transaction-list');
-        $this->success('儲存成功，請繼續操作！');
+        $this->showSuccess('儲存成功，請繼續操作！');
     }
 
     public function openTemplateModalFromTransaction()
@@ -664,12 +664,12 @@ class TransactionModal extends Component
     {
         $userId = Auth::id();
         if (!$userId) {
-            $this->error('請先登入才能刪除記錄');
+            $this->showErrorAlert('權限錯誤', '請先登入才能刪除記錄');
             return;
         }
 
         if (!$this->transactionId) {
-            $this->error('找不到要刪除的記錄');
+            $this->showErrorAlert('操作錯誤', '找不到要刪除的記錄');
             return;
         }
 
@@ -690,10 +690,10 @@ class TransactionModal extends Component
             $this->showTransactionModal = false;
             $this->dispatch('refresh-transaction-list');
             $this->dispatch('refresh-data');
-            $this->success('記錄已成功刪除！');
+            $this->showSuccess('記錄已成功刪除！');
 
         } catch (\Exception $e) {
-            $this->error('刪除失敗：' . $e->getMessage());
+            $this->showErrorAlert('刪除失敗', $e->getMessage());
         }
     }
 

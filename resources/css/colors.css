@@ -479,3 +479,42 @@ html:not([data-theme="dark"]) textarea:focus {
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 40px -15px rgba(0, 0, 0, 0.5);
 }
+
+/* --------------------------------------------------------------------------
+| SweetAlert2 宋式美學全域統一樣式
+-------------------------------------------------------------------------- */
+.swal2-popup {
+    background-color: var(--song-modal-bg) !important;
+    border: 1px solid var(--song-border) !important;
+    color: var(--song-text) !important;
+    border-radius: 1rem !important; /* 對應您的 modal-box 圓角 */
+    backdrop-filter: blur(12px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.swal2-title {
+    color: var(--song-text) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+}
+
+.swal2-html-container {
+    color: color-mix(in srgb, var(--song-text) 80%, transparent) !important;
+    font-size: 0.95rem !important;
+}
+
+/* 確認按鈕直接對應您的 btn-dark 樣式 */
+.swal2-styled.swal2-confirm {
+    background-color: var(--song-ink) !important;
+    color: var(--song-bg) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.5rem 1.5rem !important;
+    font-weight: 500 !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--song-border);
+}
+
+[data-theme="dark"] .swal2-styled.swal2-confirm {
+    background-color: #E7E5E4 !important;
+    color: #141212 !important;
+}
