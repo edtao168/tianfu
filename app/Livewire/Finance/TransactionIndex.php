@@ -54,7 +54,7 @@ class TransactionIndex extends Component
     /**
      * 渲染組件視圖
      */
-	public function render()
+    public function render()
     {
         $parsedDate = $this->parseCurrentDate();
 
@@ -92,47 +92,54 @@ class TransactionIndex extends Component
             });
         }
 
+        // 🎯 關鍵字搜索：同時支援 備註 (memo) 與 類別名稱 (category->name)
         if (!empty($this->search)) {
-            $query->where('note', 'like', '%' . $this->search . '%');
+            $searchTerm = '%' . $this->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('memo', 'like', $searchTerm)
+                  ->orWhereHas('category', function ($catQuery) use ($searchTerm) {
+                      $catQuery->where('name', 'like', $searchTerm);
+                  });
+            });
         }
 
         // 高精度當月金額累加 (bcadd / bcsub)
         $monthTransactions = (clone $query)->orderBy('recorded_at', 'desc')->get();
-		
-		// 預先載入匯率表（避免 N+1）
-		$currencyService = app(CurrencyService::class);
-$baseCode = $currencyService->getBaseCurrencyCode();
+        
+        // 預先載入匯率表（避免 N+1）
+        $currencyService = app(CurrencyService::class);
+        $baseCode = $currencyService->getBaseCurrencyCode();
 
-$totalIncome  = '0.0000';
-$totalExpense = '0.0000';
-$needsConversion = !$this->searchAccountId;
+        $totalIncome  = '0.0000';
+        $totalExpense = '0.0000';
+        $needsConversion = !$this->searchAccountId;
 
-foreach ($monthTransactions as $tx) {
-    $amount = (string) $tx->amount;
+        foreach ($monthTransactions as $tx) {
+            $amount = (string) $tx->amount;
 
-    $code = $tx->currency
-        ?? $tx->fromAccount?->currency
-        ?? $tx->toAccount?->currency
-        ?? $baseCode;
+            $code = $tx->currency
+                ?? $tx->fromAccount?->currency
+                ?? $tx->toAccount?->currency
+                ?? $baseCode;
 
-    if ($needsConversion) {
-        $currency = $currencyService->getCurrency($code);
-        if (!$currency) {
-            continue;
+            if ($needsConversion) {
+                $currency = $currencyService->getCurrency($code);
+                if (!$currency) {
+                    continue;
+                }
+                $amountInBase = $currency->is_base
+                    ? $amount
+                    : $currencyService->convertToBase($amount, $code);  
+            } else {
+                $amountInBase = $amount;
+            }
+
+            if ($tx->type === 'income') {
+                $totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
+            } elseif ($tx->type === 'expense') {
+                $totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
+            }
         }
-        $amountInBase = $currency->is_base
-            ? $amount
-            : $currencyService->convertToBase($amount, $code);  // 內部用 MoneyCalculator
-    } else {
-        $amountInBase = $amount;
-    }
-
-    if ($tx->type === 'income') {
-        $totalIncome = MoneyCalculator::add($totalIncome, $amountInBase, 4);
-    } elseif ($tx->type === 'expense') {
-        $totalExpense = MoneyCalculator::add($totalExpense, $amountInBase, 4);
-    }
-}
 
         // 按日期（Y-m-d）分組
         $groupedTransactions = $monthTransactions->groupBy(function ($item) {

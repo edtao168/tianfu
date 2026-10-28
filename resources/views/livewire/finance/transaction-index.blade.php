@@ -4,16 +4,36 @@
     <div class="sticky top-0 z-10 backdrop-blur-md bg-base-100/80 pt-2 pb-4 border-b border-base-200">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                {{-- 🎯 使用 hidden sm:block 讓抬頭與輔助標題在手機上隱藏，桌機上保留 --}}
                 <div class="hidden sm:block">
                     <h1 class="text-2xl font-bold text-base-content tracking-wide">記帳流水明細</h1>
                     <p class="text-sm opacity-70 mt-1">支出是撬動未來的槓桿，負債是抵禦通膨的盾牌，收入是維持生存的戰果。</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <x-button label="資產帳戶" icon="o-wallet" class="btn-blue border border-base-300" link="{{ route('finance.accounts') }}" />
+                {{-- 🎯 搜尋框與即時載入狀態指示燈 --}}
+                <div class="relative w-full sm:w-64">
+                    <x-input 
+                        wire:model.live.debounce.300ms="search" 
+                        icon="o-magnifying-glass" 
+                        placeholder="搜索類別、備註..." 
+                        clearable 
+                        class="input-sm border-base-300 pr-8" 
+                    />
+                    
+                    {{-- 🎯 當 search 正在背景查詢時顯示的小動畫 (絕對定位在輸入框右側) --}}
+                    <div wire:loading wire:target="search" class="absolute right-8 top-2.5 pointer-events-none">
+                        <span class="loading loading-spinner loading-xs text-primary"></span>
+                    </div>
+                </div>
+
                 <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-neutral' : 'btn-purple border border-base-300' }}" wire:click="$toggle('showFilters')" />
             </div>
+        </div>
+
+        {{-- 🎯 額外的小提示：若正在搜尋時，也可以在下方顯示文字提示（選用） --}}
+        <div wire:loading wire:target="search" class="text-xs text-primary mt-2 flex items-center gap-1.5 animate-pulse">
+            <span class="loading loading-spinner loading-xs"></span>
+            <span>正在搜尋相關紀錄...</span>
         </div>
 
         {{-- 月份導航 + 本月收支 --}}
@@ -72,8 +92,8 @@
         @endif
     </div>
 
-    <!-- 流水時間線主體 -->
-    <div class="space-y-6">
+    {{-- 🎯 核心優化：使用 wire:loading.class 讓搜尋時列表自動呈現半透明過渡，提升科技感與流暢度 --}}
+    <div class="space-y-6 transition-all duration-200" wire:loading.class="opacity-40 scale-[0.99]" wire:target="search">
         @forelse($groupedTransactions as $date => $dayTransactions)
             <div class="space-y-3">
                 <!-- 日期標頭 -->
@@ -99,7 +119,6 @@
                             $isExpense = $tx->type === 'expense';
                             $isTransfer = $tx->type === 'transfer';
                             
-                            // 🎯 使用 colors.css 定義的語意類別
                             if ($isTransfer) {
                                 $iconColor = 'text-tx-transfer';
                                 $bgColor = 'bg-tx-transfer/10';
@@ -152,7 +171,6 @@
                                 $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
                             }
                             
-                            // 🎯 帳戶：轉帳不顯示，收支顯示
                             $shouldShowAccount = !$isTransfer && $acc;
                         @endphp
                         
@@ -165,36 +183,31 @@
                             </div>
                             
                             <div class="flex-1 min-w-0 ml-3 md:ml-4">
-								<div class="flex items-center gap-2">
-									{{-- 標題區塊 --}}
-									<div class="flex items-center gap-2 min-w-0 flex-1">
-										{{-- 🟢 收支：類別名稱完整顯示 (flex-shrink-0) --}}
-										{{-- 🟡 轉帳：顯示完整來源→目的地，但空間不足時截斷 (truncate) --}}
-										<span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}" 
-											  title="{{ $displayTitle }}">
-											{{ $displayTitle }}
-										</span>
-										
-										{{-- 只有非轉帳才顯示帳戶名稱 --}}
-										@if($shouldShowAccount)
-											<span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
-												{{ $acc->name }}
-											</span>
-										@endif
-									</div>
-									
-									{{-- 金額區塊：永遠固定靠右，不被壓縮 --}}
-									<span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
-										<span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
-										{{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
-									</span>
-								</div>
-								<div class="mt-0.5">
-									<span class="text-sm opacity-60 block truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
-										{{ $tx->memo ?: '無備註' }}
-									</span>
-								</div>
-							</div>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                                        <span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}" 
+                                              title="{{ $displayTitle }}">
+                                            {{ $displayTitle }}
+                                        </span>
+                                        
+                                        @if($shouldShowAccount)
+                                            <span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
+                                                {{ $acc->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    
+                                    <span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
+                                        <span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
+                                        {{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
+                                    </span>
+                                </div>
+                                <div class="mt-0.5">
+                                    <span class="text-sm opacity-60 block truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
+                        {{ $tx->memo ?: '無備註' }}
+                    </span>
+                                </div>
+                            </div>
                         </div>
                     @endforeach
                 </div>

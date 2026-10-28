@@ -480,41 +480,113 @@ html:not([data-theme="dark"]) textarea:focus {
         0 20px 40px -15px rgba(0, 0, 0, 0.5);
 }
 
-/* --------------------------------------------------------------------------
-| SweetAlert2 宋式美學全域統一樣式
+/* ==========================================================================
+| SweetAlert2 大宋雅致美學 + 輕擬物毛玻璃 (Glassmorphism & Depth 升級版)
 -------------------------------------------------------------------------- */
-.swal2-popup {
-    background-color: var(--song-modal-bg) !important;
-    border: 1px solid var(--song-border) !important;
-    color: var(--song-text) !important;
-    border-radius: 1rem !important; /* 對應您的 modal-box 圓角 */
-    backdrop-filter: blur(12px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3) !important;
+
+/* 1. 煙雨薄霧感遮罩 */
+.swal2-container.swal2-backdrop-show {
+    background: rgba(44, 42, 41, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
 }
 
+[data-theme="dark"] .swal2-container.swal2-backdrop-show {
+    background: rgba(0, 0, 0, 0.65) !important;
+}
+
+/* 2. 主彈窗：融合紙帛漸層、雙重毛玻璃與輕擬物高光 */
+.swal2-popup {
+    background: linear-gradient(145deg, 
+        rgba(255, 255, 255, 0.94) 0%, 
+        var(--song-modal-bg) 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid var(--song-border) !important;
+    border-radius: 1.25rem !important; /* rounded-2xl */
+    
+    /* 輕擬物立體光影：內嵌白光微邊框 + 沉靜沉降陰影 */
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.8),
+        0 25px 50px -12px rgba(41, 37, 36, 0.2),
+        0 0 0 1px rgba(214, 197, 166, 0.15) !important;
+    padding: 1.75rem 1.5rem !important;
+    color: var(--song-text) !important;
+}
+
+[data-theme="dark"] .swal2-popup {
+    background: linear-gradient(145deg, 
+        rgba(32, 29, 27, 0.92) 0%, 
+        var(--song-modal-bg) 100%) !important;
+    box-shadow: 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+        0 30px 60px -15px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 3. 標題與內文排版 */
 .swal2-title {
     color: var(--song-text) !important;
+    font-family: var(--font-serif), serif !important;
     font-weight: 700 !important;
     letter-spacing: 0.05em !important;
+    font-size: 1.2rem !important;
+    padding-top: 0.5rem !important;
 }
 
 .swal2-html-container {
-    color: color-mix(in srgb, var(--song-text) 80%, transparent) !important;
+    color: color-mix(in srgb, var(--song-text) 82%, transparent) !important;
     font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    margin-top: 0.5rem !important;
 }
 
-/* 確認按鈕直接對應您的 btn-dark 樣式 */
+/* 4. 宋式圖示微光圈優化（對應海棠紅與赭石意象） */
+.swal2-icon.swal2-error {
+    border-color: color-mix(in srgb, var(--song-rose) 40%, transparent) !important;
+    color: var(--song-rose) !important;
+    background-color: color-mix(in srgb, var(--song-rose) 8%, transparent) !important;
+    box-shadow: inset 0 0 12px color-mix(in srgb, var(--song-rose) 15%, transparent) !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--song-rose) !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: color-mix(in srgb, var(--card-orange) 40%, transparent) !important;
+    color: var(--card-orange) !important;
+    background-color: color-mix(in srgb, var(--card-orange) 8%, transparent) !important;
+    box-shadow: inset 0 0 12px color-mix(in srgb, var(--card-orange) 15%, transparent) !important;
+}
+
+/* 5. 確認按鈕：完全對應您的 btn-dark 輕擬物浮雕與點擊動畫 */
 .swal2-styled.swal2-confirm {
     background-color: var(--song-ink) !important;
     color: var(--song-bg) !important;
-    border-radius: 0.75rem !important;
-    padding: 0.5rem 1.5rem !important;
-    font-weight: 500 !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--song-border);
+    border: 1px solid var(--song-border) !important;
+    border-radius: 0.75rem !important; /* rounded-xl */
+    padding: 0.5rem 1.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    margin-top: 1rem !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+    opacity: 0.92 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.18) !important;
+}
+
+.swal2-styled.swal2-confirm:active {
+    transform: scale(0.96) !important;
 }
 
 [data-theme="dark"] .swal2-styled.swal2-confirm {
     background-color: #E7E5E4 !important;
     color: #141212 !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
