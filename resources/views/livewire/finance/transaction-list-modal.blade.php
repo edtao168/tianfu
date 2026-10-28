@@ -264,20 +264,20 @@
 			<div class="flex flex-wrap items-center justify-between gap-2 p-3 md:p-4 border-t border-base-200 bg-base-200/50 flex-shrink-0">
 				<div class="flex items-center gap-2 flex-wrap">
 					@if($accountId)
-						<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm" 
+						<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
 								  wire:click="editAccount" />
 						
 						@if($currentAccount && $currentAccount->is_active)
-							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm" 
+							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm song-interactive" 
 								  wire:click="toggleAccountVisibility" />
 						@else
-							<x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm" 
+							<x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm song-interactive" 
 								  wire:click="toggleAccountVisibility" />
 						@endif
 					@endif
 				</div>
 
-				<x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm" />
+				<x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm song-interactive" />
 			</div>
 		</div>
 	</x-modal>

@@ -38,7 +38,7 @@
             
             {{-- 關閉按鈕 --}}
             <button wire:click="close" 
-                    class="btn btn-ghost btn-circle btn-sm transition-colors text-base-content/60 hover:text-base-content hover:bg-base-200">
+                    class="btn btn-ghost btn-circle btn-sm transition-colors text-base-content/60 hover:text-base-content hover:bg-base-200 song-interactive">
                 <x-heroicon-o-x-mark class="w-5 h-5" />
             </button>
         </div>
@@ -53,14 +53,14 @@
                                 ? 'bg-base-100/60' 
                                 : 'bg-base-200/60' 
                             }}">
-                    <button class="tab tab-xs font-bold transition-all duration-200 {{ $activeTab === 'expense' ? 'tab-active bg-rose-500 text-white shadow-xs' : 'text-base-content/70' }}"
+                    <button class="tab tab-xs font-bold transition-all duration-200 song-interactive {{ $activeTab === 'expense' ? 'tab-active bg-rose-500 text-white shadow-xs' : 'text-base-content/70' }}"
                             wire:click="switchTab('expense')">
                         <span class="flex items-center gap-1">
                             <x-heroicon-o-arrow-down-right class="w-3.5 h-3.5" />
                             支出類
                         </span>
                     </button>
-                    <button class="tab tab-xs font-bold transition-all duration-200 {{ $activeTab === 'income' ? 'tab-active bg-emerald-600 text-white shadow-xs' : 'text-base-content/70' }}"
+                    <button class="tab tab-xs font-bold transition-all duration-200 song-interactive {{ $activeTab === 'income' ? 'tab-active bg-emerald-600 text-white shadow-xs' : 'text-base-content/70' }}"
                             wire:click="switchTab('income')">
                         <span class="flex items-center gap-1">
                             <x-heroicon-o-arrow-up-right class="w-3.5 h-3.5" />
@@ -76,16 +76,16 @@
                                     ? 'bg-base-100/60' 
                                     : 'bg-base-200/80' 
                                 }}">
-                        <button wire:click="setViewMode('list')" class="join-item {{ $viewMode === 'list' ? 'bg-base-300 text-base-content' : 'btn-ghost text-base-content/70' }}">
+                        <button wire:click="setViewMode('list')" class="join-item song-interactive {{ $viewMode === 'list' ? 'bg-base-300 text-base-content' : 'btn-ghost text-base-content/70' }}">
                             <x-heroicon-o-bars-3 class="w-4 h-4" />
                         </button>
-                        <button wire:click="setViewMode('grid')" class="join-item {{ $viewMode === 'grid' ? 'bg-base-300 text-base-content' : 'btn-ghost text-base-content/70' }}">
+                        <button wire:click="setViewMode('grid')" class="join-item song-interactive {{ $viewMode === 'grid' ? 'bg-base-300 text-base-content' : 'btn-ghost text-base-content/70' }}">
                             <x-heroicon-o-squares-2x2 class="w-4 h-4" />
                         </button>
                     </div>
                     
                     <button wire:click="openForm" 
-                            class="btn btn-xs gap-1 transition-all duration-200 btn-neutral">
+                            class="btn btn-xs gap-1 transition-all duration-200 btn-neutral song-interactive">
                         @if($showForm)
                             <x-heroicon-o-x-mark class="w-3.5 h-3.5" />
                             <span>取消</span>
@@ -139,7 +139,7 @@
                                 @foreach($iconOptions as $iconName)
                                     <button type="button" 
                                             wire:click="$set('icon', '{{ $iconName }}')"
-                                            class="flex items-center justify-center p-2 rounded-lg transition-colors hover:bg-base-300
+                                            class="flex items-center justify-center p-2 rounded-lg transition-colors hover:bg-base-300 song-interactive 
                                                    {{ $icon === $iconName ? 'bg-base-300 ring-2 ring-base-content/30' : '' }}"
                                             title="{{ $iconName }}">
                                         <x-dynamic-component :component="'heroicon-o-' . $iconName" class="w-5 h-5 text-base-content/80" />
@@ -163,7 +163,7 @@
                         </div>
 
                         <div class="pt-2 border-t border-base-200">
-                            <button type="submit" class="btn btn-neutral btn-sm w-full gap-1">
+                            <button type="submit" class="btn btn-neutral btn-sm w-full gap-1 song-interactive">
                                 <x-heroicon-o-archive-box-arrow-down class="w-4 h-4" />
                                 {{ $editingId ? '儲存修改' : '建立分類' }}
                             </button>
@@ -228,7 +228,7 @@
                                 <div class="flex items-center gap-0.5 flex-shrink-0 ml-2">
                                     @if(!$currentParentId)
                                         <button wire:click.stop="enterCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-base-content/50 hover:text-base-content"
+                                                class="btn btn-ghost btn-xs p-1 text-base-content/50 hover:text-base-content song-interactive"
                                                 title="查看子分類">
                                             <x-heroicon-o-chevron-right class="w-4 h-4" />
                                         </button>
@@ -236,12 +236,12 @@
                                     
                                     @if(!$isDefault)
                                         <button wire:click.stop="editCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-base-content/70 hover:text-amber-600">
+                                                class="btn btn-ghost btn-xs p-1 text-base-content/70 hover:text-amber-600 song-interactive">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
                                         </button>
                                         
                                         <button wire:click.stop="confirmDeleteCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-rose-600">
+                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-rose-600 song-interactive">
                                             <x-heroicon-o-trash class="w-4 h-4" />
                                         </button>
                                     @else
@@ -300,18 +300,18 @@
                                 <div class="flex items-center gap-0.5 flex-shrink-0 ml-2">
                                     @if(!$currentParentId)
                                         <button wire:click.stop="enterCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-base-content/50 hover:text-base-content">
+                                                class="btn btn-ghost btn-xs p-1 text-base-content/50 hover:text-base-content song-interactive">
                                             <x-heroicon-o-chevron-right class="w-4 h-4" />
                                         </button>
                                     @endif
                                     
                                     @if(!$isDefault)
                                         <button wire:click.stop="editCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-base-content/70 hover:text-amber-600">
+                                                class="btn btn-ghost btn-xs p-1 text-base-content/70 hover:text-amber-600 song-interactive">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
                                         </button>
                                         <button wire:click.stop="confirmDeleteCategory({{ $category->id }})" 
-                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-rose-600">
+                                                class="btn btn-ghost btn-xs p-1 text-rose-400 hover:text-rose-600 song-interactive">
                                             <x-heroicon-o-trash class="w-4 h-4" />
                                         </button>
                                     @else
@@ -340,7 +340,7 @@
             @if($currentParentId)
                 <div class="pt-2">
                     <button wire:click="backToParents" 
-                            class="btn btn-neutral btn-sm w-full gap-1">
+                            class="btn btn-neutral btn-sm w-full gap-1 song-interactive">
                         <x-heroicon-o-arrow-uturn-left class="w-4 h-4" />
                         返回大分類列表
                     </button>
@@ -380,12 +380,12 @@
                 <div class="flex items-center justify-end gap-2 mt-6">
                     <button type="button" 
                             wire:click="$set('confirmingDeletion', null)" 
-                            class="btn btn-ghost btn-sm px-4 text-base-content/70">
+                            class="btn btn-ghost btn-sm px-4 text-base-content/70 song-interactive">
                         取消
                     </button>
                     <button type="button" 
                             wire:click="deleteCategory({{ $confirmingDeletion }})" 
-                            class="btn btn-error btn-sm px-4 text-white">
+                            class="btn btn-error btn-sm px-4 text-white song-interactive">
                         確認刪除
                     </button>
                 </div>

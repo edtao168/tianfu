@@ -8,13 +8,13 @@
 
         {{-- 第一層分頁：內容自然撐開，支援橫向滑動 --}}
         <div class="flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300/70 backdrop-blur-md w-full lg:w-auto shadow-sm overflow-x-auto">
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                     wire:click="$set('tab1', 'category')">📊 類別</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                     wire:click="$set('tab1', 'trend')">📈 收支</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                     wire:click="$set('tab1', 'account')">💼 賬戶</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $showAssetTrend ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}" 
+            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $showAssetTrend ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                     wire:click="$set('tab1', 'asset')">🏦 總資產</button>
         </div>
 
@@ -37,7 +37,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 bg-base-200/50 p-3 rounded-2xl border border-base-300/60">
             <span class="text-xs font-bold text-base-content/60 tracking-wider px-1">幣別篩選</span>
             <div class="flex gap-1.5 p-1 bg-base-100 rounded-xl border border-base-300/60 backdrop-blur-sm flex-wrap flex-1">
-                <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }}"
+                <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }} song-interactive"
                         wire:click="$set('currencyFilter', 'all')">
                     🌐 全部（合併）
                 </button>
@@ -52,7 +52,7 @@
                             default => 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm',
                         };
                     @endphp
-                    <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
+                    <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }} song-interactive"
                             wire:click="$set('currencyFilter', '{{ $currency->code }}')">
                        {{ $currency->code }}
                     </button>
@@ -70,17 +70,17 @@
         <div class="flex p-1.5 bg-base-200/80 rounded-2xl border border-base-300/70 backdrop-blur-md shadow-sm">
             @if(!$showAssetTrend)
                 @if($tab1 === 'account')
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'composition' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'composition' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                             wire:click="$set('tab2', 'composition')">佔比</button>
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'trend' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'trend' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                             wire:click="$set('tab2', 'trend')">趨勢</button>
                 @else
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }}" 
+                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                             wire:click="$set('tab2', 'expense')">支出</button>
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }}" 
+                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                             wire:click="$set('tab2', 'income')">收入</button>
                     @if($tab1 === 'trend')
-                        <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'balance' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                        <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'balance' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                                 wire:click="$set('tab2', 'balance')">結餘</button>
                     @endif
                 @endif
@@ -94,26 +94,26 @@
         {{-- 第三層分頁群組（視覺對齊：等寬彈性分佈） --}}
         <div class="flex p-1.5 bg-base-200/80 rounded-2xl border border-base-300/70 backdrop-blur-md shadow-sm">
             @if($showAssetTrend)
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('assetTab', 'month')">月度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('assetTab', 'day')">每日</button>
             @elseif($tab1 === 'account')
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'year')">年度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'month')">月度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'day')">每日</button>
             @elseif($tab1 === 'category')
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'year')">年{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
             @else
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }}" 
+                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
                         wire:click="$set('tab3', 'day')">日{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
             @endif
         </div>

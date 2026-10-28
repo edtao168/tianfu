@@ -30,8 +30,8 @@
                     $theme = $periodThemeMap[$period] ?? 'blue';
                 @endphp
             
-                <div class="clickable-card stats shadow-sm bg-base-100 border border-base-300 rounded-2xl hover:border-base-content/25 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group" 
-     wire:click="showPeriodDetail('{{ $period }}')">
+                <div class="clickable-card stats song-interactive shadow-sm bg-base-100 border border-base-300 rounded-2xl cursor-pointer overflow-hidden group" 
+                     wire:click="showPeriodDetail('{{ $period }}')">
 					<div class="stat p-0">
 
 						{{-- 斜切緞帶標題層 --}}
@@ -46,7 +46,6 @@
 							{{-- 標題文字層(浮在緞帶上,不吃斜切遮罩) --}}
 							<div class="relative flex items-center justify-between h-12 pl-5 pr-5">
 								<div class="flex items-center gap-1.5 min-w-0">
-									
 									<span class="text-sm font-bold tracking-wide
 												 text-{{ $theme }}-700 dark:text-{{ $theme }}-300
 												 truncate">
@@ -62,7 +61,7 @@
 											{{ $currencyCount }}種
 										</span>
 									@endif
-									{{-- 【新增】可點擊箭頭指示 --}}
+									{{-- 可點擊箭頭指示 --}}
 									<svg class="click-arrow w-4 h-4 opacity-40 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all"
 										 fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -71,7 +70,7 @@
 							</div>
 						</div>
 
-						{{-- 收支數字區(保持原樣) --}}
+						{{-- 收支數字區 --}}
 						<div class="px-5 pb-5 pt-3 space-y-2.5">
 							<div class="flex justify-between items-center text-sm">
 								<span class="text-tx-income font-medium">收入</span>
@@ -109,7 +108,7 @@
 		
 		{{-- 總資產卡片本體 --}}
 		<div wire:loading.remove wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop"
-			 class="relative overflow-hidden assets-card border border-base-content/10 rounded-2xl p-6 md:p-8 text-base-content shadow-xl">
+			 class="relative overflow-hidden assets-card song-interactive border border-base-content/10 rounded-2xl p-6 md:p-8 text-base-content shadow-xl">
 			
 			{{-- 背景裝飾：極淡暖光暈 --}}
 			<div class="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
@@ -119,21 +118,13 @@
 			<svg class="absolute -top-28 -right-30 w-72 h-72 md:w-96 md:h-96 opacity-[0.05] dark:opacity-[0.15] pointer-events-none select-none text-base-content transition-all" 
 				 viewBox="0 0 100 100" fill="none" stroke="currentColor">
 				
-				{{-- 寬而厚實的外緣圓框（模擬真實古錢厚重邊道） --}}
 				<circle cx="50" cy="50" r="44" stroke-width="6" />
-				
-				{{-- 中間方孔（帶有適度厚度的內郭框） --}}
 				<rect x="36" y="36" width="28" height="28" rx="1" stroke-width="2" />
 
-				{{-- 「開元通寶」四字佈局：上開、下元、右通、左寶 --}}
 				<g fill="currentColor" stroke="none" class="font-serif font-black select-none opacity-95 text-[20px]">
-					{{-- 上：開 --}}
 					<text x="50" y="24" text-anchor="middle" dominant-baseline="central">開</text>
-					{{-- 下：元 --}}
 					<text x="50" y="76" text-anchor="middle" dominant-baseline="central">元</text>
-					{{-- 右：通 --}}
 					<text x="76" y="50" text-anchor="middle" dominant-baseline="central">通</text>
-					{{-- 左：寶 --}}
 					<text x="24" y="50" text-anchor="middle" dominant-baseline="central">寶</text>
 				</g>
 			</svg>
@@ -142,7 +133,6 @@
 				{{-- 標題列 --}}
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-2 text-base-content font-semibold tracking-wider text-sm">
-						{{-- 小銅錢 SVG --}}
 						<svg class="w-4 h-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25">
 							<circle cx="12" cy="12" r="8"/>
 							<rect x="9.5" y="9.5" width="5" height="5" rx="0.5"/>
@@ -158,18 +148,18 @@
 							{{ $autoRefresh ? '自動更新中' : '已暫停' }}
 						</span>
 						
-						{{-- 重新整理 SVG --}}
+						{{-- 重新整理 --}}
 						<button wire:click="refreshTotalAssets" 
-								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10"
+								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10 active:scale-95"
 								title="立即重新整理">
 							<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4"/>
 							</svg>
 						</button>
 						
-						{{-- 播放／暫停 SVG --}}
+						{{-- 播放／暫停 --}}
 						<button wire:click="$toggle('autoRefresh')" 
-								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10 border border-base-content/10 hover:border-base-content/30"
+								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10 border border-base-content/10 hover:border-base-content/30 active:scale-95"
 								title="{{ $autoRefresh ? '暫停自動更新' : '開啟自動更新' }}">
 							@if($autoRefresh)
 								<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -199,11 +189,10 @@
 					<div class="mt-6 pt-5 border-t border-base-content/15">
 						<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
 							@foreach($this->totalAssets['breakdown'] as $item)
-								<div class="flex flex-col gap-1 bg-base-content/[0.03] backdrop-blur-md rounded-xl px-3 py-2 border border-base-content/10 hover:bg-base-content/[0.06] transition-all shadow-sm min-w-0">
+								<div class="flex flex-col gap-1 song-interactive bg-base-content/[0.03] backdrop-blur-md rounded-xl px-3 py-2 border border-base-content/10 hover:bg-base-content/[0.06] shadow-sm min-w-0">
 									<div class="flex items-center justify-between gap-1">
 										<span class="text-xs font-bold">{{ $item['code'] }}</span>
 										@if($item['is_base'])
-											{{-- 小朱印 --}}
 											<span class="text-[10px] px-1 py-0.5 rounded-sm bg-[#9E2B25]/80 text-white font-medium flex-shrink-0 tracking-wider">本幣</span>
 										@endif
 									</div>
@@ -241,8 +230,8 @@
             <p class="text-sm opacity-70 mt-1">即時追蹤您的多幣別資產配置與資金流向</p>
         </div>
         <div class="flex items-center gap-3">
-            <x-button label="新增帳戶" icon="o-plus" class="btn-purple" wire:click="openCreateModal" />
-            <x-button label="記一筆" icon="o-pencil-square" class="btn-dark text-white" wire:click="$dispatch('open-transaction-modal')" />
+            <x-button label="新增帳戶" icon="o-plus" class="btn-purple song-interactive" wire:click="openCreateModal" />
+            <x-button label="記一筆" icon="o-pencil-square" class="btn-dark song-interactive text-white" wire:click="$dispatch('open-transaction-modal')" />
         </div>
     </div>
 
@@ -263,7 +252,7 @@
         @endphp
 
         <div class="space-y-3.5 pt-2 animate-fadeIn">
-            {{-- 分幣別標題列：幣別 + 代碼 + 點線 + 合計 --}}
+            {{-- 分幣別標題列 --}}
 			<div class="flex items-center gap-2">
 				<span class="flex items-center gap-2 min-w-0">
 					<span class="w-1.5 h-4 rounded-full bg-{{ $dotColor }}-500 flex-shrink-0"></span>
@@ -273,7 +262,6 @@
 					<span class="text-xs opacity-50 font-mono font-normal flex-shrink-0">{{ $group['currency'] }}</span>
 				</span>
 
-				{{-- 引導點線 --}}
 				<span class="flex-1 border-b border-dotted border-base-content/20 min-w-[1rem]"></span>
 
 				<span class="text-sm font-bold text-base-content flex-shrink-0 whitespace-nowrap">
@@ -291,7 +279,7 @@
                     @endphp
 
                     <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="clickable-card group card-{{ $typeTheme }} account-card relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-base-content/25 active:scale-[0.98] p-5 pl-6 flex flex-col justify-between h-28">
+                         class="clickable-card group card-{{ $typeTheme }} account-card song-interactive relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer p-5 pl-6 flex flex-col justify-between h-28">
                         
                         <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 
@@ -324,7 +312,7 @@
         </div>
     @endforeach
 
-{{-- ============================================================ --}}
+    {{-- ============================================================ --}}
     {{-- 5. 新增/編輯帳戶 Modal --}}
     {{-- ============================================================ --}}
     <x-modal 
@@ -340,7 +328,7 @@
         <button 
             type="button" 
             wire:click="$set('showAccountModal', false)" 
-            class="btn btn-ghost btn-sm btn-square absolute right-4 top-4 opacity-50 hover:opacity-100"
+            class="btn btn-ghost btn-sm btn-square absolute right-4 top-4 opacity-50 hover:opacity-100 song-interactive"
         >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -351,9 +339,9 @@
         <div class="py-4">
             <x-form wire:submit="saveAccount" class="space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
-    <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
-</div>
+                    <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
+                    <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
+                </div>
 
                 <div class="space-y-2">
                     <label class="label p-0 flex items-center gap-1">
@@ -365,7 +353,7 @@
                                 $isSelected = ($accountCurrency === $code);
                             @endphp
                             <button type="button" 
-                                class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border transition-all duration-200 {{ $isSelected ? 'bg-stone-800 text-stone-50 border-stone-700 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'bg-base-200/70 border-base-300 text-base-content hover:bg-base-200' }}" 
+                                class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border song-interactive {{ $isSelected ? 'bg-stone-800 text-stone-50 border-stone-700 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'bg-base-200/70 border-base-300 text-base-content hover:bg-base-200' }}" 
                                 wire:click="$set('accountCurrency', '{{ $code }}')">
                                 <span class="text-xs font-black">{{ $name }}</span>
                                 <span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }}</span>
@@ -408,8 +396,8 @@
                 {{-- 操作按鈕 --}}
                 <x-slot:actions>
                     <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300/60">
-                        <x-button label="取消" type="button" wire:click="$set('showAccountModal', false)" class="btn-light btn-sm opacity-80" />
-                        <x-button label="確認儲存" type="submit" class="btn-dark btn-sm text-white" spinner="saveAccount" />
+                        <x-button label="取消" type="button" wire:click="$set('showAccountModal', false)" class="btn-light btn-sm opacity-80 song-interactive" />
+                        <x-button label="確認儲存" type="submit" class="btn-dark btn-sm song-interactive text-white" spinner="saveAccount" />
                     </div>
                 </x-slot:actions>
             </x-form>

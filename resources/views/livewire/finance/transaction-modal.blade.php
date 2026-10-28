@@ -5,7 +5,7 @@
         <button 
             type="button" 
             wire:click="$set('showTransactionModal', false)" 
-            class="btn btn-light btn-sm btn-square absolute right-4 top-4 text-base-content/60 hover:text-base-content"
+            class="btn btn-light btn-sm btn-square absolute right-4 top-4 text-base-content/60 hover:text-base-content song-interactive"
         >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -37,7 +37,7 @@
                                 {{ $currentType === 'expense' ? '支出類別' : '收入類別' }}
                             </span>
                         </div>
-                        <button type="button" wire:click="$set('showCategoryPicker', false)" class="p-1.5 rounded-lg hover:bg-base-200 transition-colors text-base-content">
+                        <button type="button" wire:click="$set('showCategoryPicker', false)" class="p-1.5 rounded-lg hover:bg-base-200 transition-colors text-base-content song-interactive">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
@@ -52,7 +52,7 @@
                                             <div class="text-[10px] mb-1.5 ml-1 font-bold uppercase tracking-wide {{ $themeText }}">{{ $category->name }}</div>
                                             <div class="grid grid-cols-3 gap-2">
                                                 @foreach($category->children as $child)
-                                                    <button type="button" wire:click="selectCategory({{ $child->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group active:scale-95">
+                                                    <button type="button" wire:click="selectCategory({{ $child->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group song-interactive">
                                                         <div class="flex justify-center mb-1.5">
                                                             <x-dynamic-component :component="'heroicon-o-' . ($child->icon ?? 'folder')" class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
                                                         </div>
@@ -62,7 +62,7 @@
                                             </div>
                                         </div>
                                     @else
-                                        <button type="button" wire:click="selectCategory({{ $category->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group active:scale-95">
+                                        <button type="button" wire:click="selectCategory({{ $category->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group song-interactive">
                                             <div class="flex justify-center mb-1.5">
                                                 <x-dynamic-component :component="'heroicon-o-' . ($category->icon ?? 'folder')" class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
                                             </div>
@@ -97,12 +97,12 @@
             @endphp
             <div class="grid grid-cols-4 gap-1.5 mb-5">
                 {{-- 主 Modal 頂部「範本」按鈕 --}}
-				<button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content flex items-center justify-center gap-1.5">
+				<button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content flex items-center justify-center gap-1.5 song-interactive">
 					<x-icon name="o-clipboard-document-list" class="w-4 h-4" />
 					<span>範本</span>
 				</button>
                 @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
-                    <button type="button" wire:click="$set('type', '{{ $value }}')" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 {{ $currentType === $value ? $typeClasses[$value] . ' shadow-md' : 'bg-base-200 hover:bg-base-300 text-base-content' }}">
+                    <button type="button" wire:click="$set('type', '{{ $value }}')" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 {{ $currentType === $value ? $typeClasses[$value] . ' shadow-md' : 'bg-base-200 hover:bg-base-300 text-base-content' }} song-interactive">
                         {{ $label }}
                     </button>
                 @endforeach
@@ -141,7 +141,7 @@
                         <div class="flex justify-center my-1">
 							<button type="button" 
 									wire:click="swapAccounts" 
-									class="btn btn-blue btn-sm btn-circle" 
+									class="btn btn-blue btn-sm btn-circle song-interactive" 
 									title="切換轉出／轉入賬戶">
 								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
 									<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -280,14 +280,14 @@
                 <x-slot:actions>
                     @if(!$transactionId)
                         <div class="grid grid-cols-3 gap-2 w-full pt-3 border-t border-base-300">
-                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-purple" />
-                            <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-green" spinner="saveAndKeepOpen" />
-                            <x-button label="儲存" type="submit" class="btn-dark" spinner="saveTransaction" />
+                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-purple song-interactive" />
+                            <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-green song-interactive" spinner="saveAndKeepOpen" />
+                            <x-button label="儲存" type="submit" class="btn-dark song-interactive" spinner="saveTransaction" />
                         </div>
                     @else
                         <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300">
-                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-red" spinner="deleteTransaction" />
-                            <x-button label="儲存" type="submit" class="btn-green" spinner="saveTransaction" />
+                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-red song-interactive" spinner="deleteTransaction" />
+                            <x-button label="儲存" type="submit" class="btn-green song-interactive" spinner="saveTransaction" />
                         </div>
                     @endif
                 </x-slot:actions>
@@ -388,7 +388,7 @@
                     <div class="px-4 py-3 border-t border-[var(--song-border)] shrink-0">
                         <button type="button"
                                 wire:click="$set('showCategoryPicker', false)"
-                                class="w-full py-2.5 rounded-xl font-medium text-base-content bg-base-200 hover:bg-base-300 transition-colors text-sm">
+                                class="w-full py-2.5 rounded-xl font-medium text-base-content bg-base-200 hover:bg-base-300 transition-colors text-sm song-interactive">
                             取消
                         </button>
                     </div>
@@ -408,7 +408,7 @@
                     @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
                         <button type="button"
                                 wire:click="$set('templateType', '{{ $value }}')"
-                                class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200
+                                class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 song-interactive
                                     {{ $currentTemplateType === $value 
                                         ? $templateTypeClasses[$value] . ' shadow-md'
                                         : 'bg-base-200 hover:bg-base-300 text-base-content' }}">
@@ -532,7 +532,7 @@
                 <x-slot:actions>
                     <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
                         <x-button label="取消" type="button" @click="$wire.showTemplateModal = false; $wire.resetTemplateForm()" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content" />
-                        <x-button label="{{ $editingTemplateId ? '更新' : '儲存' }}" type="submit" class="btn-sm rounded-xl btn-green" />
+                        <x-button label="{{ $editingTemplateId ? '更新' : '儲存' }}" type="submit" class="btn-sm rounded-xl btn-green song-interactive" />
                     </div>
                 </x-slot:actions>
             </x-form>
@@ -566,13 +566,13 @@
                     </div>
                     <div class="flex gap-1 shrink-0 ml-2">
                         <button wire:click="editTemplate({{ $template['id'] }})" 
-                                class="p-1.5 text-base-content/60 hover:text-base-content transition-colors rounded-lg hover:bg-base-300"
+                                class="p-1.5 text-base-content/60 hover:text-base-content transition-colors rounded-lg hover:bg-base-300 song-interactive"
                                 title="編輯範本">
                             <x-icon name="o-pencil" class="w-4 h-4" />
                         </button>
                         <button wire:click="deleteTemplate({{ $template['id'] }})" 
                                 wire:confirm="確定要刪除此範本嗎？" 
-                                class="p-1.5 text-tx-expense hover:opacity-80 transition-colors rounded-lg hover:bg-tx-expense/10"
+                                class="p-1.5 text-tx-expense hover:opacity-80 transition-colors rounded-lg hover:bg-tx-expense/10 song-interactive"
                                 title="刪除範本">
                             <x-icon name="o-trash" class="w-4 h-4" />
                         </button>
@@ -582,15 +582,15 @@
                 <div class="text-center py-8 text-base-content/60">
                     <x-icon name="o-inbox" class="w-12 h-12 mx-auto mb-2 text-base-content/40" />
                     <p>尚無範本</p>
-                    <button wire:click="openTemplateModalFromList" class="mt-3 text-sm text-tx-transfer hover:opacity-80"> 建立第一個範本 → </button>
+                    <button wire:click="openTemplateModalFromList" class="mt-3 text-sm text-tx-transfer hover:opacity-80 song-interactive"> 建立第一個範本 → </button>
                 </div>
             @endforelse
         </div>
         
         <x-slot:actions>
             <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
-                <x-button label="取消" type="button" @click="$wire.showTemplateListModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content" />
-                <x-button label="新增範本" type="button" wire:click="openTemplateModalFromList" class="btn-sm rounded-xl btn-green" />
+                <x-button label="取消" type="button" @click="$wire.showTemplateListModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
+                <x-button label="新增範本" type="button" wire:click="openTemplateModalFromList" class="btn-sm rounded-xl btn-green song-interactive" />
             </div>
         </x-slot:actions>
     </x-modal>

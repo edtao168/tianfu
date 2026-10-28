@@ -12,16 +12,16 @@
 		</div>
 		<div class="flex items-center gap-2 w-full sm:w-auto">
 			<x-input wire:model.live.debounce.400ms="search" icon="o-magnifying-glass" placeholder="搜尋姓名..." class="rounded-xl flex-1 sm:flex-initial" clearable />
-			<x-button label="建立成員" icon="o-plus" class="btn-green" wire:click="create" />
+			<x-button label="建立成員" icon="o-plus" class="btn-green song-interactive" wire:click="create" />
 		</div>
 	</div>
 
 	{{-- 📇 卡片網格（統一版本，不分裝置） --}}
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 		@forelse($partners as $partner)
-			{{-- 整張卡片可點擊開啟編輯 --}}
+			{{-- 整張卡片可點擊開啟編輯 (以 song-interactive 取代原本的 active:scale-[0.98]) --}}
 			<div 
-				class="group bg-base-200/50 rounded-2xl p-4 shadow-sm hover:shadow-md border border-transparent hover:border-base-300 transition-all duration-200 cursor-pointer active:scale-[0.98]"
+				class="group bg-base-200/50 rounded-2xl p-4 shadow-sm hover:shadow-md border border-transparent hover:border-base-300 transition-all duration-200 cursor-pointer song-interactive"
 				wire:click="openEdit({{ $partner->id }})"
 			>
 				{{-- 卡片內容 --}}
@@ -69,7 +69,7 @@
 				<div class="flex justify-end mt-3 pt-2 border-t border-base-200">
 					<x-button 
 						icon="o-trash" 
-						class="btn-red" 
+						class="btn-red song-interactive" 
 						wire:confirm="確定要將「{{ $partner->name }}」移出嗎？" 
 						wire:click.stop="delete({{ $partner->id }})" 
 						tooltip="刪除成員"
@@ -142,18 +142,20 @@
 			{{-- ⬇️ 底部共用按鈕 --}}
 			<div class="border-t border-base-200 pt-4 mt-2">
 				<div class="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+					
 					<x-button 
 						label="返回" 
 						icon="o-arrow-left" 
-						class="btn-blue" 
+						class="btn-blue song-interactive" 
 						wire:click="closeDrawer" 
 						type="button"
 					/>
+					
 					<x-button 
 						label="存檔" 
 						type="submit" 
 						icon="o-check" 
-						class="btn-green" 
+						class="btn-green song-interactive" 
 						spinner="save" 
 					/>
 				</div>

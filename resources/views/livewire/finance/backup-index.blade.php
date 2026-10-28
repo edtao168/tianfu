@@ -13,13 +13,13 @@
             <x-button 
                 label="診斷" 
                 icon="o-beaker" 
-                class="btn-purple btn-sm sm:btn-md" 
+                class="btn-purple btn-sm sm:btn-md song-interactive" 
                 wire:click="diagnoseBackup" 
             />
             <x-button 
                 label="立即備份" 
                 icon="o-cpu-chip" 
-                class="btn-dark btn-sm sm:btn-md" 
+                class="btn-dark btn-sm sm:btn-md song-interactive" 
                 wire:click="runBackup" 
                 spinner="runBackup"
             />

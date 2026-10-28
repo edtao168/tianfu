@@ -111,7 +111,7 @@
 
             {{-- 提交按鈕 --}}
             <div class="flex justify-end">
-                <x-button label="送出反饋" icon="o-paper-airplane" type="submit" class="btn-purple" spinner="submitForm" />
+                <x-button label="送出反饋" icon="o-paper-airplane" type="submit" class="btn-purple song-interactive" spinner="submitForm" />
             </div>
         </form>
     </x-card>

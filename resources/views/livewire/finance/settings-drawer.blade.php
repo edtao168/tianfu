@@ -16,19 +16,19 @@
 					<button type="button" 
 							@click="setTheme('system')"
 							:class="theme === 'system' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						跟隨系統
 					</button>
 					<button type="button" 
 							@click="setTheme('dark')"
 							:class="theme === 'dark' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						玄英黑
 					</button>
 					<button type="button" 
 							@click="setTheme('light')"
 							:class="theme === 'light' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						霜華白
 					</button>
 				</div>
@@ -44,19 +44,19 @@
 					<button type="button" 
 							@click="setFontSize('sm')"
 							:class="fontSize === 'sm' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						精簡 (小)
 					</button>
 					<button type="button" 
 							@click="setFontSize('base')"
 							:class="fontSize === 'base' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						標準 (中)
 					</button>
 					<button type="button" 
 							@click="setFontSize('lg')"
 							:class="fontSize === 'lg' ? 'bg-base-100 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'opacity-70 hover:opacity-100'"
-							class="py-1.5 text-xs rounded-lg transition-all duration-200">
+							class="py-1.5 text-xs rounded-lg transition-all duration-200 song-interactive">
 						清晰 (大)
 					</button>
 				</div>
@@ -78,7 +78,7 @@
 
 			{{-- 分類管理 --}}
 			<button wire:click="openCategoryManager" 
-					class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-base-200/60 transition-all duration-200 border border-transparent hover:border-base-200">
+					class="w-full group flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-base-200/60 transition-all duration-200 border border-transparent hover:border-base-200 song-interactive">
 				<div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
 					<x-heroicon-o-tag class="w-5 h-5 text-white" />
 				</div>
@@ -165,7 +165,7 @@
 		<x-slot:actions>
 			<form method="POST" action="{{ route('logout') }}" class="w-full">
 				@csrf
-				<button type="submit" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-base-200 hover:bg-error/10 hover:text-error text-base-content font-medium transition-all duration-200 active:scale-[0.99]">
+				<button type="submit" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-base-200 hover:bg-error/10 hover:text-error text-base-content font-medium transition-all duration-200 song-interactive">
 					<x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5" />
 					<span>安全登出</span>
 				</button>

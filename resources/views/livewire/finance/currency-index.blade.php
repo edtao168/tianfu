@@ -14,7 +14,7 @@
             <x-button 
                 label="新增幣別" 
                 icon="o-plus" 
-                class="btn-green btn-sm sm:btn-md w-full sm:w-auto" 
+                class="btn-green btn-sm sm:btn-md w-full sm:w-auto song-interactive" 
                 wire:click="create" 
             />
         </div>
@@ -30,7 +30,7 @@
                 @foreach($shops as $shop)
                     <button 
                         wire:click="switchShop({{ $shop->id }})"
-                        class="btn btn-xs sm:btn-sm {{ $currentShopId == $shop->id ? 'btn-dark' : 'btn-light' }} flex-1 sm:flex-none"
+                        class="btn btn-xs sm:btn-sm song-interactive {{ $currentShopId == $shop->id ? 'btn-dark' : 'btn-light' }} flex-1 sm:flex-none"
                     >
                         {{ $shop->name }}
                     </button>
@@ -109,8 +109,8 @@
                     </label>
                     
                     <div class="flex gap-2 w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
-                        <x-button label="💾 儲存" wire:click="save" class="btn-dark btn-sm sm:btn-md flex-1 sm:flex-none" />
-                        <x-button label="取消" wire:click="cancel" class="btn-light btn-sm sm:btn-md flex-1 sm:flex-none" />
+                        <x-button label="💾 儲存" wire:click="save" class="btn-dark btn-sm sm:btn-md flex-1 sm:flex-none song-interactive" />
+                        <x-button label="取消" wire:click="cancel" class="btn-light btn-sm sm:btn-md flex-1 sm:flex-none song-interactive" />
                     </div>
                 </div>
             </div>
@@ -125,7 +125,7 @@
             <x-button 
                 label="新增" 
                 icon="o-plus" 
-                class="btn-green btn-sm flex-1 sm:flex-none" 
+                class="btn-green btn-sm flex-1 sm:flex-none song-interactive" 
                 wire:click="create" 
             />
             
@@ -133,7 +133,7 @@
                 label="" 
                 placeholder="🔍 搜尋幣別..." 
                 wire:model.live="search"
-                class="input-sm flex-1 sm:flex-none sm:w-48"
+                class="input-sm flex-1 sm:flex-none sm:w-48 song-interactive"
                 icon="o-magnifying-glass"
             />
             
@@ -194,7 +194,7 @@
                             label="✏️ 編輯" 
                             size="xs" 
                             wire:click="edit({{ $baseCurrency->id }})"
-                            class="bg-white/20 hover:bg-white/30 text-white border-white/20 btn-xs sm:btn-sm"
+                            class="bg-white/20 hover:bg-white/30 text-white border-white/20 btn-xs sm:btn-sm song-interactive"
                         />
                     </div>
                 </div>
@@ -209,7 +209,7 @@
             {{-- 沒有本幣時的提示 --}}
             <div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
                 <p class="text-amber-700 dark:text-amber-300">⚠️ 尚未設定本幣貨幣，請先新增一個幣別並設為本幣</p>
-                <x-button label="➕ 新增幣別" wire:click="create" class="btn-primary mt-3" />
+                <x-button label="➕ 新增幣別" wire:click="create" class="btn-primary mt-3 song-interactive" />
             </div>
         @endif
 
@@ -281,7 +281,7 @@
                                         label="👑 設為本幣" 
                                         size="xs" 
                                         wire:click="setBase({{ $currency->id }})"
-                                        class="btn-primary btn-xs"
+                                        class="btn-primary btn-xs song-interactive "
                                         wire:confirm="確定要將 {{ $currency->name }} 設為本幣貨幣嗎？\n所有金額將以此為基準換算！"
                                     />
                                     
@@ -289,14 +289,14 @@
                                         label="{{ $currency->is_active ? '⛔ 停用' : '✅ 啟用' }}"
                                         size="xs"
                                         wire:click="toggleActive({{ $currency->id }})"
-                                        class="{{ $currency->is_active ? 'btn-orange btn-xs' : 'btn-green btn-xs' }}"
+                                        class="{{ $currency->is_active ? 'btn-orange btn-xs' : 'btn-green btn-xs' }} song-interactive"
                                     />
                                     
                                     <x-button 
                                         icon="o-trash" 
                                         size="xs"
                                         wire:click="delete({{ $currency->id }})"
-                                        class="btn-red btn-xs"
+                                        class="btn-red btn-xs song-interactive"
                                         wire:confirm="確定要刪除 {{ $currency->name }} 嗎？\n此操作無法復原！"
                                     />
                                 </div>
@@ -313,7 +313,7 @@
             <div class="text-6xl mb-4">💱</div>
             <p class="text-lg font-medium text-base-content">還沒有設定任何幣別</p>
             <p class="text-sm text-base-content/60 mt-1">請先新增一個幣別，並設為本幣貨幣</p>
-            <x-button label="➕ 新增第一個幣別" wire:click="create" class="btn-green mt-4" />
+            <x-button label="➕ 新增第一個幣別" wire:click="create" class="btn-green mt-4 song-interactive" />
         </div>
     @endif
 

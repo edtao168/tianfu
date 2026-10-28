@@ -26,7 +26,7 @@
                     </div>
                 </div>
 
-                <x-button label="篩選明細" icon="o-funnel" class="{{ $showFilters ? 'btn-neutral' : 'btn-purple border border-base-300' }}" wire:click="$toggle('showFilters')" />
+                <x-button label="篩選明細" icon="o-funnel" class=" song-interactive {{ $showFilters ? 'btn-neutral' : 'btn-purple border border-base-300' }}" wire:click="$toggle('showFilters')" />
             </div>
         </div>
 

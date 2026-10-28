@@ -383,6 +383,88 @@ html:not([data-theme="dark"]) textarea:focus {
 }
 
 /* ==========================================================================
+   宋韻新擬態：微光與沉降互動系統 (Song Neomorphic Micro-Interactions)
+   ========================================================================== */
+
+/* 1. 全域輕擬物基礎互動元件 */
+.song-interactive {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, box-shadow;
+}
+
+/* 懸停 (Hover)：迎光而亮，輕微浮起 1px */
+.song-interactive:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 6px 16px -4px rgba(46, 42, 38, 0.08);
+}
+
+/* 按下/手指觸碰 (Active/Pressed)：微凹內陷 (Inset Shadow) 與紮實感 */
+.song-interactive:active {
+    transform: translateY(1px);
+    box-shadow: 
+        inset 0 2px 4px 0 rgba(46, 42, 38, 0.12),
+        0 1px 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* 2. 暗色模式：夜觀青瓷 — 背光透光效果 (Dark Mode Ambient Glow) */
+[data-theme="dark"] .song-interactive:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--song-sky) 30%, transparent);
+    /* 溫潤不刺眼的周邊背光 */
+    box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 20px -2px color-mix(in srgb, var(--song-sky) 15%, transparent),
+        0 8px 24px -6px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .song-interactive:active {
+    transform: translateY(1px);
+    box-shadow: 
+        inset 0 2px 6px 0 rgba(0, 0, 0, 0.6),
+        0 0 8px 0 color-mix(in srgb, var(--song-sky) 10%, transparent);
+}
+
+/* ==========================================================================
+   強化既有按鈕系統的「按下/離線」質感
+   ========================================================================== */
+
+.btn-red,
+.btn-orange,
+.btn-green,
+.btn-blue,
+.btn-purple,
+.btn-dark,
+.btn-light {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 按下時的通用的宋紙受壓感 */
+.btn-red:active,
+.btn-orange:active,
+.btn-green:active,
+.btn-blue:active,
+.btn-purple:active,
+.btn-dark:active,
+.btn-light:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 暗色模式下按鈕按下時的極細微透光與內沉 */
+[data-theme="dark"] .btn-red:active,
+[data-theme="dark"] .btn-orange:active,
+[data-theme="dark"] .btn-green:active,
+[data-theme="dark"] .btn-blue:active,
+[data-theme="dark"] .btn-purple:active,
+[data-theme="dark"] .btn-dark:active,
+[data-theme="dark"] .btn-light:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ==========================================================================
    交易類型語意色彩 — 宋色版
    ========================================================================== */
 
