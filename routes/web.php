@@ -13,6 +13,7 @@ use App\Livewire\Finance\ContactIndex;
 use App\Livewire\Finance\CurrencyIndex;
 use App\Livewire\Finance\DocsViewer;
 use App\Livewire\Finance\PartnerIndex;
+use App\Livewire\Finance\RecurringIndex;
 use App\Livewire\Finance\ReportStats;
 use App\Livewire\Finance\TransactionIndex;
 use Illuminate\Support\Facades\Route;
@@ -60,4 +61,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finance/contact', ContactIndex::class)->name('finance.contact');
 	Route::get('/finance/partners', PartnerIndex::class)->name('finance.partners');
 	Route::get('/finance/currencies', CurrencyIndex::class)->name('finance.currencies');
+	Route::get('/finance/recurring', RecurringIndex::class)->name('finance.recurring');
 });

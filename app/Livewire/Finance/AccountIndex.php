@@ -12,11 +12,12 @@ use App\Models\Transaction;
 use App\Models\Shop;
 use App\Services\CurrencyService;
 use App\Services\MoneyCalculator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Traits\WithAlert;
 
 class AccountIndex extends Component
 {
+    use WithAlert;
+
     // ============================================================
     // 表單屬性
     // ============================================================
@@ -40,6 +41,25 @@ class AccountIndex extends Component
     {
         $this->currentShopId = session('current_shop_id', Shop::first()?->id);
         $this->loadPeriodStats();
+		
+		// 檢查是否有背景自動生成的定期收支通知
+		$this->checkPendingRecurringNotices();
+    }
+	
+    public function checkPendingRecurringNotices()
+    {
+        $cacheKey = 'pending_recurring_notice_' . $this->currentShopId;
+        
+        if (cache()->has($cacheKey)) {
+            $titles = cache()->pull($cacheKey); // 讀取後立刻清除
+            $listText = implode('<br>', $titles);
+            
+            // 呼叫 WithAlert 中的強制確認視窗 (allowOutsideClick => false)
+            $this->showWarningAlert(
+                '系統已自動生成以下定期收支',
+                '<div class="text-left mt-2 space-y-1">' . $listText . '</div>'
+            );
+        }
     }
     
     // ============================================================
@@ -194,7 +214,6 @@ class AccountIndex extends Component
 		$details = [];
 
 		foreach ($transactions as $transaction) {
-			// 幣別來源：交易 → 來源帳戶 → 目的帳戶 → 本幣
 			$currencyCode = $transaction->currency
 				?? $transaction->fromAccount?->currency
 				?? $transaction->toAccount?->currency
@@ -202,14 +221,12 @@ class AccountIndex extends Component
 
 			$currency = $currencyService->getCurrency($currencyCode);
 
-			// 找不到幣別：照原邏輯跳過
 			if (!$currency) {
 				continue;
 			}
 
 			$amountRaw = (string) $transaction->amount;
 
-			// 換算成本幣
 			$amountInBase = $currency->is_base
 				? $amountRaw
 				: $currencyService->convertToBase($amountRaw, $currencyCode);
@@ -220,7 +237,6 @@ class AccountIndex extends Component
 				$expense = MoneyCalculator::add($expense, $amountInBase, 4);
 			}
 
-			// 各幣別原幣明細
 			if (!isset($details[$currencyCode])) {
 				$details[$currencyCode] = [
 					'code' => $currencyCode,
@@ -265,7 +281,6 @@ class AccountIndex extends Component
 			'year'  => '本年度交易明細',
 		];
 
-		// 加上 params: 具名參數
 		$this->dispatch('open-transaction-list-modal', params: [
 			'dateMode' => $dateMode,
 			'title'    => $titleMap[$period] ?? '交易明細',
@@ -276,10 +291,9 @@ class AccountIndex extends Component
     // 總資產刷新
     // ============================================================
 
-	#[On('refresh-data')] //TransactionModal
+	#[On('refresh-data')]
     public function refreshData()
     {
-        // 清除計算屬性快取
         unset($this->totalAssets);
         unset($this->currencyGroups);
         $this->loadPeriodStats();
@@ -295,9 +309,6 @@ class AccountIndex extends Component
         $this->showAccountModal = true;
     }
     
-    /**
-     * 監聽來自 TransactionListModal 的編輯帳戶請求
-     */
     #[On('edit-account-from-transactions')]
     public function editAccount($accountId = null)
     {
@@ -364,7 +375,6 @@ class AccountIndex extends Component
     {
         $account = FinancialAccount::findOrFail($id);
         
-        // 檢查是否有交易記錄
         $hasTransactions = Transaction::where('from_account_id', $id)
             ->orWhere('to_account_id', $id)
             ->exists();
@@ -395,8 +405,7 @@ class AccountIndex extends Component
     
     public function viewAccountTransactions($accountId)
     {
-		// 建議此處也同步加上 title 與 params: 具名參數，確保帳戶明細標題正常
-		$account = \App\Models\FinancialAccount::find($accountId);
+		$account = FinancialAccount::find($accountId);
 
 		$this->dispatch('open-transaction-list-modal', params: [
 			'accountId' => $accountId,
@@ -418,7 +427,6 @@ class AccountIndex extends Component
     
     public function render()
 	{
-		// 轉成 MaryUI <x-select> 能正確解析的格式
 		$accountTypeOptions = collect(config('business.account_types', []))
 			->map(fn ($item, $key) => ['id' => $key, 'name' => $item['name']])
 			->values()

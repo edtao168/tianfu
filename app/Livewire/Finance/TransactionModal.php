@@ -326,7 +326,7 @@ class TransactionModal extends Component
 
     public function getTemplatesProperty()
     {
-        $query = TransactionTemplate::where('shop_id', $this->shop_id);
+        $query = TransactionTemplate::standard()->where('shop_id', $this->shop_id);
 
         if (Auth::check()) {
             $query->where(function($q) {

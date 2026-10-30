@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransactionTemplate extends Model
 {
@@ -12,17 +13,29 @@ class TransactionTemplate extends Model
 
     protected $fillable = [
         'shop_id',
-        'type',
+        'user_id',
         'name',
-        'amount',
+        'type',
+        'category_id',
         'from_account_id',
         'to_account_id',
-        'category_id',
+        'amount',
         'memo',
+        'is_recurring',
+        'frequency',
+        'interval',
+        'next_due_date',
+        'end_date',
+        'is_active',
     ];
 
     protected $casts = [
         'amount' => 'decimal:4',
+        'is_recurring' => 'boolean',
+        'is_active' => 'boolean',
+        'interval' => 'integer',
+        'next_due_date' => 'date',
+        'end_date' => 'date',
     ];
 
     // 關聯：來源帳戶
@@ -41,5 +54,21 @@ class TransactionTemplate extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * 只抓取日常記帳範本（排除定期收支）
+     */
+    public function scopeStandard(Builder $query): void
+    {
+        $query->where('is_recurring', false);
+    }
+
+    /**
+     * 只抓取定期收支項目
+     */
+    public function scopeRecurring(Builder $query): void
+    {
+        $query->where('is_recurring', true);
     }
 }
