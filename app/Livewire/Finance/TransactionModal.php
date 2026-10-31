@@ -239,6 +239,17 @@ class TransactionModal extends Component
         } else {
             $this->categoryId = $categoryId;
         }
+
+        $this->closeCategoryPicker();
+    }
+
+    /**
+     * 關閉類別選擇器並清理 context 狀態。
+     * 供 <x-category-picker> 的關閉/取消按鈕呼叫，也供 selectCategory() 內部重用。
+     * 狀態清理與舊版 selectCategory() 完全一致，避免殘留 categoryPickerReturnTo。
+     */
+    public function closeCategoryPicker(): void
+    {
         $this->showCategoryPicker = false;
         $this->categoryPickerReturnTo = null;
         $this->isTemplateCategoryPicker = false;
@@ -309,7 +320,13 @@ class TransactionModal extends Component
 
     public function getFilteredCategoriesProperty()
     {
-        $type = $this->isTemplateCategoryPicker
+        // context 判斷以 categoryPickerReturnTo 為主，isTemplateCategoryPicker 為輔。
+        // 兩者理論上同步（openCategoryPicker 會一起設），但前者在選擇器生命週期內更穩定，
+        // 避免未來若有人提早清掉 isTemplateCategoryPicker 導致讀錯 type。
+        $isTemplateContext = $this->categoryPickerReturnTo === 'template'
+            || $this->isTemplateCategoryPicker;
+
+        $type = $isTemplateContext
             ? ($this->templateType ?? 'expense')
             : $this->type;
 

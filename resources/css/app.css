@@ -71,7 +71,19 @@ body {
     border: 1px solid var(--song-border);
     border-radius: 1rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+	
+	/* 內容過長時可滾動，避免底部按鈕被切掉（手機尤其明顯） */
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
 }
+
+/* 尊重 iOS 安全區域，避免底部按鈕貼齊 home indicator */
+@supports (padding: max(0px)) {
+    .modal-box {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+
 
 .input, .select, .textarea {
     background-color: var(--song-input-bg);

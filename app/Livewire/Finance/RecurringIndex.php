@@ -18,6 +18,7 @@ class RecurringIndex extends Component
     
     // 表單屬性
     public bool $showModal = false;
+	public bool $showCategoryPicker = false;
     public ?int $editingId = null;
     public string $name = '';
     public string $type = 'expense';
@@ -60,6 +61,9 @@ class RecurringIndex extends Component
             $this->categoryId = null;
             $this->toAccountId = null;
         }
+		
+		// 型別切換時若選擇器仍開著，一併關閉，避免顯示舊 type 的分類。
+        $this->closeCategoryPicker();
     }
 
     public function openCreateModal()
@@ -73,6 +77,22 @@ class RecurringIndex extends Component
         $this->nextDueDate = now('Asia/Taipei')->format('Y-m-d');
         $this->type = 'expense';
         $this->showModal = true;
+    }
+	
+	public function openCategoryPicker(): void
+    {
+        $this->showCategoryPicker = true;
+    }
+
+    public function closeCategoryPicker(): void
+    {
+        $this->showCategoryPicker = false;
+    }
+
+    public function selectCategory(int $categoryId): void
+    {
+        $this->categoryId = $categoryId;
+        $this->closeCategoryPicker();
     }
 
     public function edit($id)
@@ -152,16 +172,44 @@ class RecurringIndex extends Component
 
     public function getAccountsProperty()
     {
+        // 轉為陣列格式，供 <x-account-select> 與 <x-choices> 使用。
+        // 格式與 TransactionModal::getAccountsProperty() 一致，含 balance / currency。
         return FinancialAccount::where('is_active', true)
             ->where('shop_id', $this->shop_id)
-            ->get();
+            ->get()
+            ->map(fn($a) => [
+                'id' => $a->id,
+                'name' => $a->name,
+                'balance' => $a->calculated_balance,
+                'currency' => $a->currency,
+            ])
+            ->toArray();
     }
 
-    public function getCategoriesProperty()
+	public function getCategoriesProperty()
     {
+        // 只取父分類，並 eager load 同 type 的 children，
+        // 供 <x-category-picker> 展開子分類使用。
         return Category::where('shop_id', $this->shop_id)
             ->where('type', $this->type)
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->where('type', $this->type)
+                      ->orderBy('sort_order');
+            }])
+            ->orderBy('sort_order')
             ->get();
+    }
+	
+	public function getSelectedCategoryProperty()
+    {
+        if (!$this->categoryId) {
+            return null;
+        }
+
+        return Category::with('parent')
+            ->where('shop_id', $this->shop_id)
+            ->find($this->categoryId);
     }
 
     public function render()

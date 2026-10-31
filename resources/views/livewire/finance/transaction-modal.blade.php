@@ -14,77 +14,15 @@
 		
 		{{-- ================ 核心切換邏輯 ================ --}}
 		@if($showCategoryPicker && $categoryPickerReturnTo === 'transaction')
-            {{-- 1. 類別選擇器 --}}
-            <div class="w-full flex flex-col" style="height: 420px;">
-                <div class="flex flex-col h-full">
-                    @php
-                        $currentType = $isTemplateCategoryPicker ? $templateType : $type;
-                        $themeText = match($currentType) {
-                            'expense' => 'text-tx-expense',
-                            'income'  => 'text-tx-income',
-                            default   => 'text-tx-transfer',
-                        };
-                        $themeBg = match($currentType) {
-                            'expense' => 'bg-tx-expense',
-                            'income'  => 'bg-tx-income',
-                            default   => 'bg-tx-transfer',
-                        };
-                    @endphp
-                    <div class="flex items-center justify-between px-4 py-3 border-b shrink-0">
-                        <div class="flex items-center gap-2">
-                            <span class="w-1 h-5 rounded-full {{ $themeBg }}"></span>
-                            <span class="text-sm font-bold tracking-wider {{ $themeText }}">
-                                {{ $currentType === 'expense' ? '支出類別' : '收入類別' }}
-                            </span>
-                        </div>
-                        <button type="button" wire:click="$set('showCategoryPicker', false)" class="p-1.5 rounded-lg hover:bg-base-200 transition-colors text-base-content song-interactive">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto px-4 py-4">
-                        @php $filteredCats = $this->filteredCategories; @endphp
-                        @if($filteredCats->isNotEmpty())
-                            <div class="grid grid-cols-3 gap-2">
-                                @foreach($filteredCats as $category)
-                                    @if($category->children->isNotEmpty())
-                                        <div class="col-span-3">
-                                            <div class="text-[10px] mb-1.5 ml-1 font-bold uppercase tracking-wide {{ $themeText }}">{{ $category->name }}</div>
-                                            <div class="grid grid-cols-3 gap-2">
-                                                @foreach($category->children as $child)
-                                                    <button type="button" wire:click="selectCategory({{ $child->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group song-interactive">
-                                                        <div class="flex justify-center mb-1.5">
-                                                            <x-dynamic-component :component="'heroicon-o-' . ($child->icon ?? 'folder')" class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
-                                                        </div>
-                                                        <div class="text-xs font-medium leading-tight text-base-content">{{ $child->name }}</div>
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @else
-                                        <button type="button" wire:click="selectCategory({{ $category->id }})" class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group song-interactive">
-                                            <div class="flex justify-center mb-1.5">
-                                                <x-dynamic-component :component="'heroicon-o-' . ($category->icon ?? 'folder')" class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
-                                            </div>
-                                            <div class="text-xs font-medium leading-tight text-base-content">{{ $category->name }}</div>
-                                        </button>
-                                    @endif
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="flex flex-col items-center justify-center h-full py-12">
-                                <div class="text-5xl mb-4">📂</div>
-                                <p class="font-medium text-sm text-base-content/70">還沒有建立對應分類</p>
-                                <p class="text-xs text-base-content/50 mt-1">請先到後台建立相符的分類</p>
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="px-4 py-3 border-t shrink-0">
-                        <button type="button" wire:click="$set('showCategoryPicker', false)" class="w-full py-2.5 rounded-xl font-medium text-sm bg-base-200 hover:bg-base-300 text-base-content"> 取消 </button>
-                    </div>
-                </div>
-            </div>
+            {{-- 1. 類別選擇器（共用元件） --}}
+			<x-category-picker
+				:type="$type"
+				:categories="$this->filteredCategories"
+				:selected-id="$categoryId"
+				pick-action="selectCategory"
+				close-action="closeCategoryPicker"
+				empty-variant="emoji"
+			/>
         @else
             {{-- 類型選擇 --}}
             @php
@@ -212,22 +150,12 @@
                     @endphp
                     <div class="grid grid-cols-3 gap-3 mb-4">
                         <div class="col-span-1 min-w-0">
-                            <div class="clickable-card aspect-square rounded-2xl border border-base-300 transition-all cursor-pointer flex flex-col items-center justify-center p-1 relative overflow-hidden bg-base-200 hover:bg-base-300" wire:click="openCategoryPicker(false)">
-                                @if($categoryId && $selectedCategory && $selectedCategory->type === $type)
-                                    <div class="text-3xl mb-1 flex justify-center">
-                                        <x-dynamic-component :component="'heroicon-o-' . ($selectedCategory->icon ?? 'folder')" class="w-10 h-10 {{ $signColor }}" />
-                                    </div>
-                                    <div class="text-xs font-bold text-center leading-tight {{ $signColor }}"> {{ $selectedCategory->name }} </div>
-                                    @if($selectedCategory->parent)
-                                        <div class="text-[10px] text-base-content/60 mt-0.5"> {{ $selectedCategory->parent->name }} </div>
-                                    @endif
-                                @else
-                                    <div class="text-3xl mb-1 flex justify-center">
-                                        <x-icon name="o-folder" class="w-8 h-8 text-base-content/40" />
-                                    </div>
-                                    <div class="text-xs font-bold text-base-content/60">類別</div>
-                                @endif
-                            </div>
+                            <x-category-display-card
+                                variant="square"
+                                :category="$selectedCategory"
+                                :type="$type"
+                                click-action="openCategoryPicker(false)"
+                            />
                         </div>
 
                         <div class="col-span-2 min-w-0 flex items-center">
@@ -305,95 +233,16 @@
              x-on:click.stop>
              
         @if($showCategoryPicker && $categoryPickerReturnTo === 'template')
-            @php
-                $currentType = $templateType ?? 'expense';
-                $themeText = match($currentType) {
-                    'expense' => 'text-tx-expense',
-                    'income'  => 'text-tx-income',
-                    default   => 'text-tx-transfer',
-                };
-                $themeBg = match($currentType) {
-                    'expense' => 'bg-tx-expense',
-                    'income'  => 'bg-tx-income',
-                    default   => 'bg-tx-transfer',
-                };
-            @endphp
-            <div class="w-full flex flex-col" style="height: 420px;">
-                <div class="flex flex-col h-full">
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--song-border)] shrink-0">
-                        <div class="flex items-center gap-2">
-                            <span class="w-1 h-5 rounded-full {{ $themeBg }}"></span>
-                            <span class="text-sm font-bold tracking-wider {{ $themeText }}">
-                                {{ $currentType === 'expense' ? '支出類別' : '收入類別' }}
-                            </span>
-                        </div>
-                        
-                        <button type="button" 
-                                wire:click="$set('showCategoryPicker', false)"
-                                class="p-1.5 rounded-lg hover:bg-base-200 text-base-content transition-colors">
-                            <x-icon name="o-x-mark" class="w-5 h-5" />
-                        </button>
-                    </div>
+            {{-- 類別選擇器（共用元件） --}}
+			<x-category-picker
+				:type="$templateType"
+				:categories="$this->filteredCategories"
+				:selected-id="$templateCategoryId"
+				pick-action="selectCategory"
+				close-action="closeCategoryPicker"
+				empty-variant="icon"
+			/>
 
-                    <div class="flex-1 overflow-y-auto px-4 py-4">
-                        @php $filteredCats = $this->filteredCategories; @endphp
-                        @if($filteredCats->isNotEmpty())
-                            <div class="grid grid-cols-3 gap-2">
-                                @foreach($filteredCats as $category)
-                                    @if($category->children->isNotEmpty())
-                                        <div class="col-span-3">
-                                            <div class="text-[10px] {{ $themeText }} mb-1.5 ml-1 font-bold uppercase tracking-wide">
-                                                {{ $category->name }}
-                                            </div>
-                                            <div class="grid grid-cols-3 gap-2">
-                                                @foreach($category->children as $child)
-                                                    <button type="button"
-                                                            wire:click="selectCategory({{ $child->id }})"
-                                                            class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group active:scale-95">
-                                                        <div class="flex justify-center mb-1.5">
-                                                            <x-dynamic-component :component="'heroicon-o-' . ($child->icon ?? 'folder')" 
-                                                                    class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
-                                                        </div>
-                                                        <div class="text-xs font-medium text-base-content leading-tight">
-                                                            {{ $child->name }}
-                                                        </div>
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @else
-                                        <button type="button"
-                                                wire:click="selectCategory({{ $category->id }})"
-                                                class="p-3 bg-base-200 hover:bg-base-300 text-base-content rounded-xl transition-all text-center group active:scale-95">
-                                            <div class="flex justify-center mb-1.5">
-                                                <x-dynamic-component :component="'heroicon-o-' . ($category->icon ?? 'folder')" 
-                                                        class="w-7 h-7 text-base-content/80 group-hover:scale-110 transition-transform" />
-                                            </div>
-                                            <div class="text-xs font-medium text-base-content leading-tight">
-                                                {{ $category->name }}
-                                            </div>
-                                        </button>
-                                    @endif
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="flex flex-col items-center justify-center h-full py-12">
-                                <x-icon name="o-folder-open" class="w-12 h-12 mb-4 text-base-content/40" />
-                                <p class="text-base-content/70 font-medium text-sm">還沒有建立對應分類</p>
-                                <p class="text-xs text-base-content/50 mt-1">請先到後台建立相符的分類</p>
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="px-4 py-3 border-t border-[var(--song-border)] shrink-0">
-                        <button type="button"
-                                wire:click="$set('showCategoryPicker', false)"
-                                class="w-full py-2.5 rounded-xl font-medium text-base-content bg-base-200 hover:bg-base-300 transition-colors text-sm song-interactive">
-                            取消
-                        </button>
-                    </div>
-                </div>
-            </div>
         @else
             <x-form wire:submit="saveAsTemplate">
                 @php
@@ -429,30 +278,12 @@
                 <div class="grid grid-cols-6 gap-3 mb-4">
                     <div class="col-span-2">
                         @if($templateType !== 'transfer')
-                            <div class="clickable-card aspect-square bg-base-200 rounded-2xl border border-[var(--song-border)]
-                                        hover:border-base-content/40 transition-all cursor-pointer 
-                                        flex flex-col items-center justify-center p-1 relative overflow-hidden"
-                                 wire:click="openCategoryPicker(true)">
-                                @if($templateCategoryId && $selectedTemplateCategory && $selectedTemplateCategory->type === $templateType)
-                                    <div class="text-3xl mb-1 flex justify-center">
-                                        <x-dynamic-component :component="'heroicon-o-' . ($selectedTemplateCategory->icon ?? 'folder')" 
-                                                class="w-10 h-10 {{ match($templateType) { 'expense' => 'text-tx-expense', 'income' => 'text-tx-income', default => 'text-base-content' } }}" />
-                                    </div>
-                                    <div class="text-xs font-bold text-center leading-tight {{ match($templateType) { 'expense' => 'text-tx-expense', 'income' => 'text-tx-income', default => 'text-base-content' } }}">
-                                        {{ $selectedTemplateCategory->name }}
-                                    </div>
-                                    @if($selectedTemplateCategory->parent)
-                                        <div class="text-[10px] text-base-content/60 mt-0.5">
-                                            {{ $selectedTemplateCategory->parent->name }}
-                                        </div>
-                                    @endif
-                                @else
-                                    <div class="text-3xl mb-1 flex justify-center">
-                                        <x-icon name="o-folder" class="w-8 h-8 text-base-content/40" />
-                                    </div>
-                                    <div class="text-xs font-bold text-base-content/60">類別</div>
-                                @endif
-                            </div>
+                            <x-category-display-card
+                                variant="square"
+                                :category="$selectedTemplateCategory"
+                                :type="$templateType"
+                                click-action="openCategoryPicker(true)"
+                            />
                         @else
                             <div class="aspect-square badge-tx-transfer rounded-2xl border
                                         flex flex-col items-center justify-center">
