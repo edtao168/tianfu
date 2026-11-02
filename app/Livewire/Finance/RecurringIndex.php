@@ -26,7 +26,7 @@ class RecurringIndex extends Component
     public ?int $toAccountId = null;
     public ?int $categoryId = null;
     public string $amount = '';
-    public string $frequency = 'monthly';
+    public string $frequency = 'yearly';
     public int $interval = 1;
     public string $nextDueDate = '';
     public ?string $endDate = null;
@@ -72,7 +72,7 @@ class RecurringIndex extends Component
             'editingId', 'name', 'type', 'fromAccountId', 'toAccountId', 
             'categoryId', 'amount', 'interval', 'endDate', 'memo', 'isActive'
         ]);
-        $this->frequency = 'monthly';
+        $this->frequency = 'yearly';
         $this->interval = 1;
         $this->nextDueDate = now('Asia/Taipei')->format('Y-m-d');
         $this->type = 'expense';
@@ -108,7 +108,7 @@ class RecurringIndex extends Component
         $this->toAccountId = $item->to_account_id;
         $this->categoryId = $item->category_id;
         $this->amount = number_format((float)$item->amount, 2, '.', '');
-        $this->frequency = $item->frequency ?? 'monthly';
+        $this->frequency = $item->frequency ?? 'yearly';
         $this->interval = $item->interval ?? 1;
         $this->nextDueDate = $item->next_due_date ? $item->next_due_date->format('Y-m-d') : now()->format('Y-m-d');
         $this->endDate = $item->end_date ? $item->end_date->format('Y-m-d') : null;

@@ -3,11 +3,12 @@
 	<x-modal 
 		wire:model="showModal" 
 		backdrop-blur-md 
-		box-class="w-full px-2 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl p-0 overflow-hidden pt-16 pb-24 md:pt-0 md:pb-0 bg-base-100 text-base-content"
+		box-class="w-full max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-100 text-base-content"
 	>
-		<div class="flex flex-col h-[calc(100vh-10rem)] md:h-[80vh] max-h-[80vh]">
+		{{表單結構：外層設定 --}}
+		<div class="flex flex-col h-full">
 
-			{{-- 頂部標題屏風 --}}
+			{{-- 頂部標題與統計資訊區 (固定不捲動) --}}
 			<div class="p-4 md:p-5 bg-base-200/50 border-b border-base-200 flex-shrink-0">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
@@ -20,9 +21,6 @@
 							<div class="min-w-0 flex-1">
 								<h3 class="text-lg md:text-lg font-black text-base-content tracking-wide font-sans flex items-center gap-2 flex-wrap">
 									<span class="truncate">{{ $title }}</span> 
-									<!-- span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-base-200 text-base-content opacity-80 font-mono flex-shrink-0">
-										{{ $transactionType === 'expense' ? '支出' : ($transactionType === 'income' ? '收入' : '交易明細') }}
-									</span -->
 								</h3>
 								<p class="text-sm opacity-70 mt-0.5 flex items-center gap-2 flex-wrap">
 									<span>共 <strong class="text-base-content font-mono">{{ $transactionsData['total_count'] ?? 0 }}</strong> 筆記錄</span>
@@ -90,195 +88,180 @@
 				</div>
 			</div>
 
-			{{-- 內文與數據區塊 --}}
-			<div class="px-0 md:px-6 bg-base-100 flex-1 overflow-y-auto min-h-0 space-y-4">
+			{{-- 【可捲動的交易列表內容區】參考 recurring-index 的 max-h 與 overflow-y-auto 設計 --}}
+			<div class="overflow-y-auto max-h-[55vh] sm:max-h-[65vh] px-4 md:px-6 py-4 space-y-4 bg-base-100">
 				
-				<div class="space-y-4 md:space-y-5 max-w-full">
+				{{-- 日期導航 --}}
+				<div class="w-full max-w-full flex-shrink-0">
+					<x-date-nav 
+						model="currentDate" 
+						:type="$dateMode"
+						:display="$dateDisplay" 
+						:isCurrent="$isCurrentDate" 
+						:disableNext="$isCurrentDate" 
+					/>
+				</div>
 
-					{{-- 日期導航 --}}
-					<div class="w-full max-w-full flex-shrink-0">
-						<x-date-nav 
-							model="currentDate" 
-							:type="$dateMode"
-							:display="$dateDisplay" 
-							:isCurrent="$isCurrentDate" 
-							:disableNext="$isCurrentDate" 
-						/>
-					</div>
-
-					{{-- 交易明細列表 - 按日期分組 --}}
-					@php
-						$groupedList = [];
-						foreach($transactionsData['list'] ?? [] as $tx) {
-							$date = substr($tx['recorded_at'], 0, 10);
-							if (!isset($groupedList[$date])) {
-								$groupedList[$date] = [];
-							}
-							$groupedList[$date][] = $tx;
+				{{-- 交易明細列表 - 按日期分組 --}}
+				@php
+					$groupedList = [];
+					foreach($transactionsData['list'] ?? [] as $tx) {
+						$date = substr($tx['recorded_at'], 0, 10);
+						if (!isset($groupedList[$date])) {
+							$groupedList[$date] = [];
 						}
-						krsort($groupedList);
-					@endphp
+						$groupedList[$date][] = $tx;
+					}
+					krsort($groupedList);
+				@endphp
 
-					<div class="space-y-6">
-						@forelse($groupedList as $date => $dayTransactions)
-							<div class="space-y-3">
-								{{-- 日期標頭 --}}
-								<div class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2 px-2">
-									<span class="w-2 h-2 rounded-full bg-teal-500/70"></span>
-									<span>{{ date('Y 年 m 月 d 日', strtotime($date)) }}</span>
-									<span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][date('w', strtotime($date))] }}</span>
-									<span class="text-xs font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
-								</div>
+				<div class="space-y-6">
+					@forelse($groupedList as $date => $dayTransactions)
+						<div class="space-y-3">
+							{{-- 日期標頭 --}}
+							<div class="text-sm font-bold opacity-70 tracking-wider flex items-center gap-2 px-2">
+								<span class="w-2 h-2 rounded-full bg-teal-500/70"></span>
+								<span>{{ date('Y 年 m 月 d 日', strtotime($date)) }}</span>
+								<span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][date('w', strtotime($date))] }}</span>
+								<span class="text-xs font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
+							</div>
 
-								{{-- 當天交易卡片群組 --}}
-								<div class="bg-base-100 rounded-2xl border border-base-200 shadow-sm divide-y divide-base-200/60 overflow-hidden">
-									@foreach($dayTransactions as $tx)
-										@php
-											$typeTheme = $tx['account_type_theme'] ?? 'orange';
-											$isIncome = $tx['is_income'] ?? false;
-											$isExpense = $tx['is_expense'] ?? false;
-											$isTransfer = $tx['is_transfer'] ?? false;
-											$categoryIcon = $tx['category_icon'] ?? 'folder';
-											$categoryName = $tx['category_name'] ?? null;
-											
-											// 🎯 使用 colors.css 定義的語意類別
-											if ($isTransfer) {
-												$amountClass = 'text-tx-transfer';
-												$iconColor = 'text-tx-transfer';
-												$amountPrefix = '↕';
-												$bgColor = 'bg-tx-transfer/10';
-											} elseif ($isIncome) {
-												$amountClass = 'text-tx-income';
-												$iconColor = 'text-tx-income';
-												$amountPrefix = '+';
-												$bgColor = 'bg-tx-income/10';
-											} elseif ($isExpense) {
-												$amountClass = 'text-tx-expense';
-												$iconColor = 'text-tx-expense';
-												$amountPrefix = '-';
-												$bgColor = 'bg-tx-expense/10';
-											} else {
-												$amountClass = 'text-base-content';
-												$iconColor = 'opacity-50';
-												$amountPrefix = '';
-												$bgColor = 'bg-base-200';
-											}
-											
-											$displayAmount = $tx['display_amount'] ?? $tx['amount'];
-											
-											// 建立顯示標題（完整內容）
-											if ($isTransfer) {
-												$fromName = $tx['from_account_name'] ?? '帳戶';
-												$toName = $tx['to_account_name'] ?? '帳戶';
-												$displayTitle = $fromName . ' → ' . $toName;
-											} elseif ($categoryName) {
-												$displayTitle = $categoryName;
-											} else {
-												$displayTitle = $isIncome ? '收入' : '支出';
-											}
-											
-											$accountName = $tx['account_name'] ?? ($currentAccount->name ?? '');
-											
-											$summary = $tx['memo'] ?: '';
-											if ($isTransfer && !$summary) {
-												if ($accountId && $tx['from_account_id'] == $accountId) {
-													$toName = $tx['to_account_name'] ?? '帳戶 #' . $tx['to_account_id'];
-													$summary = '轉出至 ' . $toName;
-												} elseif ($accountId && $tx['to_account_id'] == $accountId) {
-													$fromName = $tx['from_account_name'] ?? '帳戶 #' . $tx['from_account_id'];
-													$summary = '從 ' . $fromName . ' 轉入';
-												} else {
-													$summary = ($tx['from_account_name'] ?? '帳戶') . ' ➔ ' . ($tx['to_account_name'] ?? '帳戶');
-												}
-											}
-											
-											// 🎯 統一邏輯：轉帳不顯示帳戶，收支顯示帳戶
-											// 在帳戶模式（$accountId）下，所有交易都屬於同一個帳戶，不重複顯示
-											// 在總覽模式（!$accountId）下，收支顯示帳戶名稱
-											$shouldShowAccount = !$isTransfer && !$accountId && $accountName;
-										@endphp
+							{{-- 當天交易卡片群組 --}}
+							<div class="bg-base-100 rounded-2xl border border-base-200 shadow-sm divide-y divide-base-200/60 overflow-hidden">
+								@foreach($dayTransactions as $tx)
+									@php
+										$typeTheme = $tx['account_type_theme'] ?? 'orange';
+										$isIncome = $tx['is_income'] ?? false;
+										$isExpense = $tx['is_expense'] ?? false;
+										$isTransfer = $tx['is_transfer'] ?? false;
+										$categoryIcon = $tx['category_icon'] ?? 'folder';
+										$categoryName = $tx['category_name'] ?? null;
 										
-										<!-- 單筆交易卡片 -->
-										<div class="clickable-card card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
-											 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
-											
-											{{-- 左側主題側邊條 --}}
-											<span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
-											
-											{{-- 圖標 --}}
-											<div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
-												<x-dynamic-component 
-													:component="'heroicon-o-' . $categoryIcon" 
-													class="w-5 h-5 {{ $iconColor }}" />
-											</div>
-											
-											{{-- 內容區域 --}}
-											<div class="flex-1 min-w-0 ml-3 md:ml-4">
-												<div class="flex items-center gap-2">
-													{{-- 標題區塊 --}}
-													<div class="flex items-center gap-2 min-w-0 flex-1">
-														{{-- 🟢 收支：類別名稱完整顯示 (flex-shrink-0) --}}
-														{{-- 🟡 轉帳：顯示完整來源→目的地，但空間不足時截斷 (truncate) --}}
-														<span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}"
-															  title="{{ $displayTitle }}">
-															{{ $displayTitle }}
-														</span>
-														
-														{{-- 🎯 轉帳不顯示，收支顯示帳戶名稱 --}}
-														@if($shouldShowAccount)
-															<span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
-																{{ $accountName }}
-															</span>
-														@endif
-													</div>
-													
-													{{-- 金額 --}}
-													<span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
-														<span class="font-normal opacity-50 text-sm">{{ $tx['currency_symbol'] ?? $currencySymbol }}</span>
-														{{ $amountPrefix }}{{ number_format((float)$displayAmount, 2) }}
+										if ($isTransfer) {
+											$amountClass = 'text-tx-transfer';
+											$iconColor = 'text-tx-transfer';
+											$amountPrefix = '↕';
+											$bgColor = 'bg-tx-transfer/10';
+										} elseif ($isIncome) {
+											$amountClass = 'text-tx-income';
+											$iconColor = 'text-tx-income';
+											$amountPrefix = '+';
+											$bgColor = 'bg-tx-income/10';
+										} elseif ($isExpense) {
+											$amountClass = 'text-tx-expense';
+											$iconColor = 'text-tx-expense';
+											$amountPrefix = '-';
+											$bgColor = 'bg-tx-expense/10';
+										} else {
+											$amountClass = 'text-base-content';
+											$iconColor = 'opacity-50';
+											$amountPrefix = '';
+											$bgColor = 'bg-base-200';
+										}
+										
+										$displayAmount = $tx['display_amount'] ?? $tx['amount'];
+										
+										if ($isTransfer) {
+											$fromName = $tx['from_account_name'] ?? '帳戶';
+											$toName = $tx['to_account_name'] ?? '帳戶';
+											$displayTitle = $fromName . ' → ' . $toName;
+										} elseif ($categoryName) {
+											$displayTitle = $categoryName;
+										} else {
+											$displayTitle = $isIncome ? '收入' : '支出';
+										}
+										
+										$accountName = $tx['account_name'] ?? ($currentAccount->name ?? '');
+										
+										$summary = $tx['memo'] ?: '';
+										if ($isTransfer && !$summary) {
+											if ($accountId && $tx['from_account_id'] == $accountId) {
+												$toName = $tx['to_account_name'] ?? '帳戶 #' . $tx['to_account_id'];
+												$summary = '轉出至 ' . $toName;
+											} elseif ($accountId && $tx['to_account_id'] == $accountId) {
+												$fromName = $tx['from_account_name'] ?? '帳戶 #' . $tx['from_account_id'];
+												$summary = '從 ' . $fromName . ' 轉入';
+											} else {
+												$summary = ($tx['from_account_name'] ?? '帳戶') . ' ➔ ' . ($tx['to_account_name'] ?? '帳戶');
+											}
+										}
+										
+										$shouldShowAccount = !$isTransfer && !$accountId && $accountName;
+									@endphp
+									
+									<!-- 單筆交易卡片 -->
+									<div class="clickable-card card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
+										 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
+										
+										<span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
+										
+										<div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
+											<x-dynamic-component 
+												:component="'heroicon-o-' . $categoryIcon" 
+												class="w-5 h-5 {{ $iconColor }}" />
+										</div>
+										
+										<div class="flex-1 min-w-0 ml-3 md:ml-4">
+											<div class="flex items-center gap-2">
+												<div class="flex items-center gap-2 min-w-0 flex-1">
+													<span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}"
+														  title="{{ $displayTitle }}">
+														{{ $displayTitle }}
 													</span>
+													
+													@if($shouldShowAccount)
+														<span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
+															{{ $accountName }}
+														</span>
+													@endif
 												</div>
 												
-												{{-- 備註 --}}
-												<div class="mt-0.5">
-													<span class="text-sm opacity-60 block truncate min-w-0 {{ $summary ? '' : 'italic' }}">
-														{{ $summary ?: '無備註' }}
-													</span>
-												</div>
+												<span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
+													<span class="font-normal opacity-50 text-sm">{{ $tx['currency_symbol'] ?? $currencySymbol }}</span>
+													{{ $amountPrefix }}{{ number_format((float)$displayAmount, 2) }}
+												</span>
+											</div>
+											
+											<div class="mt-0.5">
+												<span class="text-sm opacity-60 block truncate min-w-0 {{ $summary ? '' : 'italic' }}">
+													{{ $summary ?: '無備註' }}
+												</span>
 											</div>
 										</div>
-									@endforeach
-								</div>
+									</div>
+								@endforeach
 							</div>
-						@empty
-							<div class="text-center opacity-60 py-10 bg-base-200/30 rounded-xl border border-dashed border-base-200">
-								<x-heroicon-o-document-text class="w-12 h-12 mx-auto mb-2 opacity-30" />
-								<p class="text-base md:text-sm tracking-wide font-medium">{{ $dateDisplay }} 尚無任何流水紀錄</p>
-							</div>
-						@endforelse
-					</div>
+						</div>
+					@empty
+						<div class="text-center opacity-60 py-10 bg-base-200/30 rounded-xl border border-dashed border-base-200">
+							<x-heroicon-o-document-text class="w-12 h-12 mx-auto mb-2 opacity-30" />
+							<p class="text-base md:text-sm tracking-wide font-medium">{{ $dateDisplay }} 尚無任何流水紀錄</p>
+						</div>
+					@endforelse
 				</div>
 			</div>
 
-			{{-- 底層動作列 --}}
-			<div class="flex flex-wrap items-center justify-between gap-2 p-3 md:p-4 border-t border-base-200 bg-base-200/50 flex-shrink-0">
-				<div class="flex items-center gap-2 flex-wrap">
-					@if($accountId)
-						<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
-								  wire:click="editAccount" />
-						
-						@if($currentAccount && $currentAccount->is_active)
-							<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm song-interactive" 
-								  wire:click="toggleAccountVisibility" />
-						@else
-							<x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm song-interactive" 
-								  wire:click="toggleAccountVisibility" />
+			{{-- 【固定在底部的動作按鈕區】完全對齊 recurring-index 的寫法 --}}
+			<x-slot:actions>
+				<div class="flex flex-wrap items-center justify-between gap-2 w-full pt-3 border-t border-[var(--song-border)] bg-base-100">
+					<div class="flex items-center gap-2 flex-wrap">
+						@if($accountId)
+							<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
+									  wire:click="editAccount" />
+							
+							@if($currentAccount && $currentAccount->is_active)
+								<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm song-interactive" 
+									  wire:click="toggleAccountVisibility" />
+							@else
+								<x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm song-interactive" 
+									  wire:click="toggleAccountVisibility" />
+							@endif
 						@endif
-					@endif
-				</div>
+					</div>
 
-				<x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm song-interactive" />
-			</div>
+					<x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm song-interactive" />
+				</div>
+			</x-slot:actions>
 		</div>
 	</x-modal>
 </div>
