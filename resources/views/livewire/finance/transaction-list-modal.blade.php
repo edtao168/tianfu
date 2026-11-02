@@ -1,4 +1,4 @@
-<!-- filepath: resources/views/livewire/finance/transaction-list-modal.blade.php -->
+<!-- resources/views/livewire/finance/transaction-list-modal.blade.php -->
 <div>
 	<x-modal 
 		wire:model="showModal" 
@@ -189,7 +189,7 @@
 										$shouldShowAccount = !$isTransfer && !$accountId && $accountName;
 									@endphp
 									
-									<!-- 單筆交易卡片 -->
+									{{-- 單筆交易卡片 --}}
 									<div class="clickable-card card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
 										 wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx['id'] }} })">
 										

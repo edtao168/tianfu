@@ -1,6 +1,6 @@
 <!-- resources/views/livewire/recuring-index.blade.php -->
 <div class="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
-    <!-- 頂部標題與新增按鈕 -->
+    {{-- 頂部標題與新增按鈕 --}}
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-base-content">定期收支管理</h1>
@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <!-- 新增/編輯 Modal -->
+    {{-- 新增/編輯 Modal --}}
 	<x-modal wire:model="showModal" title="{{ $editingId ? '編輯定期收支' : '新增定期收支' }}" separator size="lg">
 		@if($showCategoryPicker)
 			{{-- 類別選擇器（共用元件） --}}
@@ -109,10 +109,10 @@
 				empty-variant="emoji"
 			/>
 		@else
-			{{-- 表單改用 flex flex-col h-full，由內部容器控制捲動 --}}
+			{{-- 表單改由內部容器控制捲動 --}}
 			<x-form wire:submit="save" class="flex flex-col h-full overflow-hidden">
 				
-				<!-- 【可捲動的表單內容區】限制電腦端與手機端各自的最大高度，超出時自動出現捲動條 -->
+				{{-- 【可捲動的表單內容區】限制電腦端與手機端各自的最大高度，超出時自動出現捲動條 --}}
 				<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-4 max-h-[55vh] md:max-h-[65vh]">
 					{{-- 類型切換 --}}
 					@php
@@ -265,7 +265,7 @@
 					</div>
 				</div>
 
-				<!-- 【固定在底部的動作按鈕區】加入 flex-shrink-0 確保在電腦大螢幕中絕對不會被壓縮消失 -->
+				{{-- 【固定在底部的動作按鈕區】加入 flex-shrink-0 確保在電腦大螢幕中絕對不會被壓縮消失 --}}
 				<x-slot:actions>
 					<div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)] bg-base-100 flex-shrink-0">
 						<x-button label="取消" type="button" @click="$wire.showModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
