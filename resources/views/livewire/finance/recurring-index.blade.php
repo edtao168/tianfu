@@ -9,7 +9,7 @@
         <x-button label="新增定期項目" icon="o-plus" wire:click="openCreateModal" class="btn-green song-interactive" />
     </div>
 
-    <!-- 列表（響應式卡片 grid） -->
+	{{-- 列表（響應式卡片 grid） --}}
     <div class="space-y-4">
         @forelse($items as $item)
             @php
