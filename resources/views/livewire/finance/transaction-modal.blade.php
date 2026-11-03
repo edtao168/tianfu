@@ -226,8 +226,7 @@
     {{-- ==================== 範本 Modal ==================== --}}
     <x-modal wire:model="showTemplateModal" 
              title="{{ $editingTemplateId ? '編輯範本' : '儲存範本' }}" 
-             separator 
-             persistent
+             separator
              size="lg"
              box-class="border border-[var(--song-border)] bg-[var(--song-modal-bg)] bg-gradient-to-br from-amber-500/[0.04] to-transparent"
              x-on:click.stop>

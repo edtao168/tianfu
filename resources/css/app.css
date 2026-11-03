@@ -79,6 +79,30 @@ body {
     overflow: hidden; /* 隱藏外部溢出，改由內部主體捲動 */
 }
 
+/* Modal 內部三段式：header / body / footer 的高度分配 */
+.modal-box > .modal-header {
+    flex: 0 0 auto;
+}
+.modal-box > .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;              /* ★ 關鍵，缺這行 flex 不會捲 */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.modal-box > .modal-footer {
+    flex: 0 0 auto;
+}
+
+/* Mary UI 的 actions slot 是 .modal-action，讓它貼齊邊緣不要額外 padding */
+.modal-box > .modal-action {
+    margin-top: 0;              /* 取消 DaisyUI 預設的 margin-top */
+    padding: 0.75rem 1rem;      /* 自行控制 */
+    border-top: 1px solid var(--song-border);
+    background-color: var(--song-modal-bg);
+    flex-shrink: 0;
+}
+
 /* 尊重 iOS 安全區域，避免底部按鈕貼齊 home indicator */
 @supports (padding: max(0px)) {
     .modal-box {

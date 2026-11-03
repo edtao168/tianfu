@@ -6,7 +6,7 @@
 		box-class="w-full max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-100 text-base-content"
 	>
 		{{-- 表單結構：外層設定 --}}
-		<div class="flex flex-col h-full">
+	    <div class="flex flex-col max-h-[85vh]">
 
 			{{-- 頂部標題與統計資訊區 (固定不捲動) --}}
 			<div class="p-4 md:p-5 bg-base-200/50 border-b border-base-200 flex-shrink-0">
@@ -89,7 +89,7 @@
 			</div>
 
 			{{-- 【可捲動的交易列表內容區】參考 recurring-index 的 max-h 與 overflow-y-auto 設計 --}}
-			<div class="overflow-y-auto max-h-[55vh] sm:max-h-[65vh] px-4 md:px-6 py-4 space-y-4 bg-base-100">
+			<div class="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 bg-base-100">
 				
 				{{-- 日期導航 --}}
 				<div class="w-full max-w-full flex-shrink-0">
@@ -242,26 +242,24 @@
 			</div>
 
 			{{-- 【固定在底部的動作按鈕區】完全對齊 recurring-index 的寫法 --}}
-			<x-slot:actions>
-				<div class="flex flex-wrap items-center justify-between gap-2 w-full pt-3 border-t border-[var(--song-border)] bg-base-100">
-					<div class="flex items-center gap-2 flex-wrap">
-						@if($accountId)
-							<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
-									  wire:click="editAccount" />
-							
-							@if($currentAccount && $currentAccount->is_active)
-								<x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm song-interactive" 
-									  wire:click="toggleAccountVisibility" />
-							@else
-								<x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm song-interactive" 
-									  wire:click="toggleAccountVisibility" />
-							@endif
-						@endif
-					</div>
+			        <div class="modal-action flex-shrink-0 flex flex-wrap items-center justify-between gap-2 p-3 m-0 border-t border-[var(--song-border)] bg-base-100">
+            <div class="flex items-center gap-2 flex-wrap">
+                @if($accountId)
+                    <x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
+                              wire:click="editAccount" />
+                    
+                    @if($currentAccount && $currentAccount->is_active)
+                        <x-button label="隱藏此帳戶" icon="o-eye-slash" class="btn-purple btn-sm song-interactive" 
+                                  wire:click="toggleAccountVisibility" />
+                    @else
+                        <x-button label="恢復顯示" icon="o-eye" class="btn-dark btn-sm song-interactive" 
+                                  wire:click="toggleAccountVisibility" />
+                    @endif
+                @endif
+            </div>
 
-					<x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm song-interactive" />
-				</div>
-			</x-slot:actions>
+            <x-button label="關閉" @click="$wire.showModal = false" class="btn-light btn-sm song-interactive" />
+        </div>
 		</div>
 	</x-modal>
 </div>
