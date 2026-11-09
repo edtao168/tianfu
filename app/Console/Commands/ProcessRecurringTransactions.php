@@ -55,7 +55,7 @@ class ProcessRecurringTransactions extends Command
 
                     // 2. 計算並更新下次觸發日 (next_due_date)
                     $nextDate = Carbon::parse($item->next_due_date);
-                    switch ($item->frequency) {
+                    switch ($item->cycle_unit) {
                         case 'daily':
                             $nextDate->addDays($item->interval);
                             break;

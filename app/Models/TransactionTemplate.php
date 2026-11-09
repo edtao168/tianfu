@@ -22,7 +22,7 @@ class TransactionTemplate extends Model
         'amount',
         'memo',
         'is_recurring',
-        'frequency',
+        'cycle_unit',
         'interval',
         'next_due_date',
         'end_date',

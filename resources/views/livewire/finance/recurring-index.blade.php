@@ -28,12 +28,12 @@
                     'income'  => '收入',
                     default   => '轉帳',
                 };
-                $freqLabel = match($item->frequency) {
+                $freqLabel = match($item->cycle_unit) {
                     'daily'   => '每 ' . $item->interval . ' 天',
                     'weekly'  => '每 ' . $item->interval . ' 週',
                     'monthly' => '每 ' . $item->interval . ' 個月',
                     'yearly'  => '每 ' . $item->interval . ' 年',
-                    default   => $item->frequency,
+                    default   => $item->cycle_unit,
                 };
             @endphp
 
@@ -227,7 +227,7 @@
 
 					{{-- 週期 --}}
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-						<x-select label="週期單位" wire:model="frequency" :options="[
+						<x-select label="週期單位" wire:model="cycle_unit" :options="[
 							['id' => 'monthly', 'name' => '每月'],
 							['id' => 'yearly',  'name' => '每年'],
 							['id' => 'weekly',  'name' => '每週'],

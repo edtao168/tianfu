@@ -26,7 +26,7 @@ class RecurringIndex extends Component
     public ?int $toAccountId = null;
     public ?int $categoryId = null;
     public string $amount = '';
-    public string $frequency = 'yearly';
+    public string $cycle_unit = 'yearly';
     public int $interval = 1;
     public string $nextDueDate = '';
     public ?string $endDate = null;
@@ -38,7 +38,7 @@ class RecurringIndex extends Component
         'type' => 'required|in:expense,income,transfer',
         'fromAccountId' => 'required|exists:financial_accounts,id',
         'amount' => 'required|numeric|gt:0',
-        'frequency' => 'required|in:daily,weekly,monthly,yearly',
+        'cycle_unit' => 'required|in:daily,weekly,monthly,yearly',
         'interval' => 'required|integer|min:1',
         'nextDueDate' => 'required|date',
         'endDate' => 'nullable|date|after_or_equal:nextDueDate',
@@ -72,7 +72,7 @@ class RecurringIndex extends Component
             'editingId', 'name', 'type', 'fromAccountId', 'toAccountId', 
             'categoryId', 'amount', 'interval', 'endDate', 'memo', 'isActive'
         ]);
-        $this->frequency = 'yearly';
+        $this->cycle_unit = 'yearly';
         $this->interval = 1;
         $this->nextDueDate = now('Asia/Taipei')->format('Y-m-d');
         $this->type = 'expense';
@@ -108,7 +108,7 @@ class RecurringIndex extends Component
         $this->toAccountId = $item->to_account_id;
         $this->categoryId = $item->category_id;
         $this->amount = number_format((float)$item->amount, 2, '.', '');
-        $this->frequency = $item->frequency ?? 'yearly';
+        $this->cycle_unit = $item->cycle_unit ?? 'yearly';
         $this->interval = $item->interval ?? 1;
         $this->nextDueDate = $item->next_due_date ? $item->next_due_date->format('Y-m-d') : now()->format('Y-m-d');
         $this->endDate = $item->end_date ? $item->end_date->format('Y-m-d') : null;
@@ -138,7 +138,7 @@ class RecurringIndex extends Component
             'category_id' => $this->type !== 'transfer' ? $this->categoryId : null,
             'amount' => $this->amount,
             'is_recurring' => true, // 標記為定期收支項目
-            'frequency' => $this->frequency,
+            'cycle_unit' => $this->cycle_unit,
             'interval' => $this->interval,
             'next_due_date' => $this->nextDueDate,
             'end_date' => $this->endDate ?: null,
