@@ -71,7 +71,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="text-[10px] uppercase tracking-wider text-base-content/50 mb-0.5">頻率</div>
+                        <div class="text-[10px] uppercase tracking-wider text-base-content/50 mb-0.5">週期</div>
                         <div class="text-sm font-medium truncate">{{ $freqLabel }}</div>
                     </div>
                     <div>
@@ -225,16 +225,16 @@
 						@endif
 					</div>
 
-					{{-- 頻率 + 間隔 --}}
+					{{-- 週期 --}}
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-						<x-select label="週期頻率" wire:model="frequency" :options="[
+						<x-select label="週期單位" wire:model="frequency" :options="[
 							['id' => 'monthly', 'name' => '每月'],
 							['id' => 'yearly',  'name' => '每年'],
 							['id' => 'weekly',  'name' => '每週'],
 							['id' => 'daily',   'name' => '每天'],
 						]" option-value="id" option-label="name" required />
 
-						<x-input label="間隔倍數 (每 N 周期)" wire:model="interval" type="number" min="1" required />
+						<x-input label="周期" wire:model="interval" type="number" min="1" required />
 					</div>
 
 					{{-- 日期設定 --}}
@@ -265,9 +265,9 @@
 					</div>
 				</div>
 
-				{{-- 【固定在底部的動作按鈕區】加入 flex-shrink-0 確保在電腦大螢幕中絕對不會被壓縮消失 --}}
+				{{-- 底部按鈕 --}}
 				<x-slot:actions>
-					<div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)] bg-base-100 flex-shrink-0">
+					<div class="grid grid-cols-2 gap-2 w-full">
 						<x-button label="取消" type="button" @click="$wire.showModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
 						<x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-green song-interactive" spinner="save" />
 					</div>

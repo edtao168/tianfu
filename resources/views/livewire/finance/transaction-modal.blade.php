@@ -209,27 +209,20 @@
                     </div>
                 </div>
 
-                {{-- 操作按鈕：由 .modal-box > .modal-action 控制固定底部 --}}
+                {{-- 底部按鈕：主要記帳 Modal --}}
                 <x-slot:actions>
-                    {{-- 左側：範本相關按鈕 --}}
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <x-button label="範本" icon="o-clipboard-document-list" type="button" wire:click="openTemplateList" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
-                        @if(!$transactionId)
-                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-sm rounded-xl btn-purple song-interactive" />
-                        @endif
-                    </div>
-
-                    {{-- 右側：主要記帳動作按鈕 --}}
-                    <div class="flex items-center gap-2 flex-wrap">
-                        @if(!$transactionId)
-                            <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-sm rounded-xl btn-green song-interactive" spinner="saveAndKeepOpen" />
-                            <x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-dark song-interactive" spinner="saveTransaction" />
-                        @else
-                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-sm rounded-xl btn-red song-interactive" spinner="deleteTransaction" />
-                            <x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-green song-interactive" spinner="saveTransaction" />
-                        @endif
-                    </div>
-                </x-slot:actions>
+					<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+						<x-button label="範本" icon="o-clipboard-document-list" type="button" wire:click="openTemplateList" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive w-full" />
+						@if(!$transactionId)
+							<x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-sm rounded-xl btn-purple song-interactive w-full" />
+							<x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-sm rounded-xl btn-green song-interactive w-full" spinner="saveAndKeepOpen" />
+							<x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-dark song-interactive w-full" spinner="saveTransaction" />
+						@else
+							<x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-sm rounded-xl btn-red song-interactive w-full" spinner="deleteTransaction" />
+							<x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-green song-interactive w-full" spinner="saveTransaction" />
+						@endif
+					</div>
+				</x-slot:actions>
             </x-form>
         @endif
     </x-modal>
@@ -375,7 +368,8 @@
                     </div>
                 </div>
 
-                <x-slot:actions>
+                {{-- 底部按鈕：範本 Modal --}}
+				<x-slot:actions>
                     <div class="grid grid-cols-2 gap-2 w-full">
                         <x-button label="取消" type="button" @click="$wire.showTemplateModal = false; $wire.resetTemplateForm()" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
                         <x-button label="{{ $editingTemplateId ? '更新' : '儲存' }}" type="submit" class="btn-sm rounded-xl btn-green song-interactive" />
