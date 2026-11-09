@@ -24,200 +24,211 @@
 				empty-variant="emoji"
 			/>
         @else
-            {{-- 類型選擇 --}}
-            @php
-                $typeClasses = [
-                    'expense'  => 'bg-tx-expense text-white shadow-rose-900/20',
-                    'income'   => 'bg-tx-income text-white shadow-emerald-900/20',
-                    'transfer' => 'bg-tx-transfer text-white shadow-sky-900/20',
-                ];
-                $currentType = $this->type ?? 'expense';
-            @endphp
-            <div class="grid grid-cols-4 gap-1.5 mb-5">
-                {{-- 主 Modal 頂部「範本」按鈕 --}}
-				<button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content flex items-center justify-center gap-1.5 song-interactive">
-					<x-icon name="o-clipboard-document-list" class="w-4 h-4" />
-					<span>範本</span>
-				</button>
-                @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
-                    <button type="button" wire:click="$set('type', '{{ $value }}')" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 {{ $currentType === $value ? $typeClasses[$value] . ' shadow-md' : 'bg-base-200 hover:bg-base-300 text-base-content' }} song-interactive">
-                        {{ $label }}
-                    </button>
-                @endforeach
-            </div>
+            {{-- 表單：外層 flex 撐滿剩餘高度，內層內容區可捲動，actions 固定底部 --}}
+            <x-form wire:submit="saveTransaction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
 
-            {{-- 表單 Form 內容 --}}
-            <x-form wire:submit="saveTransaction">
-                <div class="mb-4">
-                    <x-date-nav 
-                        model="currentDate" 
-                        :type="$dateMode"
-                        :display="date('Y-m-d', strtotime($currentDate))" 
-                        :isCurrent="$currentDate === date('Y-m-d')" 
-                        :disableNext="false"
-                    />
-                </div>
-                
-                {{-- 帳戶選擇區塊 --}}
-                @if($type === 'transfer')
-                    {{-- 轉帳模式：轉出賬戶 + 餘額 / 轉入賬戶 + 餘額 --}}
-                    <div class="space-y-3 mb-4">
-                        {{-- 轉出列 --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
-                            <div class="sm:col-span-6 min-w-0">
-                                <x-account-select 
-                                    model="fromAccountId" 
-                                    label="轉出賬戶" 
-                                    :accounts="$this->accounts" 
-                                    :selectedAccountId="$fromAccountId" 
-                                    :showBalance="false"
-                                />
-                            </div>
-                        </div>
+                {{-- 【可捲動內容區】 --}}
+                <div class="overflow-y-auto flex-1 min-h-0 pr-1 max-h-[55vh] md:max-h-[65vh]">
 
-                        {{-- 切換按鈕 --}}
-                        <div class="flex justify-center my-1">
-							<button type="button" 
-									wire:click="swapAccounts" 
-									class="btn btn-blue btn-sm btn-circle song-interactive" 
-									title="切換轉出／轉入賬戶">
-								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-								</svg>
-
-                            </button>
-                        </div>
-
-                        {{-- 轉入列 --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
-                            <div class="sm:col-span-6 min-w-0">
-                                <x-account-select 
-                                    model="toAccountId" 
-                                    label="轉入賬戶" 
-                                    placeholder="選擇目標帳戶"
-                                    :accounts="$this->accounts" 
-                                    :selectedAccountId="$toAccountId" 
-                                    :excludeId="$fromAccountId" 
-                                    :showBalance="false"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {{-- 轉帳金額顯示 --}}               
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div>
-                            <label class="block text-xs font-bold mb-1 text-base-content">轉出金額</label>
-                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
-                                <span class="text-lg font-bold shrink-0 text-tx-expense">-</span>
-                                <input 
-                                    type="text" 
-                                    inputmode="decimal" 
-                                    wire:model.live.debounce.500ms="amount" 
-                                    x-data="{ shouldFocus: false }" 
-                                    x-init="
-                                        $watch('shouldFocus', value => { 
-                                            if (value) { 
-                                                $nextTick(() => { 
-                                                    $el.focus(); 
-                                                    $el.select(); 
-                                                    shouldFocus = false; 
-                                                }); 
-                                            } 
-                                        })
-                                    " 
-                                    x-on:focus-amount-input.window="shouldFocus = true"
-									x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
-                                    placeholder="0" 
-                                    autocomplete="off" 
-                                    class="grow min-w-0 bg-transparent outline-none text-right font-bold text-lg caret-base-content text-tx-expense" 
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold mb-1 text-base-content">轉入金額 (估算)</label>
-                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
-                                <span class="text-lg font-bold text-tx-income">+</span>
-                                <span class="grow text-right text-lg font-bold text-tx-income">{{ $amount ?? 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    {{-- 非轉帳模式：類別 + 金額 --}}
+                    {{-- 類型選擇 --}}
                     @php
-                        $sign = match($type) { 'expense' => '−', 'income' => '+', default => '', };
-                        $signColor = match($type) { 'expense' => 'text-tx-expense', 'income' => 'text-tx-income', default => 'text-tx-transfer', };
+                        $typeClasses = [
+                            'expense'  => 'bg-tx-expense text-white shadow-rose-900/20',
+                            'income'   => 'bg-tx-income text-white shadow-emerald-900/20',
+                            'transfer' => 'bg-tx-transfer text-white shadow-sky-900/20',
+                        ];
+                        $currentType = $this->type ?? 'expense';
                     @endphp
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="col-span-1 min-w-0">
-                            <x-category-display-card
-                                variant="square"
-                                :category="$selectedCategory"
-                                :type="$type"
-                                click-action="openCategoryPicker(false)"
-                            />
-                        </div>
-
-                        <div class="col-span-2 min-w-0 flex items-center">
-                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
-                                <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
-                                <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" 
-    x-data="{ shouldFocus: false }" 
-    x-init=" $watch('shouldFocus', value => { if (value) { $nextTick(() => { $el.focus(); $el.select(); shouldFocus = false; }); } }) " 
-    x-on:focus-amount-input.window="shouldFocus = true"
-    x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
-    placeholder="0" autocomplete="off" 
-    class="grow min-w-0 bg-transparent outline-none text-right font-bold text-4xl caret-base-content {{ $signColor }}" />
-                            </div>
-                            @error('amount') <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </div>
+                    <div class="grid grid-cols-4 gap-1.5 mb-5">
+                        {{-- 主 Modal 頂部「範本」按鈕 --}}
+                        <button type="button" wire:click="openTemplateList" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 bg-base-200 hover:bg-base-300 text-base-content flex items-center justify-center gap-1.5 song-interactive">
+                            <x-icon name="o-clipboard-document-list" class="w-4 h-4" />
+                            <span>範本</span>
+                        </button>
+                        @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
+                            <button type="button" wire:click="$set('type', '{{ $value }}')" class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 {{ $currentType === $value ? $typeClasses[$value] . ' shadow-md' : 'bg-base-200 hover:bg-base-300 text-base-content' }} song-interactive">
+                                {{ $label }}
+                            </button>
+                        @endforeach
                     </div>
-                    
-                    {{-- 非轉帳模式：帳戶選擇 --}}
-                    <div class="mb-4 min-w-0">
-                        <x-account-select 
-                            model="fromAccountId" 
-                            :accounts="$this->accounts" 
-                            :selectedAccountId="$fromAccountId" 
+
+                    {{-- 日期導航 --}}
+                    <div class="mb-4">
+                        <x-date-nav 
+                            model="currentDate" 
+                            :type="$dateMode"
+                            :display="date('Y-m-d', strtotime($currentDate))" 
+                            :isCurrent="$currentDate === date('Y-m-d')" 
+                            :disableNext="false"
                         />
                     </div>
-                @endif
+                    
+                    {{-- 帳戶選擇區塊 --}}
+                    @if($type === 'transfer')
+                        {{-- 轉帳模式：轉出賬戶 + 餘額 / 轉入賬戶 + 餘額 --}}
+                        <div class="space-y-3 mb-4">
+                            {{-- 轉出列 --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
+                                <div class="sm:col-span-6 min-w-0">
+                                    <x-account-select 
+                                        model="fromAccountId" 
+                                        label="轉出賬戶" 
+                                        :accounts="$this->accounts" 
+                                        :selectedAccountId="$fromAccountId" 
+                                        :showBalance="false"
+                                    />
+                                </div>
+                            </div>
 
-                {{-- 照片 + 備註 --}}
-                <div class="grid grid-cols-5 gap-3 mb-5">
-                    <div class="col-span-2">
-                        <label class="aspect-square rounded-2xl border-2 border-dashed border-base-300 hover:border-base-content/40 transition-all cursor-pointer flex flex-col items-center justify-center relative overflow-hidden bg-base-200/50">
-                            <input type="file" wire:model="photo" accept="image/*" class="hidden" id="photo-input">
-                            @if(isset($photo) && method_exists($photo, 'temporaryUrl'))
-                                <img src="{{ $photo->temporaryUrl() }}" class="absolute inset-0 w-full h-full object-cover">
-                            @elseif(isset($existingPhotoPath) && $existingPhotoPath)
-                                <img src="{{ Storage::url($existingPhotoPath) }}" class="absolute inset-0 w-full h-full object-cover">
-                            @else
-                                <svg class="w-8 h-8 mb-1 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                <span class="text-xs font-medium text-base-content/60">照片</span>
-                            @endif
-                            <div wire:loading wire:target="photo" class="absolute inset-0 bg-base-900/50 flex items-center justify-center text-xs text-white"> 上傳中... </div>
-                        </label>
-                    </div>
-                    <div class="col-span-3">
-                        <textarea wire:model="memo" placeholder="請輸入備註" class="textarea w-full h-full min-h-[80px] resize-none placeholder:font-medium"></textarea>
+                            {{-- 切換按鈕 --}}
+                            <div class="flex justify-center my-1">
+                                <button type="button" 
+                                        wire:click="swapAccounts" 
+                                        class="btn btn-blue btn-sm btn-circle song-interactive" 
+                                        title="切換轉出／轉入賬戶">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- 轉入列 --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 min-w-0">
+                                <div class="sm:col-span-6 min-w-0">
+                                    <x-account-select 
+                                        model="toAccountId" 
+                                        label="轉入賬戶" 
+                                        placeholder="選擇目標帳戶"
+                                        :accounts="$this->accounts" 
+                                        :selectedAccountId="$toAccountId" 
+                                        :excludeId="$fromAccountId" 
+                                        :showBalance="false"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {{-- 轉帳金額顯示 --}}               
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold mb-1 text-base-content">轉出金額</label>
+                                <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                    <span class="text-lg font-bold shrink-0 text-tx-expense">-</span>
+                                    <input 
+                                        type="text" 
+                                        inputmode="decimal" 
+                                        wire:model.live.debounce.500ms="amount" 
+                                        x-data="{ shouldFocus: false }" 
+                                        x-init="
+                                            $watch('shouldFocus', value => { 
+                                                if (value) { 
+                                                    $nextTick(() => { 
+                                                        $el.focus(); 
+                                                        $el.select(); 
+                                                        shouldFocus = false; 
+                                                    }); 
+                                                } 
+                                            })
+                                        " 
+                                        x-on:focus-amount-input.window="shouldFocus = true"
+                                        x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
+                                        placeholder="0" 
+                                        autocomplete="off" 
+                                        class="grow min-w-0 bg-transparent outline-none text-right font-bold text-lg caret-base-content text-tx-expense" 
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold mb-1 text-base-content">轉入金額 (估算)</label>
+                                <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                    <span class="text-lg font-bold text-tx-income">+</span>
+                                    <span class="grow text-right text-lg font-bold text-tx-income">{{ $amount ?? 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        {{-- 非轉帳模式：類別 + 金額 --}}
+                        @php
+                            $sign = match($type) { 'expense' => '−', 'income' => '+', default => '', };
+                            $signColor = match($type) { 'expense' => 'text-tx-expense', 'income' => 'text-tx-income', default => 'text-tx-transfer', };
+                        @endphp
+                        <div class="grid grid-cols-3 gap-3 mb-4">
+                            <div class="col-span-1 min-w-0">
+                                <x-category-display-card
+                                    variant="square"
+                                    :category="$selectedCategory"
+                                    :type="$type"
+                                    click-action="openCategoryPicker(false)"
+                                />
+                            </div>
+
+                            <div class="col-span-2 min-w-0 flex items-center">
+                                <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                    <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
+                                    <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="amount" 
+                                        x-data="{ shouldFocus: false }" 
+                                        x-init=" $watch('shouldFocus', value => { if (value) { $nextTick(() => { $el.focus(); $el.select(); shouldFocus = false; }); } }) " 
+                                        x-on:focus-amount-input.window="shouldFocus = true"
+                                        x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
+                                        placeholder="0" autocomplete="off" 
+                                        class="grow min-w-0 bg-transparent outline-none text-right font-bold text-4xl caret-base-content {{ $signColor }}" />
+                                </div>
+                                @error('amount') <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        
+                        {{-- 非轉帳模式：帳戶選擇 --}}
+                        <div class="mb-4 min-w-0">
+                            <x-account-select 
+                                model="fromAccountId" 
+                                :accounts="$this->accounts" 
+                                :selectedAccountId="$fromAccountId" 
+                            />
+                        </div>
+                    @endif
+
+                    {{-- 照片 + 備註 --}}
+                    <div class="grid grid-cols-5 gap-3 mb-5">
+                        <div class="col-span-2">
+                            <label class="aspect-square rounded-2xl border-2 border-dashed border-base-300 hover:border-base-content/40 transition-all cursor-pointer flex flex-col items-center justify-center relative overflow-hidden bg-base-200/50">
+                                <input type="file" wire:model="photo" accept="image/*" class="hidden" id="photo-input">
+                                @if(isset($photo) && method_exists($photo, 'temporaryUrl'))
+                                    <img src="{{ $photo->temporaryUrl() }}" class="absolute inset-0 w-full h-full object-cover">
+                                @elseif(isset($existingPhotoPath) && $existingPhotoPath)
+                                    <img src="{{ Storage::url($existingPhotoPath) }}" class="absolute inset-0 w-full h-full object-cover">
+                                @else
+                                    <svg class="w-8 h-8 mb-1 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span class="text-xs font-medium text-base-content/60">照片</span>
+                                @endif
+                                <div wire:loading wire:target="photo" class="absolute inset-0 bg-base-900/50 flex items-center justify-center text-xs text-white"> 上傳中... </div>
+                            </label>
+                        </div>
+                        <div class="col-span-3">
+                            <textarea wire:model="memo" placeholder="請輸入備註" class="textarea w-full h-full min-h-[80px] resize-none placeholder:font-medium"></textarea>
+                        </div>
                     </div>
                 </div>
 
-                {{-- 操作按鈕 --}}
+                {{-- 操作按鈕：由 .modal-box > .modal-action 控制固定底部 --}}
                 <x-slot:actions>
-                    @if(!$transactionId)
-                        <div class="grid grid-cols-3 gap-2 w-full pt-3 border-t border-base-300">
-                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-purple song-interactive" />
-                            <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-green song-interactive" spinner="saveAndKeepOpen" />
-                            <x-button label="儲存" type="submit" class="btn-dark song-interactive" spinner="saveTransaction" />
-                        </div>
-                    @else
-                        <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300">
-                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-red song-interactive" spinner="deleteTransaction" />
-                            <x-button label="儲存" type="submit" class="btn-green song-interactive" spinner="saveTransaction" />
-                        </div>
-                    @endif
+                    {{-- 左側：範本相關按鈕 --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <x-button label="範本" icon="o-clipboard-document-list" type="button" wire:click="openTemplateList" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
+                        @if(!$transactionId)
+                            <x-button label="存為範本" type="button" wire:click="openTemplateModalFromTransaction" class="btn-sm rounded-xl btn-purple song-interactive" />
+                        @endif
+                    </div>
+
+                    {{-- 右側：主要記帳動作按鈕 --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        @if(!$transactionId)
+                            <x-button label="再記一筆" type="button" wire:click="saveAndKeepOpen" class="btn-sm rounded-xl btn-green song-interactive" spinner="saveAndKeepOpen" />
+                            <x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-dark song-interactive" spinner="saveTransaction" />
+                        @else
+                            <x-button label="刪除" type="button" wire:click="deleteTransaction" class="btn-sm rounded-xl btn-red song-interactive" spinner="deleteTransaction" />
+                            <x-button label="儲存" type="submit" class="btn-sm rounded-xl btn-green song-interactive" spinner="saveTransaction" />
+                        @endif
+                    </div>
                 </x-slot:actions>
             </x-form>
         @endif
@@ -243,125 +254,130 @@
 			/>
 
         @else
-            <x-form wire:submit="saveAsTemplate">
-                @php
-                    $templateTypeClasses = [
-                        'expense'  => 'bg-tx-expense text-white shadow-rose-900/20',
-                        'income'   => 'bg-tx-income text-white shadow-emerald-900/20',
-                        'transfer' => 'bg-tx-transfer text-white shadow-sky-900/20',
-                    ];
-                    $currentTemplateType = $this->templateType ?? 'expense';
-                @endphp
-                <div class="grid grid-cols-3 gap-1.5 mb-5">
-                    @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
-                        <button type="button"
-                                wire:click="$set('templateType', '{{ $value }}')"
-                                class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 song-interactive
-                                    {{ $currentTemplateType === $value 
-                                        ? $templateTypeClasses[$value] . ' shadow-md'
-                                        : 'bg-base-200 hover:bg-base-300 text-base-content' }}">
-                            {{ $label }}
-                        </button>
-                    @endforeach
-                </div>
+            <x-form wire:submit="saveAsTemplate" class="flex flex-col flex-1 min-h-0 overflow-hidden">
 
-                <x-input 
-                    label="範本名稱" 
-                    wire:model="templateName" 
-                    placeholder="例如：早餐、股息" 
-                    icon="o-bookmark"
-                    inline
-                    required 
-                />
-
-                <div class="grid grid-cols-6 gap-3 mb-4">
-                    <div class="col-span-2">
-                        @if($templateType !== 'transfer')
-                            <x-category-display-card
-                                variant="square"
-                                :category="$selectedTemplateCategory"
-                                :type="$templateType"
-                                click-action="openCategoryPicker(true)"
-                            />
-                        @else
-                            <div class="aspect-square badge-tx-transfer rounded-2xl border
-                                        flex flex-col items-center justify-center">
-                                <div class="text-3xl mb-1 flex justify-center">
-                                    <x-icon name="o-arrow-path" class="w-10 h-10 text-tx-transfer" />
-                                </div>
-                                <div class="text-xs font-bold text-tx-transfer">轉帳</div>
-                            </div>
-                        @endif
-                    </div>
+                {{-- 【可捲動內容區】 --}}
+                <div class="overflow-y-auto flex-1 min-h-0 pr-1 max-h-[55vh] md:max-h-[65vh]">
 
                     @php
-                        $sign = match($templateType) {
-                            'expense' => '−',
-                            'income'  => '+',
-                            default   => '',
-                        };
-                        $signColor = match($templateType) {
-                            'expense'  => 'text-tx-expense',
-                            'income'   => 'text-tx-income',
-                            'transfer' => 'text-tx-transfer',
-                            default    => 'text-base-content/60',
-                        };
+                        $templateTypeClasses = [
+                            'expense'  => 'bg-tx-expense text-white shadow-rose-900/20',
+                            'income'   => 'bg-tx-income text-white shadow-emerald-900/20',
+                            'transfer' => 'bg-tx-transfer text-white shadow-sky-900/20',
+                        ];
+                        $currentTemplateType = $this->templateType ?? 'expense';
                     @endphp
-                    <div class="col-span-4 flex items-center">
-                        <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
-                            <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
-                            <input type="text"
-								   inputmode="decimal"
-								   wire:model.live.debounce.500ms="amount"
-								   x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
-								   placeholder="0"
-								   autocomplete="off"
-								   class="grow min-w-0 bg-transparent outline-none text-right font-bold placeholder:text-base-content/40 caret-base-content {{ $signColor }}"
-								   style="font-size: 2.25rem; height: 3rem; margin: 0;"
-							/>
-                        </div>
-                        @error('amount')
-                            <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
+                    <div class="grid grid-cols-3 gap-1.5 mb-5">
+                        @foreach(['expense' => '支出', 'income' => '收入', 'transfer' => '轉帳'] as $value => $label)
+                            <button type="button"
+                                    wire:click="$set('templateType', '{{ $value }}')"
+                                    class="py-2.5 text-sm font-bold rounded-xl transition-all duration-200 song-interactive
+                                        {{ $currentTemplateType === $value 
+                                            ? $templateTypeClasses[$value] . ' shadow-md'
+                                            : 'bg-base-200 hover:bg-base-300 text-base-content' }}">
+                                {{ $label }}
+                            </button>
+                        @endforeach
                     </div>
-                </div>
 
-                {{-- 範本帳戶選擇 --}}
-                <div class="mb-4 min-w-0">
-                    <x-account-select 
-                        model="templateFromAccountId" 
-                        :accounts="$this->accounts" 
-                        :selectedAccountId="$templateFromAccountId" 
+                    <x-input 
+                        label="範本名稱" 
+                        wire:model="templateName" 
+                        placeholder="例如：早餐、股息" 
+                        icon="o-bookmark"
+                        inline
+                        required 
                     />
-                </div>
 
-                {{-- 範本轉帳目標帳戶 --}}
-                @if($templateType === 'transfer')
+                    <div class="grid grid-cols-6 gap-3 mb-4">
+                        <div class="col-span-2">
+                            @if($templateType !== 'transfer')
+                                <x-category-display-card
+                                    variant="square"
+                                    :category="$selectedTemplateCategory"
+                                    :type="$templateType"
+                                    click-action="openCategoryPicker(true)"
+                                />
+                            @else
+                                <div class="aspect-square badge-tx-transfer rounded-2xl border
+                                            flex flex-col items-center justify-center">
+                                    <div class="text-3xl mb-1 flex justify-center">
+                                        <x-icon name="o-arrow-path" class="w-10 h-10 text-tx-transfer" />
+                                    </div>
+                                    <div class="text-xs font-bold text-tx-transfer">轉帳</div>
+                                </div>
+                            @endif
+                        </div>
+
+                        @php
+                            $sign = match($templateType) {
+                                'expense' => '−',
+                                'income'  => '+',
+                                default   => '',
+                            };
+                            $signColor = match($templateType) {
+                                'expense'  => 'text-tx-expense',
+                                'income'   => 'text-tx-income',
+                                'transfer' => 'text-tx-transfer',
+                                default    => 'text-base-content/60',
+                            };
+                        @endphp
+                        <div class="col-span-4 flex items-center">
+                            <div class="input w-full flex items-center gap-1 px-3 py-2 h-auto">
+                                <span class="text-2xl font-bold shrink-0 {{ $signColor }}">{{ $sign }}</span>
+                                <input type="text"
+                                       inputmode="decimal"
+                                       wire:model.live.debounce.500ms="amount"
+                                       x-on:focus="if ($el.value === '0' || $el.value === '0.00' || parseFloat($el.value) === 0) { $el.value = ''; $wire.set('amount', ''); }"
+                                       placeholder="0"
+                                       autocomplete="off"
+                                       class="grow min-w-0 bg-transparent outline-none text-right font-bold placeholder:text-base-content/40 caret-base-content {{ $signColor }}"
+                                       style="font-size: 2.25rem; height: 3rem; margin: 0;"
+                                />
+                            </div>
+                            @error('amount')
+                                <span class="text-tx-expense text-xs mt-1 block">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- 範本帳戶選擇 --}}
                     <div class="mb-4 min-w-0">
                         <x-account-select 
-                            model="templateToAccountId" 
-                            label="轉入賬戶" 
-                            placeholder="選擇目標帳戶"
+                            model="templateFromAccountId" 
                             :accounts="$this->accounts" 
-                            :selectedAccountId="$templateToAccountId" 
-                            :excludeId="$templateFromAccountId" 
-                            :showBalance="false" 
+                            :selectedAccountId="$templateFromAccountId" 
                         />
                     </div>
-                @endif
 
-                <div class="grid grid-cols-5 gap-3 mb-4">
-                    <div class="col-span-5">
-                        <textarea wire:model="templateMemo"
-                                  placeholder="請輸入備註"
-                                  rows="3"
-                                  class="textarea w-full resize-none placeholder:font-medium"></textarea>
+                    {{-- 範本轉帳目標帳戶 --}}
+                    @if($templateType === 'transfer')
+                        <div class="mb-4 min-w-0">
+                            <x-account-select 
+                                model="templateToAccountId" 
+                                label="轉入賬戶" 
+                                placeholder="選擇目標帳戶"
+                                :accounts="$this->accounts" 
+                                :selectedAccountId="$templateToAccountId" 
+                                :excludeId="$templateFromAccountId" 
+                                :showBalance="false" 
+                            />
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-5 gap-3 mb-4">
+                        <div class="col-span-5">
+                            <textarea wire:model="templateMemo"
+                                      placeholder="請輸入備註"
+                                      rows="3"
+                                      class="textarea w-full resize-none placeholder:font-medium"></textarea>
+                        </div>
                     </div>
                 </div>
 
                 <x-slot:actions>
-                    <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
-                        <x-button label="取消" type="button" @click="$wire.showTemplateModal = false; $wire.resetTemplateForm()" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content" />
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <x-button label="取消" type="button" @click="$wire.showTemplateModal = false; $wire.resetTemplateForm()" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
                         <x-button label="{{ $editingTemplateId ? '更新' : '儲存' }}" type="submit" class="btn-sm rounded-xl btn-green song-interactive" />
                     </div>
                 </x-slot:actions>
@@ -377,7 +393,8 @@
              size="lg"
              box-class="border border-[var(--song-border)] bg-[var(--song-modal-bg)] bg-gradient-to-br from-amber-500/[0.04] to-transparent">
         
-        <div class="space-y-2 max-h-96 overflow-y-auto">
+        {{-- 【可捲動列表區】 --}}
+        <div class="overflow-y-auto flex-1 min-h-0 max-h-[55vh] md:max-h-[65vh] space-y-2">
             @forelse($templates as $template)
                 @php
                     $templateTypeColor = match($template['type'] ?? 'expense') {
@@ -418,7 +435,7 @@
         </div>
         
         <x-slot:actions>
-            <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-[var(--song-border)]">
+            <div class="grid grid-cols-2 gap-2 w-full">
                 <x-button label="取消" type="button" @click="$wire.showTemplateListModal = false" class="btn-sm rounded-xl bg-base-200 hover:bg-base-300 text-base-content song-interactive" />
                 <x-button label="新增範本" type="button" wire:click="openTemplateModalFromList" class="btn-sm rounded-xl btn-green song-interactive" />
             </div>
