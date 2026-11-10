@@ -26,6 +26,8 @@ class TransactionListModal extends Component
     public ?int $accountId = null;
     public ?int $categoryId = null;
     public ?string $transactionType = null; // income, expense, transfer
+    public string $dateMode = 'month';
+    public string $currentDate = '';
 
     // 標題與幣別顯示
     public string $title = '交易明細列表';
@@ -144,8 +146,8 @@ class TransactionListModal extends Component
 		} else {
 			$this->currencySymbol = app(CurrencyService::class)->getBaseCurrencySymbol();
 		}
-
-        $this->loadTransactions();
+		
+		$this->loadTransactions();
         $this->showModal = true;
     }
 

@@ -1,6 +1,15 @@
-<!-- filepath: resources/views/livewire/finance/account-index.blade.php -->
-<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
-    
+<div x-data="{ 
+    loadingPeriod: null,
+    init() {
+        // 監聽 Livewire 動作完成後，延遲一小段時間確保 Modal 已經完整渲染出來並顯示
+        Livewire.on('modal-opened', () => {
+            this.loadingPeriod = null;
+        });
+    }
+}" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
+
+{{-- filepath: resources/views/livewire/finance/account-index.blade.php --}}
+   
     {{-- ============================================================ --}}
     {{-- 1. 頂部收支統計卡片 --}}
     {{-- ============================================================ --}}
@@ -30,8 +39,19 @@
                     $theme = $periodThemeMap[$period] ?? 'blue';
                 @endphp
             
-                <div class="clickable-card stats song-interactive shadow-sm bg-base-100 border border-base-300 rounded-2xl cursor-pointer overflow-hidden group" 
+				<div class="clickable-card stats song-interactive shadow-sm bg-base-100 border border-base-300 rounded-2xl cursor-pointer overflow-hidden group
+					 data-loading:opacity-50 data-loading:pointer-events-none transition-opacity"
                      wire:click="showPeriodDetail('{{ $period }}')">
+					 
+					{{-- 這裡利用 wire:loading 針對特定按鈕的動作顯示，並透過背後渲染機制維持直到 Modal 開啟 --}}
+					<template x-teleport="body">
+						<div wire:loading.flex
+							 wire:target="showPeriodDetail('{{ $period }}')"
+							 class="fixed inset-0 z-[999] items-center justify-center bg-base-100/40 backdrop-blur-[1px]">
+							<span class="loading loading-spinner loading-lg text-base-content/80"></span>
+						</div>
+					</template>
+	
 					<div class="stat p-0">
 
 						{{-- 斜切緞帶標題層 --}}

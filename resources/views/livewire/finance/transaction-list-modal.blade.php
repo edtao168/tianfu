@@ -1,5 +1,6 @@
-<!-- resources/views/livewire/finance/transaction-list-modal.blade.php -->
 <div>
+{{-- resources/views/livewire/finance/transaction-list-modal.blade.php --}}
+
 	<x-modal 
 		wire:model="showModal" 
 		backdrop-blur-md 
