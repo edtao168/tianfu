@@ -2,23 +2,37 @@
 <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 text-base-content animate-fadeIn">
     
     {{-- ============================================================ --}}
-    {{-- 頂部篩選與第一層分頁（視覺對齊：彈性均分列） --}}
+    {{-- 頂部篩選與第一層分頁 --}}
     {{-- ============================================================ --}}
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-base-300/60 pb-5">
 
-        {{-- 第一層分頁：內容自然撐開，支援橫向滑動 --}}
+        {{-- 第一層分頁 --}}
         <div class="flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300/70 backdrop-blur-md w-full lg:w-auto shadow-sm overflow-x-auto">
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'category' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                    wire:click="$set('tab1', 'category')">📊 類別</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'trend' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                    wire:click="$set('tab1', 'trend')">📈 收支</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $tab1 === 'account' && !$showAssetTrend ? 'bg-base-100 text-base-content shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                    wire:click="$set('tab1', 'account')">💼 賬戶</button>
-            <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap {{ $showAssetTrend ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                    wire:click="$set('tab1', 'asset')">🏦 總資產</button>
+            @php
+                $primaryTabs = [
+                    ['key' => 'category', 'label' => '📊 類別', 'isAsset' => false],
+                    ['key' => 'trend',    'label' => '📈 收支', 'isAsset' => false],
+                    ['key' => 'account',  'label' => '💼 賬戶', 'isAsset' => false],
+                    ['key' => 'asset',    'label' => '🏦 總資產', 'isAsset' => true],
+                ];
+            @endphp
+            @foreach($primaryTabs as $tab)
+                @php
+                    $isActive = $tab['isAsset']
+                        ? $showAssetTrend
+                        : ($tab1 === $tab['key'] && !$showAssetTrend);
+                    $activeClass = $tab['isAsset']
+                        ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900'
+                        : 'bg-base-100 text-base-content shadow-sm';
+                @endphp
+                <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap song-interactive {{ $isActive ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
+                        wire:click="$set('tab1', '{{ $tab['key'] }}')">
+                    {{ $tab['label'] }}
+                </button>
+            @endforeach
         </div>
 
-        {{-- 日期導覽元件 --}}
+        {{-- 日期導覽 --}}
         <div class="flex items-center justify-end gap-2">
             <x-date-nav 
                 model="currentDate" 
@@ -31,7 +45,7 @@
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 幣別切換器（總資產趨勢時隱藏） --}}
+    {{-- 幣別切換器 --}}
     {{-- ============================================================ --}}
     @if(!$showAssetTrend)
         <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 bg-base-200/50 p-3 rounded-2xl border border-base-300/60">
@@ -54,7 +68,7 @@
                     @endphp
                     <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }} song-interactive"
                             wire:click="$set('currencyFilter', '{{ $currency->code }}')">
-                       {{ $currency->code }}
+                        {{ $currency->code }}
                     </button>
                 @endforeach
             </div>
@@ -62,7 +76,7 @@
     @endif
 
     {{-- ============================================================ --}}
-    {{-- 第二層與第三層分頁（嚴格落實視覺對齊與彈性均分） --}}
+    {{-- 第二層與第三層分頁 --}}
     {{-- ============================================================ --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         
@@ -91,7 +105,7 @@
             @endif
         </div>
 
-        {{-- 第三層分頁群組（視覺對齊：等寬彈性分佈） --}}
+        {{-- 第三層分頁群組 --}}
         <div class="flex p-1.5 bg-base-200/80 rounded-2xl border border-base-300/70 backdrop-blur-md shadow-sm">
             @if($showAssetTrend)
                 <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
@@ -125,24 +139,21 @@
     {{-- ============================================================ --}}
     @if($showAssetTrend && $effectBreakdown)
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
-                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">期間變動</div>
-                <div class="text-lg font-black font-mono {{ $effectBreakdown['total_change_raw'] >= 0 ? 'text-success' : 'text-error' }}">
-                    {{ $effectBreakdown['total_change'] }}
+            @php
+                $effects = [
+                    ['label' => '期間變動',     'raw' => $effectBreakdown['total_change_raw'],       'display' => $effectBreakdown['total_change']],
+                    ['label' => '💼 交易貢獻', 'raw' => $effectBreakdown['transaction_effect_raw'], 'display' => $effectBreakdown['transaction_effect']],
+                    ['label' => '💱 匯率重估', 'raw' => $effectBreakdown['fx_effect_raw'],          'display' => $effectBreakdown['fx_effect']],
+                ];
+            @endphp
+            @foreach($effects as $effect)
+                <div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
+                    <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">{{ $effect['label'] }}</div>
+                    <div class="text-lg font-black font-mono {{ $effect['raw'] >= 0 ? 'text-success' : 'text-error' }}">
+                        {{ $effect['display'] }}
+                    </div>
                 </div>
-            </div>
-            <div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
-                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">💼 交易貢獻</div>
-                <div class="text-lg font-black font-mono {{ $effectBreakdown['transaction_effect_raw'] >= 0 ? 'text-success' : 'text-error' }}">
-                    {{ $effectBreakdown['transaction_effect'] }}
-                </div>
-            </div>
-            <div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
-                <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">💱 匯率重估</div>
-                <div class="text-lg font-black font-mono {{ $effectBreakdown['fx_effect_raw'] >= 0 ? 'text-success' : 'text-error' }}">
-                    {{ $effectBreakdown['fx_effect'] }}
-                </div>
-            </div>
+            @endforeach
         </div>
     @endif
 
@@ -151,11 +162,39 @@
     {{-- ============================================================ --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <div class="lg:col-span-5 bg-base-100 border border-base-300/70 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
+        {{-- 圖表容器（含局部 loading 遮罩） --}}
+        <div x-data="{ chartRendering: false }"
+             x-on:chart-rendering-start.window="chartRendering = true"
+             x-on:chart-rendering-end.window="chartRendering = false"
+             class="lg:col-span-5 bg-base-100 border border-base-300/70 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
+
+            {{-- 後端重算期間：wire:loading 遮罩 --}}
+            <div wire:loading.flex
+                 wire:target="tab1, tab2, tab3, assetTab, currencyFilter, currentDate"
+                 class="absolute inset-0 z-20 items-center justify-center bg-base-100/70 backdrop-blur-[2px] rounded-2xl">
+                <div class="flex flex-col items-center gap-2">
+                    <span class="loading loading-spinner loading-md text-base-content/70"></span>
+                    <span class="text-xs font-medium text-base-content/60">資料計算中...</span>
+                </div>
+            </div>
+
+            {{-- 前端重繪期間：chartRendering 遮罩（與上者接力） --}}
+            <div x-show="chartRendering"
+                 x-transition.opacity.duration.150ms
+                 class="absolute inset-0 z-20 flex items-center justify-center bg-base-100/70 backdrop-blur-[2px] rounded-2xl">
+                <div class="flex flex-col items-center gap-2">
+                    <span class="loading loading-spinner loading-md text-base-content/70"></span>
+                    <span class="text-xs font-medium text-base-content/60">圖表繪製中...</span>
+                </div>
+            </div>
+
             @if($tab1 === 'account' && $tab2 === 'trend')
-                <div id="smallMultiplesContainer" class="w-full grid grid-cols-1 gap-3" style="max-height: 520px; overflow-y: auto;"></div>
+                {{-- small multiples：固定高度，JS 會複用 canvas --}}
+                <div id="smallMultiplesContainer"
+                     class="w-full grid grid-cols-1 gap-3 relative z-10"
+                     style="max-height: 520px; overflow-y: auto;"></div>
             @else
-                <div class="w-full max-w-[320px] relative" style="min-height: 300px;">
+                <div class="w-full max-w-[320px] relative z-10" style="min-height: 300px;">
                     <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
                     @if($tab1 === 'category' && !$showAssetTrend)
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
@@ -180,6 +219,7 @@
             @endif
         </div>
 
+        {{-- 明細表格區 --}}
         <div class="lg:col-span-7 space-y-4">
             
             @if($tab1 === 'account')
@@ -489,7 +529,7 @@
 </div>
 
 {{-- ============================================================ --}}
-{{-- Chart.js 渲染 --}}
+{{-- Chart.js 渲染（優化版：保留實例、關閉小圖動畫） --}}
 {{-- ============================================================ --}}
 @push('scripts')
 <script>
@@ -499,7 +539,7 @@ document.addEventListener('livewire:init', function () {
         return {
             text: isDark ? '#E7E5E4' : '#292524',
             grid: isDark ? 'rgba(68, 64, 60, 0.25)' : 'rgba(231, 229, 228, 0.5)',
-            pies: isDark 
+            pies: isDark
                 ? ['#8fb4cf', '#b57a7a', '#5b8c7a', '#c29a63', '#8972a3', '#577180', '#415a44', '#555555']
                 : ['#a2bddb', '#b57a7a', '#5b8c7a', '#d4af37', '#9b84b3', '#6a8a9a', '#739072', '#a8a29e'],
             primary: '#a2bddb',
@@ -507,193 +547,243 @@ document.addEventListener('livewire:init', function () {
         };
     };
 
-    setTimeout(function() {
-        let chartInstance = null;
-        const smallMultiplesInstances = [];
+    // ===== 狀態管理 =====
+    let chartInstance = null;
+    // key = account name，value = Chart 實例；用 Map 方便差異比對
+    const smallMultiplesMap = new Map();
+    let currentRenderMode = null; // 'single' | 'multi'
 
-        function renderChart(data) {
-            const canvasEl = document.getElementById('financeChart');
-            if (!canvasEl) return;
-            
-            const ctx = canvasEl.getContext('2d');
-            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    const emitRenderingStart = () => window.dispatchEvent(new CustomEvent('chart-rendering-start'));
+    const emitRenderingEnd   = () => window.dispatchEvent(new CustomEvent('chart-rendering-end'));
 
-            const centerTotalEl = document.getElementById('chartCenterTotal');
-            if (centerTotalEl && data.centerText !== undefined && data.centerText !== null) {
-                const symbol = data.symbol || '';
-                centerTotalEl.textContent = symbol + data.centerText;
-            }
+    // ===== 共用工具 =====
+    function formatAxisTick(value) {
+        if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+        if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+        return value;
+    }
 
-            const palette = getSongPalette();
-
-            if (!data.labels || data.labels.length === 0 || (!data.values && !data.series)) {
-                chartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: { labels: ['無數據'], datasets: [{ data: [1], backgroundColor: [palette.grid], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: false } }, cutout: '75%' }
-                });
-                return;
-            }
-
-            const isPie = data.type === 'pie';
-            const isLine = data.type === 'line';
-            const isMultiLine = data.type === 'multiLine';
-            const chartType = isPie
-				? 'doughnut'
-				: (data.type === 'bar' ? 'bar' : 'line');
-
-            let datasets = [];
-
-            if (isMultiLine) {
-                datasets = (data.series || []).map(s => ({
-                    label: s.name,
-                    data: s.values,
-                    borderColor: s.color,
-                    backgroundColor: s.color + '20',
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.4,
-                    pointRadius: 2,
-                    pointBackgroundColor: s.color,
-                }));
-            } else if (isLine) {
-                datasets = [{
-                    data: data.values,
-                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
-                    borderColor: '#818cf8',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#818cf8',
-                }];
-            } else if (isPie) {
-                datasets = [{
-                    data: data.values,
-                    backgroundColor: palette.pies,
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#141212' : '#FAF9F6',
-                    borderWidth: 1.5,
-                }];
-            } else {
-                datasets = [{
-                    data: data.values,
-                    backgroundColor: data.color || palette.primary,
-                    borderRadius: 4,
-                }];
-            }
-
-            const config = {
-                type: chartType,
-                data: {
-                    labels: data.labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: isPie ? 1 : 1.5,
-                    plugins: {
-                        legend: {
-                            display: isPie || isMultiLine,
-                            position: 'bottom',
-                            labels: { 
-                                boxWidth: 10, 
-                                font: { size: 11 },
-                                color: palette.text,
-                                padding: 12
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(20, 18, 18, 0.9)',
-                            titleColor: '#FAF9F6',
-                            bodyColor: '#E7E5E4',
-                            borderColor: 'rgba(231, 229, 228, 0.1)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label || context.label || '';
-                                    const value = context.parsed.y ?? context.parsed.r ?? context.parsed;
-                                    if (isPie) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                        return ` ${label}: ${data.symbol || ''}${value.toLocaleString()} (${percentage}%)`;
-                                    }
-                                    return ` ${label}: ${data.symbol || ''}${value.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    cutout: isPie ? '75%' : undefined
-                }
-            };
-
-            if (!isPie) {
-                config.options.scales = {
-                    y: {
-                        beginAtZero: false,
-                        grid: { color: palette.grid },
-                        ticks: {
-                            color: palette.text + '90',
-                            font: { size: 10, family: 'mono' },
-                            callback: function(value) {
-                                if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-                                if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
-                                return value;
-                            }
-                        }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 }
+    function buildTooltipConfig(data, isPie) {
+        return {
+            backgroundColor: 'rgba(20, 18, 18, 0.9)',
+            titleColor: '#FAF9F6',
+            bodyColor: '#E7E5E4',
+            borderColor: 'rgba(231, 229, 228, 0.1)',
+            borderWidth: 1,
+            callbacks: {
+                label: function(context) {
+                    const label = context.dataset.label || context.label || '';
+                    const value = context.parsed.y ?? context.parsed.r ?? context.parsed;
+                    if (isPie) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                        return ` ${label}: ${data.symbol || ''}${value.toLocaleString()} (${percentage}%)`;
                     }
-                };
+                    return ` ${label}: ${data.symbol || ''}${value.toLocaleString()}`;
+                }
             }
+        };
+    }
 
-            chartInstance = new Chart(ctx, config);
+    // ===== 單圖渲染（保留實例，只更新資料） =====
+    function renderChart(data) {
+        // 若從 multi 切回 single，先清掉 small multiples
+        if (currentRenderMode === 'multi') {
+            destroySmallMultiples();
+            currentRenderMode = null;
         }
 
-        function renderSmallMultiples(data) {
-            const container = document.getElementById('smallMultiplesContainer');
-            if (!container) return;
+        const canvasEl = document.getElementById('financeChart');
+        if (!canvasEl) return;
 
-            smallMultiplesInstances.forEach(c => c.destroy());
-            smallMultiplesInstances.length = 0;
-            container.innerHTML = '';
+        const ctx = canvasEl.getContext('2d');
+        const palette = getSongPalette();
 
-            const palette = getSongPalette();
+        // 更新中心文字
+        const centerTotalEl = document.getElementById('chartCenterTotal');
+        if (centerTotalEl && data.centerText !== undefined && data.centerText !== null) {
+            centerTotalEl.textContent = (data.symbol || '') + data.centerText;
+        }
 
-            if (!data.series || data.series.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-16 text-base-content/40">
-                        <span class="text-3xl mb-2">📭</span>
-                        <span class="text-sm">暫無賬戶數據</span>
-                    </div>`;
-                return;
+        // 無資料狀態
+        if (!data.labels || data.labels.length === 0 || (!data.values && !data.series)) {
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['無數據'], datasets: [{ data: [1], backgroundColor: [palette.grid], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: false } }, cutout: '75%' }
+            });
+            return;
+        }
+
+        const isPie = data.type === 'pie';
+        const isLine = data.type === 'line';
+        const chartType = isPie ? 'doughnut' : (data.type === 'bar' ? 'bar' : 'line');
+
+        // 組 datasets
+        let datasets;
+        if (isLine) {
+            datasets = [{
+                data: data.values,
+                backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                borderColor: '#818cf8',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: '#818cf8',
+            }];
+        } else if (isPie) {
+            datasets = [{
+                data: data.values,
+                backgroundColor: palette.pies,
+                borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#141212' : '#FAF9F6',
+                borderWidth: 1.5,
+            }];
+        } else {
+            datasets = [{
+                data: data.values,
+                backgroundColor: data.color || palette.primary,
+                borderRadius: 4,
+            }];
+        }
+
+        // 若已有實例且「類型相同」，走 update 路徑（快很多）
+        if (chartInstance && chartInstance.config.type === chartType) {
+            chartInstance.data.labels = data.labels;
+            chartInstance.data.datasets = datasets;
+            if (isPie) {
+                chartInstance.options.cutout = '75%';
+                delete chartInstance.options.scales;
+            } else {
+                chartInstance.options.scales = buildScales(palette);
             }
+            chartInstance.update('none'); // 關動畫，更新極快
+            return;
+        }
 
-            const symbol = data.symbol || '';
+        // 否則重建（切換圖表類型時才重建）
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-            data.series.forEach((s, idx) => {
+        const config = {
+            type: chartType,
+            data: { labels: data.labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: isPie ? 1 : 1.5,
+                animation: { duration: 200 }, // 主圖保留輕量動畫
+                plugins: {
+                    legend: {
+                        display: isPie,
+                        position: 'bottom',
+                        labels: { boxWidth: 10, font: { size: 11 }, color: palette.text, padding: 12 }
+                    },
+                    tooltip: buildTooltipConfig(data, isPie)
+                },
+                cutout: isPie ? '75%' : undefined
+            }
+        };
+
+        if (!isPie) {
+            config.options.scales = buildScales(palette);
+        }
+
+        chartInstance = new Chart(ctx, config);
+    }
+
+    function buildScales(palette) {
+        return {
+            y: {
+                beginAtZero: false,
+                grid: { color: palette.grid },
+                ticks: { color: palette.text + '90', font: { size: 10, family: 'mono' }, callback: formatAxisTick }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 }
+            }
+        };
+    }
+
+    // ===== Small Multiples 渲染（差異更新） =====
+    function destroySmallMultiples() {
+        smallMultiplesMap.forEach(c => c.destroy());
+        smallMultiplesMap.clear();
+        const container = document.getElementById('smallMultiplesContainer');
+        if (container) container.innerHTML = '';
+    }
+
+    function renderSmallMultiples(data) {
+        const container = document.getElementById('smallMultiplesContainer');
+        if (!container) return;
+
+        // 若從 single 切到 multi，先清掉主圖
+        if (currentRenderMode === 'single') {
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            currentRenderMode = null;
+        }
+        currentRenderMode = 'multi';
+
+        const palette = getSongPalette();
+        const symbol = data.symbol || '';
+        const series = data.series || [];
+
+        // 空資料
+        if (series.length === 0) {
+            destroySmallMultiples();
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 text-base-content/40">
+                    <span class="text-3xl mb-2">📭</span>
+                    <span class="text-sm">暫無賬戶數據</span>
+                </div>`;
+            return;
+        }
+
+        // 記錄本次要保留的 key
+        const nextKeys = new Set(series.map(s => s.name));
+
+        // 移除「本次不存在」的舊圖（帳戶被刪除）
+        for (const [name, chart] of smallMultiplesMap.entries()) {
+            if (!nextKeys.has(name)) {
+                chart.destroy();
+                smallMultiplesMap.delete(name);
+                const card = container.querySelector(`[data-account-key="${CSS.escape(name)}"]`);
+                if (card) card.remove();
+            }
+        }
+
+        // 依序處理每個 series
+        series.forEach((s) => {
+            let chart = smallMultiplesMap.get(s.name);
+            let canvasEl = chart ? chart.canvas : null;
+            const lastValue = s.values[s.values.length - 1] || 0;
+
+            // 若帳戶是新的，建立卡片 + canvas
+            if (!chart) {
                 const card = document.createElement('div');
                 card.className = 'bg-base-200/50 border border-base-300/60 rounded-xl p-3';
+                card.dataset.accountKey = s.name;
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-base-content/80 flex items-center gap-1.5">
                             <span class="inline-block w-2 h-2 rounded-full" style="background: ${s.color}"></span>
-                            ${s.name}
+                            <span class="sm-name"></span>
                         </span>
-                        <span class="text-[10px] text-base-content/60 font-mono">
-                            ${symbol}${(s.values[s.values.length - 1] || 0).toLocaleString()}
-                        </span>
+                        <span class="text-[10px] text-base-content/60 font-mono sm-value"></span>
                     </div>
                     <div style="height: 110px; position: relative;">
-                        <canvas id="sm-chart-${idx}"></canvas>
+                        <canvas></canvas>
                     </div>
                 `;
+                card.querySelector('.sm-name').textContent = s.name;
+                card.querySelector('.sm-value').textContent = `${symbol}${lastValue.toLocaleString()}`;
                 container.appendChild(card);
 
-                const ctx = card.querySelector('canvas').getContext('2d');
-                const chart = new Chart(ctx, {
+                canvasEl = card.querySelector('canvas');
+                const ctx = canvasEl.getContext('2d');
+
+                chart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: data.labels,
@@ -711,6 +801,7 @@ document.addEventListener('livewire:init', function () {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false, // small multiples 關閉動畫，初始化更快
                         plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -718,9 +809,7 @@ document.addEventListener('livewire:init', function () {
                                 titleColor: '#FAF9F6',
                                 bodyColor: '#E7E5E4',
                                 callbacks: {
-                                    label: function(context) {
-                                        return ` ${symbol}${context.parsed.y.toLocaleString()}`;
-                                    }
+                                    label: (context) => ` ${symbol}${context.parsed.y.toLocaleString()}`
                                 }
                             }
                         },
@@ -732,11 +821,7 @@ document.addEventListener('livewire:init', function () {
                                     color: palette.text + '60',
                                     font: { size: 9, family: 'mono' },
                                     maxTicksLimit: 4,
-                                    callback: function(value) {
-                                        if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-                                        if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
-                                        return value;
-                                    }
+                                    callback: formatAxisTick
                                 }
                             },
                             x: {
@@ -746,16 +831,49 @@ document.addEventListener('livewire:init', function () {
                         }
                     }
                 });
-                smallMultiplesInstances.push(chart);
-            });
-        }
+                smallMultiplesMap.set(s.name, chart);
+            } else {
+                // 既有圖：只更新資料
+                chart.data.labels = data.labels;
+                chart.data.datasets[0].data = s.values;
+                chart.data.datasets[0].borderColor = s.color;
+                chart.data.datasets[0].backgroundColor = s.color + '20';
+                chart.data.datasets[0].pointBackgroundColor = s.color;
+                chart.update('none'); // 關動畫
 
-        function renderByData(data) {
-            if (!data) return;
-            if (data.isSmallMultiples) renderSmallMultiples(data);
-            else renderChart(data);
-        }
+                // 更新文字
+                const card = chart.canvas.closest('[data-account-key]');
+                if (card) {
+                    card.querySelector('.sm-value').textContent = `${symbol}${lastValue.toLocaleString()}`;
+                }
+            }
+        });
 
+        // 依 series 順序重排卡片（避免順序錯亂）
+        series.forEach((s) => {
+            const card = container.querySelector(`[data-account-key="${CSS.escape(s.name)}"]`);
+            if (card) container.appendChild(card);
+        });
+    }
+
+    // ===== 入口 =====
+    function renderByData(data) {
+        if (!data) return;
+        emitRenderingStart();
+        // 用 rAF 讓遮罩先渲染，再執行可能耗時的重繪
+        requestAnimationFrame(() => {
+            try {
+                if (data.isSmallMultiples) renderSmallMultiples(data);
+                else renderChart(data);
+            } finally {
+                // 再一個 rAF 確保 chart 已繪製到畫布
+                requestAnimationFrame(() => emitRenderingEnd());
+            }
+        });
+    }
+
+    // ===== 初始化 =====
+    setTimeout(function() {
         const initialData = @json($chartData ?? null);
         renderByData(initialData);
 
@@ -763,21 +881,28 @@ document.addEventListener('livewire:init', function () {
             if (data && data[0]) renderByData(data[0]);
         });
 
+        // 主題切換：重建（顏色需重算），但保留結構
         const observer = new MutationObserver(() => {
             const fresh = @json($chartData ?? null);
-            if (fresh) renderByData(fresh);
+            if (fresh) {
+                // 主題變更需重建 chart（顏色寫在 config 內）
+                destroySmallMultiples();
+                if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+                currentRenderMode = null;
+                renderByData(fresh);
+            }
         });
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
+        // resize：只 resize，不重建
         let resizeTimer;
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (chartInstance) chartInstance.resize();
-                smallMultiplesInstances.forEach(c => c.resize());
+                smallMultiplesMap.forEach(c => c.resize());
             }, 250);
         });
-
     }, 100);
 });
 </script>

@@ -1,12 +1,4 @@
-<div x-data="{ 
-    loadingPeriod: null,
-    init() {
-        // 監聽 Livewire 動作完成後，延遲一小段時間確保 Modal 已經完整渲染出來並顯示
-        Livewire.on('modal-opened', () => {
-            this.loadingPeriod = null;
-        });
-    }
-}" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
 
 {{-- filepath: resources/views/livewire/finance/account-index.blade.php --}}
    
@@ -43,15 +35,8 @@
 					 data-loading:opacity-50 data-loading:pointer-events-none transition-opacity"
                      wire:click="showPeriodDetail('{{ $period }}')">
 					 
-					{{-- 這裡利用 wire:loading 針對特定按鈕的動作顯示，並透過背後渲染機制維持直到 Modal 開啟 --}}
-					<template x-teleport="body">
-						<div wire:loading.flex
-							 wire:target="showPeriodDetail('{{ $period }}')"
-							 class="fixed inset-0 z-[999] items-center justify-center bg-base-100/40 backdrop-blur-[1px]">
-							<span class="loading loading-spinner loading-lg text-base-content/80"></span>
-						</div>
-					</template>
-	
+					<x-loading-overlay target="showPeriodDetail('{{ $period }}')" />
+					
 					<div class="stat p-0">
 
 						{{-- 斜切緞帶標題層 --}}
@@ -299,8 +284,12 @@
                     @endphp
 
                     <div wire:click="viewAccountTransactions({{ $account->id }})" 
-                         class="clickable-card group card-{{ $typeTheme }} account-card song-interactive relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer p-5 pl-6 flex flex-col justify-between h-28">
+                         class="clickable-card group card-{{ $typeTheme }} account-card song-interactive relative overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-sm cursor-pointer p-5 pl-6 flex flex-col justify-between h-28
+                                data-loading:opacity-50 data-loading:pointer-events-none transition-opacity">
                         
+                        {{-- 點擊卡片時的全螢幕 Loading 圈圈 --}}
+						<x-loading-overlay target="viewAccountTransactions({{ $account->id }})" />
+
                         <span class="account-left-bar absolute left-0 top-0 bottom-0 w-1.5"></span>
 
                         <div class="flex justify-between items-start relative z-10">

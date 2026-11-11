@@ -89,11 +89,11 @@ class AccountIndex extends Component
 				->where('user_id', auth()->id())
 				->where('currency', $currency->code)
 				->where('is_active', true)
-				->get()
-				->map(function ($account) {
-					$account->calculated_balance = (float) $account->calculated_balance;
-					return $account;
-				});
+                ->get()
+                ->map(function ($account) {
+                    $account->calculated_balance = (float) $account->calculated_balance;
+                    return $account;
+                });
 
 			if ($accounts->isNotEmpty()) {
 				$groups[] = [

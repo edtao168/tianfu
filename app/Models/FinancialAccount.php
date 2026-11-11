@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\MoneyCalculator;
 use App\Traits\BelongsToTenant;
 use App\Traits\HasShop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FinancialAccount extends Model
 {
@@ -47,19 +49,20 @@ class FinancialAccount extends Model
         // 流入金額 (Inflow)：收入 或 轉帳進入此帳戶
         $inflow = Transaction::where('shop_id', $this->shop_id)
             ->where('to_account_id', $this->id)
+			->where('type', '!=', 'expense')
             ->sum('amount');
 
         // 流出金額 (Outflow)：支出 或 轉帳從此帳戶扣除
         $outflow = Transaction::where('shop_id', $this->shop_id)
             ->where('from_account_id', $this->id)
+			->where('type', '!=', 'income')
             ->sum('amount');
 
-        // 交易後實際動態餘額 = 初始資產 + 流入 - 流出 (強制 BCMath 高精度運算)
-        return bcsub(
-            bcadd($initialBalance, (string)$inflow, 4),
-            (string)$outflow,
-            4
-        );
+        // 交易後實際動態餘額
+        return MoneyCalculator::sub(
+			MoneyCalculator::add($initialBalance, (string)$inflow),
+			(string)$outflow
+		);
     }
 
 	/**
@@ -70,10 +73,12 @@ class FinancialAccount extends Model
 		$initialBalance = (string) ($this->balance ?? '0');
 
 		$inflowQuery = Transaction::where('shop_id', $this->shop_id)
-			->where('to_account_id', $this->id);
+			->where('to_account_id', $this->id)
+			->where('type', '!=', 'expense');
 
 		$outflowQuery = Transaction::where('shop_id', $this->shop_id)
-			->where('from_account_id', $this->id);
+			->where('from_account_id', $this->id)
+			->where('type', '!=', 'income');
 
 		if ($endDate) {
 			$inflowQuery->where('recorded_at', '<=', $endDate);
@@ -84,10 +89,9 @@ class FinancialAccount extends Model
 		$outflow = $outflowQuery->sum('amount');
 
 		// 歷史餘額 = 初始金額 + 截至時間的總流入 - 截至時間的總流出
-		return bcsub(
-			bcadd($initialBalance, (string)$inflow, 4),
-			(string)$outflow,
-			4
+	    return MoneyCalculator::sub(
+			MoneyCalculator::add($initialBalance, (string)$inflow),
+			(string)$outflow
 		);
 	}
 	

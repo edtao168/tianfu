@@ -191,7 +191,7 @@ class TransactionListModal extends Component
 		);
 
 		// 3. 計算當月淨變化量
-		$netAmount = bcsub($totalIncome, $totalExpense, 4);
+		$netAmount = MoneyCalculator::sub($totalIncome, $totalExpense);
 
 		// 4. 正確計算「歷史期末」與「歷史期初」餘額
 		[$openingBalance, $closingBalance] = $this->calculateBalances($netAmount, $end);
@@ -518,7 +518,7 @@ class TransactionListModal extends Component
 			$closingBalance = $this->currentAccount->getBalanceAtDate($endDate);
 			
 			// 期初金額 = 該月期末金額 - 該月淨收益
-			$openingBalance = bcsub($closingBalance, $netAmount, 4);
+			$openingBalance = MoneyCalculator::sub($closingBalance, $netAmount);
 		}
 
 		return [$openingBalance, $closingBalance];
