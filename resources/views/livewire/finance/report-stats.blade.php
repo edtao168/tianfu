@@ -602,7 +602,7 @@ document.addEventListener('livewire:init', function () {
         // 更新中心文字
         const centerTotalEl = document.getElementById('chartCenterTotal');
         if (centerTotalEl && data.centerText !== undefined && data.centerText !== null) {
-            centerTotalEl.textContent = (data.symbol || '') + data.centerText;
+            centerTotalEl.textContent = data.centerText;
         }
 
         // 無資料狀態

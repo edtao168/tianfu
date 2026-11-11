@@ -846,7 +846,6 @@ class ReportStats extends Component
                     'isAssetTrend' => false,
                     'isSmallMultiples' => false,
                     'isMultiLine' => false,
-                    'symbol' => $data['symbol'] ?? 'NT$',
                 ];
             }
 
