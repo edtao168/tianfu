@@ -1,38 +1,81 @@
-<!-- filepath: resources/views/livewire/finance/report-stats.blade.php -->
-<div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 text-base-content animate-fadeIn">
+{{-- resources/views/livewire/finance/report-stats.blade.php --}}
+<div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 text-base-content animate-fadeIn"
+     x-data="{ filterDrawer: false }">
     
     {{-- ============================================================ --}}
-    {{-- 頂部篩選與第一層分頁 --}}
+    {{-- 手機端頂部佈局：左側 2/3 (4個分頁 2x2 排列) + 右側 1/3 (篩選按鈕)，下方日期導覽獨占一列 w-full --}}
     {{-- ============================================================ --}}
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-base-300/60 pb-5">
+    @php
+        $primaryTabs = [
+            ['key' => 'category', 'label' => '類別', 'icon' => 'heroicon-m-chart-pie', 'isAsset' => false],
+            ['key' => 'trend',    'label' => '收支', 'icon' => 'heroicon-m-chart-bar', 'isAsset' => false],
+            ['key' => 'account',  'label' => '賬戶', 'icon' => 'heroicon-m-wallet', 'isAsset' => false],
+            ['key' => 'asset',    'label' => '總資產', 'icon' => 'heroicon-m-building-library', 'isAsset' => true],
+        ];
+    @endphp
 
-        {{-- 第一層分頁 --}}
-        <div class="flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300/70 backdrop-blur-md w-full lg:w-auto shadow-sm overflow-x-auto">
-            @php
-                $primaryTabs = [
-                    ['key' => 'category', 'label' => '📊 類別', 'isAsset' => false],
-                    ['key' => 'trend',    'label' => '📈 收支', 'isAsset' => false],
-                    ['key' => 'account',  'label' => '💼 賬戶', 'isAsset' => false],
-                    ['key' => 'asset',    'label' => '🏦 總資產', 'isAsset' => true],
-                ];
-            @endphp
+    <div class="block md:hidden space-y-3 pb-3 border-b border-base-300/60">
+        {{-- 上方：左邊 2/3 (4個分頁 2x2) + 右邊 1/3 (篩選按鈕) --}}
+        <div class="grid grid-cols-3 gap-2 items-stretch">
+            <div class="col-span-2 grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-base-200/80 border border-base-300/70 backdrop-blur-md shadow-sm">
+                @foreach($primaryTabs as $tab)
+                    @php
+                        $isActive = $tab['isAsset']
+                            ? $showAssetTrend
+                            : ($tab1 === $tab['key'] && !$showAssetTrend);
+                        $activeClass = $tab['isAsset']
+                            ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900 font-bold'
+                            : 'bg-base-100 text-base-content shadow-sm font-bold';
+                    @endphp
+                    <button class="px-2.5 py-2 rounded-lg text-xs transition-all duration-200 flex items-center justify-center gap-1 whitespace-nowrap song-interactive {{ $isActive ? $activeClass : 'text-base-content/60 hover:text-base-content font-medium' }}"
+                            wire:click="$set('tab1', '{{ $tab['key'] }}')">
+                        <x-dynamic-component :component="$tab['icon']" class="w-3.5 h-3.5 shrink-0" />
+                        <span>{{ $tab['label'] }}</span>
+                    </button>
+                @endforeach
+            </div>
+            <div class="col-span-1 flex">
+                <button @click="filterDrawer = !filterDrawer" 
+                        class="w-full btn btn-purple h-full min-h-[44px] px-2 rounded-xl flex flex-col items-center justify-center gap-1 shrink-0 song-interactive shadow-sm">
+                    <x-heroicon-m-adjustments-horizontal class="w-4 h-4" />
+                    <span class="text-[11px] font-bold tracking-wide">篩選</span>
+                </button>
+            </div>
+        </div>
+
+        {{-- 下方：日期導覽獨占一列 w-full --}}
+        <div class="w-full">
+            <x-date-nav 
+                model="currentDate" 
+                :type="$dateMode"
+                :display="$displayDate" 
+                :isCurrent="$isCurrent" 
+                :disableNext="$isCurrent"
+            />
+        </div>
+    </div>
+
+    {{-- ============================================================ --}}
+    {{-- 電腦端頂部佈局（維持現狀） --}}
+    {{-- ============================================================ --}}
+    <div class="hidden md:flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-base-300/60 pb-5">
+        <div class="flex p-1.5 rounded-xl bg-base-200/80 border border-base-300/70 backdrop-blur-md shadow-sm overflow-x-auto">
             @foreach($primaryTabs as $tab)
                 @php
                     $isActive = $tab['isAsset']
                         ? $showAssetTrend
                         : ($tab1 === $tab['key'] && !$showAssetTrend);
                     $activeClass = $tab['isAsset']
-                        ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900'
-                        : 'bg-base-100 text-base-content shadow-sm';
+                        ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900 font-bold'
+                        : 'bg-base-100 text-base-content shadow-sm font-bold';
                 @endphp
-                <button class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 text-center whitespace-nowrap song-interactive {{ $isActive ? $activeClass : 'text-base-content/60 hover:text-base-content' }}"
+                <button class="px-4 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap song-interactive {{ $isActive ? $activeClass : 'text-base-content/60 hover:text-base-content font-medium' }}"
                         wire:click="$set('tab1', '{{ $tab['key'] }}')">
-                    {{ $tab['label'] }}
+                    <x-dynamic-component :component="$tab['icon']" class="w-4 h-4 shrink-0" />
+                    <span>{{ $tab['label'] }}</span>
                 </button>
             @endforeach
         </div>
-
-        {{-- 日期導覽 --}}
         <div class="flex items-center justify-end gap-2">
             <x-date-nav 
                 model="currentDate" 
@@ -45,117 +88,130 @@
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 幣別切換器 --}}
+    {{-- 電腦端專屬過濾工具列（加深外框） --}}
     {{-- ============================================================ --}}
-    @if(!$showAssetTrend)
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 bg-base-200/50 p-3 rounded-2xl border border-base-300/60">
-            <span class="text-xs font-bold text-base-content/60 tracking-wider px-1">幣別篩選</span>
-            <div class="flex gap-1.5 p-1 bg-base-100 rounded-xl border border-base-300/60 backdrop-blur-sm flex-wrap flex-1">
-                <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'text-base-content/60 hover:text-base-content' }} song-interactive"
+    <div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border-2 border-base-300 shadow-sm backdrop-blur-sm">
+        @if(!$showAssetTrend)
+            <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">幣別：</span>
+                <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all song-interactive {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 text-base-content/70 hover:text-base-content border border-base-300' }}"
                         wire:click="$set('currencyFilter', 'all')">
-                    🌐 全部（合併）
+                    全部
                 </button>
                 @foreach($this->availableCurrencies as $currency)
-                    @php
-                        $theme = config('business.currency_theme_map')[$currency->code] ?? 'gray';
-                        $activeClass = match($theme) {
-                            'blue' => 'bg-sky-500/20 text-sky-800 dark:text-sky-300 shadow-sm font-black',
-                            'red' => 'bg-rose-500/20 text-rose-800 dark:text-rose-300 shadow-sm font-black',
-                            'green' => 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-sm font-black',
-                            'purple' => 'bg-purple-500/20 text-purple-800 dark:text-purple-300 shadow-sm font-black',
-                            default => 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm',
-                        };
-                    @endphp
-                    <button class="px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 text-center whitespace-nowrap {{ $currencyFilter === $currency->code ? $activeClass : 'text-base-content/60 hover:text-base-content' }} song-interactive"
+                    <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all song-interactive {{ $currencyFilter === $currency->code ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 text-base-content/70 hover:text-base-content border border-base-300' }}"
                             wire:click="$set('currencyFilter', '{{ $currency->code }}')">
                         {{ $currency->code }}
                     </button>
                 @endforeach
             </div>
-        </div>
-    @endif
+            <div class="h-4 w-[1px] bg-base-300 mx-1"></div>
+        @endif
 
-    {{-- ============================================================ --}}
-    {{-- 第二層與第三層分頁 --}}
-    {{-- ============================================================ --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        
-        {{-- 第二層分頁群組 --}}
-        <div class="flex p-1.5 bg-base-200/80 rounded-2xl border border-base-300/70 backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">檢視：</span>
             @if(!$showAssetTrend)
                 @if($tab1 === 'account')
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'composition' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                            wire:click="$set('tab2', 'composition')">佔比</button>
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'trend' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                            wire:click="$set('tab2', 'trend')">趨勢</button>
+                    <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
+                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'composition' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'composition')">佔比</button>
+                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'trend' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'trend')">趨勢</button>
+                    </div>
                 @else
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                            wire:click="$set('tab2', 'expense')">支出</button>
-                    <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-sm font-black' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                            wire:click="$set('tab2', 'income')">收入</button>
-                    @if($tab1 === 'trend')
-                        <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab2 === 'balance' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                                wire:click="$set('tab2', 'balance')">結餘</button>
-                    @endif
+                    <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
+                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'expense' ? 'btn-error' : 'btn-ghost' }}" wire:click="$set('tab2', 'expense')">支出</button>
+                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'income' ? 'btn-success' : 'btn-ghost' }}" wire:click="$set('tab2', 'income')">收入</button>
+                        @if($tab1 === 'trend')
+                            <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'balance' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'balance')">結餘</button>
+                        @endif
+                    </div>
                 @endif
             @else
-                <div class="flex-1 py-2 text-center text-xs font-bold text-primary bg-primary/10 rounded-xl">
-                    本位幣：{{ $baseCurrency->symbol ?? 'NT$' }} {{ $baseCurrency->code ?? 'TWD' }}
-                </div>
+                <span class="text-xs font-bold text-primary">總資產本位幣：{{ $baseCurrency->code ?? 'TWD' }}</span>
             @endif
         </div>
-
-        {{-- 第三層分頁群組 --}}
-        <div class="flex p-1.5 bg-base-200/80 rounded-2xl border border-base-300/70 backdrop-blur-md shadow-sm">
-            @if($showAssetTrend)
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('assetTab', 'month')">月度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $assetTab === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('assetTab', 'day')">每日</button>
-            @elseif($tab1 === 'account')
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'year')">年度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'month')">月度</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'day')">每日</button>
-            @elseif($tab1 === 'category')
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'year' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'year')">年{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : '收入' }}</button>
-            @else
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'month' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'month')">月{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
-                <button class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-center {{ $tab3 === 'day' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900 shadow-sm' : 'text-base-content/60 hover:text-base-content' }} song-interactive" 
-                        wire:click="$set('tab3', 'day')">日{{ $tab2 === 'expense' ? '支出' : ($tab2 === 'income' ? '收入' : '結餘') }}</button>
-            @endif
-        </div>
-
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 交易效應 vs 匯率效應分解 --}}
+    {{-- 手機專屬抽屜 --}}
     {{-- ============================================================ --}}
-    @if($showAssetTrend && $effectBreakdown)
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            @php
-                $effects = [
-                    ['label' => '期間變動',     'raw' => $effectBreakdown['total_change_raw'],       'display' => $effectBreakdown['total_change']],
-                    ['label' => '💼 交易貢獻', 'raw' => $effectBreakdown['transaction_effect_raw'], 'display' => $effectBreakdown['transaction_effect']],
-                    ['label' => '💱 匯率重估', 'raw' => $effectBreakdown['fx_effect_raw'],          'display' => $effectBreakdown['fx_effect']],
-                ];
-            @endphp
-            @foreach($effects as $effect)
-                <div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
-                    <div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">{{ $effect['label'] }}</div>
-                    <div class="text-lg font-black font-mono {{ $effect['raw'] >= 0 ? 'text-success' : 'text-error' }}">
-                        {{ $effect['display'] }}
-                    </div>
+    <div x-show="filterDrawer" 
+         style="display: none;"
+         class="fixed inset-0 z-50 overflow-hidden lg:hidden" 
+         role="dialog" aria-modal="true">
+        
+        <div x-show="filterDrawer" 
+             x-transition.opacity.duration.200ms
+             @click="filterDrawer = false" 
+             class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
+            <div x-show="filterDrawer"
+                 x-transition:enter="transform transition ease-in-out duration-300"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in-out duration-300"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full"
+                 class="fixed inset-y-0 right-0 w-3/4 max-w-sm bg-base-100 border-l border-base-300 shadow-2xl flex flex-col justify-between">
+                
+                <div class="flex items-center justify-between p-4 border-b border-base-300">
+                    <h3 class="font-serif font-bold text-base text-base-content">報表檢視與篩選設定</h3>
+                    <button @click="filterDrawer = false" class="btn btn-sm btn-ghost btn-square song-interactive">✕</button>
                 </div>
-            @endforeach
+
+                <div class="flex-1 overflow-y-auto space-y-6 p-4">
+                    @if(!$showAssetTrend)
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-base-content/60 tracking-wider">幣別選擇</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="p-2.5 rounded-xl text-xs font-bold border transition-all text-center song-interactive {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300 text-base-content' }}"
+                                        wire:click="$set('currencyFilter', 'all')">
+                                    🌐 全部（合併）
+                                </button>
+                                @foreach($this->availableCurrencies as $currency)
+                                    <button class="p-2.5 rounded-xl text-xs font-bold border transition-all text-center song-interactive {{ $currencyFilter === $currency->code ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300 text-base-content' }}"
+                                            wire:click="$set('currencyFilter', '{{ $currency->code }}')">
+                                        {{ $currency->code }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="border-t border-base-300/60"></div>
+                    @endif
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-base-content/60 tracking-wider">數據維度切換</label>
+                        <div class="flex flex-col gap-2">
+                            @if(!$showAssetTrend)
+                                @if($tab1 === 'account')
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'composition' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'composition')">佔比分佈</button>
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'trend' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'trend')">賬戶趨勢</button>
+                                    </div>
+                                @else
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'expense')">支出分析</button>
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'income')">收入分析</button>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('assetTab', 'month')">月度總資產</button>
+                                    <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $assetTab === 'day' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('assetTab', 'day')">每日總資產</button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+					{{-- 底部按鈕 --}}
+					<div class="modal-action border-t border-base-300 p-4">
+						<button @click="filterDrawer = false" class="w-full btn btn-dark py-2.5 rounded-xl font-bold song-interactive">
+							確認並套用
+						</button>
+					</div>
+                </div>                
+            </div>
         </div>
-    @endif
+    </div>
 
     {{-- ============================================================ --}}
     {{-- 主內容區 --}}
@@ -218,6 +274,33 @@
                 </div>
             @endif
         </div>
+
+		{{--
+			交易效應 vs 匯率效應分解
+			期間變動 = 期末總資產（本位幣） - 期初總資產（本位幣）
+			交易貢獻 = 期間內實際收入總額 - 期間內實際支出總額（皆換算為本位幣）
+			匯率重估 = 期間變動 - 交易貢獻
+					（即扣除真實現金流後的剩餘資產差異，反映外幣匯率波動影響）
+		--}}
+		@if($showAssetTrend && $effectBreakdown)
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+				@php
+					$effects = [						
+						['label' => '📆 期間變動',     'raw' => $effectBreakdown['total_change_raw'],       'display' => $effectBreakdown['total_change']],						
+						['label' => '💼 交易貢獻', 'raw' => $effectBreakdown['transaction_effect_raw'], 'display' => $effectBreakdown['transaction_effect']],					
+						['label' => '💱 匯率重估', 'raw' => $effectBreakdown['fx_effect_raw'],          'display' => $effectBreakdown['fx_effect']],
+					];
+				@endphp
+				@foreach($effects as $effect)
+					<div class="bg-base-100 border border-base-300/70 p-4 rounded-2xl shadow-sm">
+						<div class="text-xs font-bold text-base-content/50 tracking-widest mb-1">{{ $effect['label'] }}</div>
+						<div class="text-lg font-black font-mono {{ $effect['raw'] < 0 ? 'text-error' : 'text-base-content' }}">
+							{{ $effect['display'] }}
+						</div>
+					</div>
+				@endforeach
+			</div>
+		@endif
 
         {{-- 明細表格區 --}}
         <div class="lg:col-span-7 space-y-4">

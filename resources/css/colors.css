@@ -221,13 +221,13 @@ html:not([data-theme="dark"]) textarea:focus {
    宋式按鈕配色系統（含輕擬物與 Dark 模式）
    ========================================================================== */
 
-.btn-red,
-.btn-orange,
-.btn-green,
-.btn-blue,
-.btn-purple,
-.btn-dark,
-.btn-light {
+.btn-red,		/* 危險，錯誤，刪除 */
+.btn-orange,	/* 警告，修改 */
+.btn-green,		/* 儲存 */
+.btn-blue,		/* 增加 */
+.btn-purple,	/* 特殊，例外，查詢 */
+.btn-dark,		/* 特殊，例外，確認 */
+.btn-light {	/* 關閉 */
     @apply rounded-xl transition-all duration-200 font-medium;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.02);
 }

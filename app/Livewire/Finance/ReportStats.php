@@ -134,13 +134,15 @@ class ReportStats extends Component
 
     public function openCategoryTransactions(int $categoryId, string $categoryName)
     {
+        $currencyParam = $this->currencyFilter !== 'all' ? $this->currencyFilter : null;
+
         $this->dispatch('open-transaction-list-modal', params: [
             'categoryId' => $categoryId,
             'type' => $this->tab2,
             'title' => $categoryName . ' - 交易明細',
             'dateMode' => $this->tab3 === 'year' ? 'year' : 'month',
             'baseDate' => $this->selectedYear . '-' . sprintf('%02d', $this->selectedMonth) . '-01',
-            'currency' => $this->currencyFilter,
+            'currency' => $currencyParam,
         ]);
     }
 
