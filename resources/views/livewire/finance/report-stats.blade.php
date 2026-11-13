@@ -59,7 +59,7 @@
 			{{-- 時間粒度（類別 / 賬戶占比） --}}
 			@if($this->usesGranularity())
 				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
-					{{ ['year' => '年', 'month' => '月', 'day' => '日'][$granularity] }}
+					按{{ ['year' => '年', 'month' => '月', 'day' => '日'][$granularity] }}
 				</span>
 			@endif
 

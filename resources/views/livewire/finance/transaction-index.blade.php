@@ -62,9 +62,6 @@
                         @endforeach
                     </div>
                 </div>
-                <span class="text-[10px] opacity-40 font-mono">
-                    {{ $dateMode === 'year' ? '按月份組' : '按日分組' }}
-                </span>
             </div>
 
             {{-- 期間收支數據卡片 (1:1 雙欄) --}}
