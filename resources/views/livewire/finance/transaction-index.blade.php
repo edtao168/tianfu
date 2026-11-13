@@ -1,4 +1,4 @@
-<!-- resources/views/livewire/finance/transaction-index.blade.php -->
+{{-- resources/views/livewire/finance/transaction-index.blade.php --}}
 
 <div class="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-6 text-base-content space-y-6">
     <div class="sticky top-0 z-10 backdrop-blur-md bg-base-100/80 pt-2 pb-4 border-b border-base-200">
@@ -12,14 +12,14 @@
             <div class="flex items-center gap-2">
                 {{-- 🎯 搜尋框與即時載入狀態指示燈 --}}
                 <div class="relative w-full sm:w-64">
-                    <x-input 
-                        wire:model.live.debounce.300ms="search" 
-                        icon="o-magnifying-glass" 
-                        placeholder="搜索類別、備註..." 
-                        clearable 
-                        class="input-sm border-base-300 pr-8" 
+                    <x-input
+                        wire:model.live.debounce.300ms="search"
+                        icon="o-magnifying-glass"
+                        placeholder="搜索類別、備註..."
+                        clearable
+                        class="input-sm border-base-300 pr-8"
                     />
-                    
+
                     {{-- 🎯 當 search 正在背景查詢時顯示的小動畫 (絕對定位在輸入框右側) --}}
                     <div wire:loading wire:target="search" class="absolute right-8 top-2.5 pointer-events-none">
                         <span class="loading loading-spinner loading-xs text-primary"></span>
@@ -36,17 +36,38 @@
             <span>正在搜尋相關紀錄...</span>
         </div>
 
-        {{-- 月份導航 + 本月收支 --}}
+        {{-- 日期導覽 + 粒度切換 + 期間收支 --}}
         <div class="mt-4 space-y-3">
-            <x-date-nav 
-                model="currentDate" 
-                type="month"
-                :display="$monthDisplay" 
-                :isCurrent="$isCurrentMonth" 
-                :disableNext="$isCurrentMonth" 
+            {{-- 日期導覽：type 跟隨 dateMode --}}
+            <x-date-nav
+                model="currentDate"
+                :type="$dateMode"
+                :display="$dateDisplay"
+                :isCurrent="$isCurrent"
+                :disableNext="$isCurrent"
             />
 
-            {{-- 本月收支數據卡片 (1:1 雙欄) --}}
+            {{-- 粒度切換（日 / 月 / 年） --}}
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold opacity-60 tracking-wider">粒度</span>
+                    <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
+                        @foreach(['day' => '日', 'month' => '月', 'year' => '年'] as $mode => $label)
+                            <button
+                                wire:click="$set('dateMode', '{{ $mode }}')"
+                                class="btn btn-xs join-item song-interactive {{ $dateMode === $mode ? 'btn-neutral' : 'btn-ghost' }}"
+                            >
+                                {{ $label }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+                <span class="text-[10px] opacity-40 font-mono">
+                    {{ $dateMode === 'year' ? '按月份組' : '按日分組' }}
+                </span>
+            </div>
+
+            {{-- 期間收支數據卡片 (1:1 雙欄) --}}
             <div class="grid grid-cols-2 gap-2">
                 <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                     <div class="flex items-center gap-1.5">
@@ -73,20 +94,20 @@
         <!-- 動態展開的進階篩選面板 -->
         @if($showFilters)
             <div class="mt-4 bg-base-200/50 p-5 rounded-2xl border border-base-200 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 transition-all duration-300 animate-fadeIn">
-                <x-select label="貨幣種類" wire:model.live="searchCurrency" placeholder="全部貨幣" 
-                          :options="collect($currencies)->map(fn($info, $code) => ['id' => $code, 'name' => $info['name']])->toArray()" 
+                <x-select label="貨幣種類" wire:model.live="searchCurrency" placeholder="全部貨幣"
+                          :options="collect($currencies)->map(fn($info, $code) => ['id' => $code, 'name' => $info['name']])->toArray()"
                           class="select-sm" inline />
-                
-                <x-select label="資產帳戶" wire:model.live="searchAccountId" placeholder="全部帳戶" 
-                          :options="$accounts->map(fn($a) => ['id' => $a->id, 'name' => $a->name.' ('.$a->currency.')'])->toArray()" 
+
+                <x-select label="資產帳戶" wire:model.live="searchAccountId" placeholder="全部帳戶"
+                          :options="$accounts->map(fn($a) => ['id' => $a->id, 'name' => $a->name.' ('.$a->currency.')'])->toArray()"
                           class="select-sm" inline />
-                
-                <x-select label="收支分類" wire:model.live="searchCategoryId" placeholder="全部分類" 
-                          :options="$categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->toArray()" 
+
+                <x-select label="收支分類" wire:model.live="searchCategoryId" placeholder="全部分類"
+                          :options="$categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->toArray()"
                           class="select-sm" inline />
-                
-                <x-select label="收支性質" wire:model.live="searchType" placeholder="全部性質" 
-                          :options="[['id' => 'expense', 'name' => '純支出'], ['id' => 'income', 'name' => '純收入']]" 
+
+                <x-select label="收支性質" wire:model.live="searchType" placeholder="全部性質"
+                          :options="[['id' => 'expense', 'name' => '純支出'], ['id' => 'income', 'name' => '純收入']]"
                           class="select-sm" inline />
             </div>
         @endif
@@ -94,45 +115,62 @@
 
     {{-- 🎯 核心優化：使用 wire:loading.class 讓搜尋時列表自動呈現半透明過渡，提升科技感與流暢度 --}}
     <div class="space-y-6 transition-all duration-200" wire:loading.class="opacity-40 scale-[0.99]" wire:target="search">
-        @forelse($groupedTransactions as $date => $dayTransactions)
+        @forelse($groupedTransactions as $groupKey => $dayTransactions)
+            @php
+                // 依 groupFormat 解析 groupKey：
+                //   year 模式：groupKey = 'Y-m'（如 2026-11）
+                //   day/month 模式：groupKey = 'Y-m-d'（如 2026-11-13）
+                $groupDate = $groupFormat === 'Y-m'
+                    ? \Carbon\Carbon::createFromFormat('Y-m', $groupKey)
+                    : \Carbon\Carbon::createFromFormat('Y-m-d', $groupKey);
+
+                $isYearGroup = $dateMode === 'year';
+            @endphp
             <div class="space-y-3">
                 <!-- 日期標頭 -->
                 <div class="text-xs font-bold opacity-70 tracking-wider flex items-center gap-2 px-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500/70"></span>
-                    <span>{{ date('Y-m-d', strtotime($date)) }}</span>
-                    <span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][date('w', strtotime($date))] }}</span>
-                    <span class="text-[10px] font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
+                    @if($isYearGroup)
+                        {{-- year 模式：2026 年 11 月 --}}
+                        <span>{{ $groupDate->format('Y 年 m 月') }}</span>
+                        <span class="text-[10px] font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
+                    @else
+                        {{-- day/month 模式：2026-11-13 週四 --}}
+                        <span>{{ $groupDate->format('Y-m-d') }}</span>
+                        <span class="opacity-70">週{{ ['日','一','二','三','四','五','六'][$groupDate->dayOfWeek] }}</span>
+                        <span class="text-[10px] font-normal opacity-50 ml-1">({{ count($dayTransactions) }} 筆)</span>
+                    @endif
                 </div>
 
-                <!-- 當天交易卡片群組 -->
+                <!-- 當天（或當月）交易卡片群組 -->
                 <div class="bg-base-100 rounded-2xl border border-base-200 shadow-sm divide-y divide-base-200/60 overflow-hidden">
                     @foreach($dayTransactions as $tx)
                         @php
                             $acc = $tx->fromAccount ?? $tx->toAccount;
                             $typeConfig = config("business.account_types.{$acc?->type}") ?? config("business.account_types.cash");
                             $typeTheme = $typeConfig['theme'] ?? 'orange';
-                            
+
                             $currencyCode = $acc?->currency ?? 'TWD';
                             $currencySymbol = $currencies[$currencyCode]['symbol'] ?? 'NT$';
-                            
+
                             $isIncome = $tx->type === 'income';
                             $isExpense = $tx->type === 'expense';
                             $isTransfer = $tx->type === 'transfer';
-                            
+
                             if ($isTransfer) {
                                 $iconColor = 'text-tx-transfer';
                                 $bgColor = 'bg-tx-transfer/10';
                                 $amountClass = 'text-tx-transfer';
                                 $amountPrefix = '↕';
                                 $iconName = 'o-arrow-path';
-                                
+
                                 $fromName = $tx->fromAccount->name ?? '?';
                                 $toName = $tx->toAccount->name ?? '?';
                                 $displayTitle = $fromName . ' → ' . $toName;
                             } elseif ($tx->category) {
                                 $displayTitle = $tx->category->name;
                                 $iconName = $tx->category->icon ?? 'o-hashtag';
-                                
+
                                 if ($tx->category->type === 'expense') {
                                     $iconColor = 'text-tx-expense';
                                     $bgColor = 'bg-tx-expense/10';
@@ -166,37 +204,37 @@
                                 }
                                 $displayTitle = $acc?->name ?? '未分類';
                             }
-                            
+
                             if (!str_starts_with($iconName, 'heroicon')) {
                                 $iconName = 'heroicon-o-' . ltrim($iconName, 'o-');
                             }
-                            
+
                             $shouldShowAccount = !$isTransfer && $acc;
                         @endphp
-                        
+
                         <div class="clickable-card card-{{ $typeTheme }} relative flex items-center py-3 px-4 transition-all duration-150 cursor-pointer group hover:bg-base-200/50 min-w-0"
                              wire:click="$dispatch('open-transaction-modal', { transactionId: {{ $tx->id }} })">
                             <span class="account-left-bar absolute left-0 top-1 bottom-1 w-1 rounded-r-full z-10"></span>
-                            
+
                             <div class="rounded-xl p-2.5 flex-shrink-0 {{ $bgColor }}">
                                 <x-dynamic-component :component="$iconName" class="w-5 h-5 {{ $iconColor }}" />
                             </div>
-                            
+
                             <div class="flex-1 min-w-0 ml-3 md:ml-4">
                                 <div class="flex items-center gap-2">
                                     <div class="flex items-center gap-2 min-w-0 flex-1">
-                                        <span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}" 
+                                        <span class="text-base font-semibold text-base-content {{ $isTransfer ? 'truncate min-w-0' : 'flex-shrink-0' }}"
                                               title="{{ $displayTitle }}">
                                             {{ $displayTitle }}
                                         </span>
-                                        
+
                                         @if($shouldShowAccount)
                                             <span class="text-sm opacity-60 font-normal truncate min-w-0 flex-1">
                                                 {{ $acc->name }}
                                             </span>
                                         @endif
                                     </div>
-                                    
+
                                     <span class="font-mono font-bold text-base {{ $amountClass }} flex-shrink-0">
                                         <span class="font-normal opacity-50 text-sm">{{ $currencySymbol }}</span>
                                         {{ $amountPrefix }}{{ number_format((float)$tx->amount, 2) }}
@@ -204,8 +242,8 @@
                                 </div>
                                 <div class="mt-0.5">
                                     <span class="text-sm opacity-60 block truncate min-w-0 {{ $tx->memo ? '' : 'italic' }}">
-                        {{ $tx->memo ?: '無備註' }}
-                    </span>
+                                        {{ $tx->memo ?: '無備註' }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -215,8 +253,8 @@
         @empty
             <div class="bg-base-100 rounded-2xl p-16 border border-dashed border-base-200 text-center opacity-60 text-sm">
                 <x-heroicon-o-document-magnifying-glass class="w-10 h-10 mx-auto mb-3 opacity-40" />
-                <p class="font-medium">{{ $monthDisplay }} 沒有符合篩選條件的紀錄</p>
-                <p class="text-xs opacity-60 mt-1">試試調整篩選條件或切換其他月份</p>
+                <p class="font-medium">{{ $dateDisplay }} 沒有符合篩選條件的紀錄</p>
+                <p class="text-xs opacity-60 mt-1">試試調整篩選條件或切換其他{{ $dateMode === 'year' ? '年份' : ($dateMode === 'day' ? '日期' : '月份') }}</p>
             </div>
         @endforelse
     </div>
@@ -225,7 +263,7 @@
     @if($transactionCount > 0)
         <div class="mt-6 pt-4 border-t border-base-200 flex justify-between items-center text-xs opacity-50 pb-10">
             <span>共 {{ $transactionCount }} 筆交易</span>
-            <span>{{ $monthDisplay }}</span>
+            <span>{{ $dateDisplay }}</span>
         </div>
     @endif
 </div>

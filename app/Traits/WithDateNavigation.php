@@ -37,30 +37,36 @@ trait WithDateNavigation
         }
     }
 
-    public function previousDate(): void
+    public function nextDate()
     {
         $date = $this->parseCurrentDate();
-
-        $this->currentDate = match ($this->dateMode) {
-            'day' => $date->subDay()->format('Y-m-d'),
-            'year' => $date->subYear()->format('Y'),
-            default => $date->subMonth()->format('Y-m'),
+        $next = match ($this->dateMode) {
+            'year'  => $date->copy()->addYear(),
+            'day'   => $date->copy()->addDay(),
+            default => $date->copy()->addMonth(),
         };
-
-        $this->afterDateUpdated();
+        $this->currentDate = match ($this->dateMode) {
+            'year'  => $next->format('Y'),
+            'day'   => $next->format('Y-m-d'),
+            default => $next->format('Y-m'),
+        };
+        $this->onDateChanged();
     }
 
-    public function nextDate(): void
+    public function prevDate()
     {
         $date = $this->parseCurrentDate();
-
-        $this->currentDate = match ($this->dateMode) {
-            'day' => $date->addDay()->format('Y-m-d'),
-            'year' => $date->addYear()->format('Y'),
-            default => $date->addMonth()->format('Y-m'),
+        $prev = match ($this->dateMode) {
+            'year'  => $date->copy()->subYear(),
+            'day'   => $date->copy()->subDay(),
+            default => $date->copy()->subMonth(),
         };
-
-        $this->afterDateUpdated();
+        $this->currentDate = match ($this->dateMode) {
+            'year'  => $prev->format('Y'),
+            'day'   => $prev->format('Y-m-d'),
+            default => $prev->format('Y-m'),
+        };
+        $this->onDateChanged();
     }
 
     public function updatedCurrentDate(): void

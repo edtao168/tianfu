@@ -42,6 +42,64 @@
                 </button>
             </div>
         </div>
+		{{-- 手機端狀態條：顯示當前篩選維度 --}}
+		<div class="flex items-center gap-2 px-1 text-xs">
+			{{-- 收支方向（類別/收支分頁才顯示） --}}
+			@if($tab1 === 'category' || ($tab1 === 'trend' && !$showAssetTrend))
+				<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md
+					{{ $tab2 === 'expense' ? 'bg-error/10 text-error' :
+					   ($tab2 === 'income' ? 'bg-success/10 text-success' : 'bg-base-200 text-base-content/70') }}">
+					<span class="w-1.5 h-1.5 rounded-full
+						{{ $tab2 === 'expense' ? 'bg-error' :
+						   ($tab2 === 'income' ? 'bg-success' : 'bg-base-content/50') }}"></span>
+					{{ ['expense' => '支出', 'income' => '收入', 'balance' => '結餘'][$tab2] ?? $tab2 }}
+				</span>
+			@endif
+			
+			{{-- 時間粒度（類別 / 賬戶占比） --}}
+			@if($this->usesGranularity())
+				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
+					{{ ['year' => '年', 'month' => '月', 'day' => '日'][$granularity] }}
+				</span>
+			@endif
+
+			{{-- 賬戶模式 --}}
+			@if($tab1 === 'account')
+				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
+					{{ $tab2 === 'composition' ? '佔比' : '趨勢' }}
+				</span>
+			@endif
+
+			{{-- 總資產模式 --}}
+			{{-- 幣別狀態：合併 / 單幣別 / 總資產本位幣 --}}
+			@php
+				$isConsolidated = $currencyFilter === 'all';
+				$baseCode = $baseCurrency->code ?? 'TWD';
+			@endphp
+
+			@if($showAssetTrend)
+				{{-- 總資產：固定本位幣換算 --}}
+				<span class="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono text-[11px]">
+					{{ $baseCode }} 本位幣
+				</span>
+			@elseif($isConsolidated)
+				{{-- 合併模式 --}}
+				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/60 font-mono text-[11px]">
+					🌐 全部合併
+				</span>
+			@else
+				{{-- 單一幣別原幣 --}}
+				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70 font-mono text-[11px]">
+					{{ $currencyFilter }}
+				</span>
+			@endif
+
+			{{-- 右側：點擊開啟抽屜的提示 --}}
+			<button @click="filterDrawer = true"
+					class="ml-auto text-base-content/40 hover:text-base-content/70">
+				<x-heroicon-m-chevron-down class="w-3.5 h-3.5" />
+			</button>
+		</div>
 
         {{-- 下方：日期導覽獨占一列 w-full --}}
         <div class="w-full">
@@ -91,21 +149,20 @@
     {{-- 電腦端專屬過濾工具列（加深外框） --}}
     {{-- ============================================================ --}}
     <div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border-2 border-base-300 shadow-sm backdrop-blur-sm">
-        @if(!$showAssetTrend)
-            <div class="flex items-center gap-1.5">
-                <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">幣別：</span>
-                <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all song-interactive {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 text-base-content/70 hover:text-base-content border border-base-300' }}"
-                        wire:click="$set('currencyFilter', 'all')">
-                    全部
-                </button>
-                @foreach($this->availableCurrencies as $currency)
-                    <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all song-interactive {{ $currencyFilter === $currency->code ? 'bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 text-base-content/70 hover:text-base-content border border-base-300' }}"
-                            wire:click="$set('currencyFilter', '{{ $currency->code }}')">
-                        {{ $currency->code }}
-                    </button>
-                @endforeach
-            </div>
+        @if($this->usesGranularity())
             <div class="h-4 w-[1px] bg-base-300 mx-1"></div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">時間：</span>
+                <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
+                    @foreach($this->allowedGranularities() as $g)
+                        <button class="btn btn-xs join-item song-interactive
+                                       {{ $granularity === $g ? 'btn-neutral' : 'btn-ghost' }}"
+                                wire:click="$set('granularity', '{{ $g }}')">
+                            {{ ['year' => '年', 'month' => '月', 'day' => '日'][$g] }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         @endif
 
         <div class="flex items-center gap-2">
@@ -134,35 +191,41 @@
     {{-- ============================================================ --}}
     {{-- 手機專屬抽屜 --}}
     {{-- ============================================================ --}}
-    <div x-show="filterDrawer" 
-         style="display: none;"
-         class="fixed inset-0 z-50 overflow-hidden lg:hidden" 
-         role="dialog" aria-modal="true">
-        
-        <div x-show="filterDrawer" 
-             x-transition.opacity.duration.200ms
-             @click="filterDrawer = false" 
-             class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+	<div x-show="filterDrawer" 
+		 style="display: none;"
+		 class="fixed inset-0 z-50 lg:hidden"
+		 role="dialog" aria-modal="true">
 
-        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div x-show="filterDrawer"
-                 x-transition:enter="transform transition ease-in-out duration-300"
-                 x-transition:enter-start="translate-x-full"
-                 x-transition:enter-end="translate-x-0"
-                 x-transition:leave="transform transition ease-in-out duration-300"
-                 x-transition:leave-start="translate-x-0"
-                 x-transition:leave-end="translate-x-full"
-                 class="fixed inset-y-0 right-0 w-3/4 max-w-sm bg-base-100 border-l border-base-300 shadow-2xl flex flex-col justify-between">
-                
-                <div class="flex items-center justify-between p-4 border-b border-base-300">
-                    <h3 class="font-serif font-bold text-base text-base-content">報表檢視與篩選設定</h3>
-                    <button @click="filterDrawer = false" class="btn btn-sm btn-ghost btn-square song-interactive">✕</button>
-                </div>
+		{{-- 遮罩：鋪滿全螢幕（含 header 下方），點擊關閉 --}}
+		<div x-show="filterDrawer"
+			 x-transition.opacity.duration.200ms
+			 @click="filterDrawer = false"
+			 class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+		{{-- 面板容器：left 留白，right 貼齊 --}}
+		<div class="absolute inset-y-0 right-0 max-w-full flex pl-10 pointer-events-none">
+			<div x-show="filterDrawer"
+				 x-transition:enter="transform transition ease-in-out duration-300"
+				 x-transition:enter-start="translate-x-full"
+				 x-transition:enter-end="translate-x-0"
+				 x-transition:leave="transform transition ease-in-out duration-300"
+				 x-transition:leave-start="translate-x-0"
+				 x-transition:leave-end="translate-x-full"
+				 {{-- 🔥 關鍵：top 往下推，避開 sticky header（header 高度約 64~72px） --}}
+				 class="fixed top-20 bottom-0 right-0 w-3/4 max-w-sm pointer-events-auto
+						bg-base-100 border-l border-base-300 shadow-2xl
+						flex flex-col rounded-tl-2xl">
+				
+				{{-- 抽屜標題列：現在不會被 header 蓋住 --}}
+				<div class="flex items-center justify-between p-4 border-b border-base-300 flex-shrink-0">
+					<h3 class="font-serif font-bold text-base text-base-content">報表檢視與篩選設定</h3>
+					<button @click="filterDrawer = false" class="btn btn-sm btn-ghost btn-square song-interactive">✕</button>
+				</div>
 
                 <div class="flex-1 overflow-y-auto space-y-6 p-4">
                     @if(!$showAssetTrend)
                         <div class="space-y-2">
-                            <label class="text-xs font-bold text-base-content/60 tracking-wider">幣別選擇</label>
+                            <label class="text-xs font-bold text-base-content/60 tracking-wider">幣別</label>
                             <div class="grid grid-cols-2 gap-2">
                                 <button class="p-2.5 rounded-xl text-xs font-bold border transition-all text-center song-interactive {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300 text-base-content' }}"
                                         wire:click="$set('currencyFilter', 'all')">
@@ -180,7 +243,7 @@
                     @endif
 
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-base-content/60 tracking-wider">數據維度切換</label>
+                        <label class="text-xs font-bold text-base-content/60 tracking-wider">檢視</label>
                         <div class="flex flex-col gap-2">
                             @if(!$showAssetTrend)
                                 @if($tab1 === 'account')
@@ -190,8 +253,8 @@
                                     </div>
                                 @else
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'expense')">支出分析</button>
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'income')">收入分析</button>
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'expense')">支出</button>
+                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'income')">收入</button>
                                     </div>
                                 @endif
                             @else
@@ -202,8 +265,27 @@
                             @endif
                         </div>
                     </div>
+					
+					@if($this->usesGranularity())
+                        <div class="border-t border-base-300/60"></div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-base-content/60 tracking-wider">時間範圍</label>
+                            <div class="grid grid-cols-{{ count($this->allowedGranularities()) }} gap-2">
+                                @foreach($this->allowedGranularities() as $g)
+                                    <button wire:click="$set('granularity', '{{ $g }}')"
+                                            class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive
+                                                   {{ $granularity === $g
+                                                        ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900'
+                                                        : 'bg-base-100 border-base-300' }}">
+                                        {{ ['year' => '年', 'month' => '月', 'day' => '日'][$g] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+					
 					{{-- 底部按鈕 --}}
-					<div class="modal-action border-t border-base-300 p-4">
+					<div class="modal-action border-base-300 p-4">
 						<button @click="filterDrawer = false" class="w-full btn btn-dark py-2.5 rounded-xl font-bold song-interactive">
 							確認並套用
 						</button>
@@ -530,7 +612,9 @@
                         <table class="table w-full text-sm">
                             <thead>
                                 <tr class="border-b border-base-300/60 text-base-content/50">
-                                    <th class="bg-transparent font-bold">分類大類</th>
+                                    <th class="bg-transparent font-bold">
+										{{ ['expense' => '支出', 'income' => '收入'][$tab2] ?? '' }}分類
+									</th>
                                     <th class="bg-transparent text-right font-bold">總計金額</th>
                                     <th class="bg-transparent text-right font-bold">佔比</th>
                                 </tr>

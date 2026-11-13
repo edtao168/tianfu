@@ -96,7 +96,7 @@
                     class="btn btn-xs btn-ghost rounded-lg text-xs font-semibold gap-1 hover:bg-primary/10 hover:text-primary transition-all song-interactive"
                 >
                     <x-heroicon-o-arrow-path class="w-3 h-3" />
-                    <span class="hidden sm:inline">{{ $type === 'year' ? '今年' : '本月' }}</span>
+                    <span class="hidden sm:inline">{{ $type === 'year' ? '今年' : ($type === 'day' ? '今日' : '本月') }}</span>
                 </button>
             @endif
         </div>

@@ -30,6 +30,13 @@ class ReportStats extends Component
      * 幣別篩選：'all' = 合併（本位幣換算）；其他 = 單一幣別原幣不換算
      */
     public string $currencyFilter = 'all';
+	
+	/**
+     * 時間粒度：僅類別分頁（year|month|day）與賬戶占比分頁（year|month）使用
+     * 收支分頁仍用 $tab3；總資產仍用 $assetTab
+     */
+    public string $granularity = 'month';
+	public bool $hasUserChangedGranularity = false;
 
     public function mount()
     {
@@ -65,19 +72,32 @@ class ReportStats extends Component
             if (!in_array($this->tab2, ['expense', 'income'], true)) {
                 $this->tab2 = 'expense';
             }
-            if ($this->tab3 === 'day') $this->tab3 = 'month';
+            // 類別：允許 year|month|day，保留使用者上次選擇；預設 month
+            if (!in_array($this->granularity, ['year', 'month', 'day'], true)) {
+                $this->granularity = 'month';
+            }
             $this->showAssetTrend = false;
+
         } elseif ($value === 'asset') {
             $this->showAssetTrend = true;
             $this->tab2 = 'balance';
             $this->currencyFilter = 'all';   // 資產趨勢強制合併
+
         } elseif ($value === 'account') {
             $this->showAssetTrend = false;
             if (!in_array($this->tab2, ['composition', 'trend'], true)) {
                 $this->tab2 = 'composition';
             }
-            // ⬅️ 賬戶報表預設年度
-            $this->tab3 = 'year';
+            // 賬戶占比：只允許 year|month；若上次是 day 則退回 month
+            if (!in_array($this->granularity, ['year', 'month'], true)) {
+                $this->granularity = 'month';
+            }
+            // 首次進入賬戶分頁時預設年（保留原習慣）
+            if ($this->tab2 === 'composition' && $this->granularity === 'month'
+                && !$this->hasUserChangedGranularity) {
+                $this->granularity = 'year';
+            }
+
         } else {
             if (!in_array($this->tab2, ['expense', 'income', 'balance'], true)) {
                 $this->tab2 = 'expense';
@@ -113,19 +133,67 @@ class ReportStats extends Component
 
     private function updateDateMode()
     {
-        $activeMode = $this->showAssetTrend ? $this->assetTab : $this->tab3;
+        // 決定目前分頁的「時間模式」來源
+        if ($this->showAssetTrend) {
+            $activeMode = $this->assetTab;                      // month | day
+        } elseif ($this->usesGranularity()) {
+            $activeMode = $this->granularity;                   // year | month | day
+        } else {
+            $activeMode = $this->tab3;                          // month | day（收支）
+        }
 
         if ($activeMode === 'year') {
             $this->dateMode = 'year';
             if (strlen($this->currentDate) > 4) {
                 $this->currentDate = substr($this->currentDate, 0, 4);
             }
+        } elseif ($activeMode === 'day') {
+            $this->dateMode = 'day';
+            if (strlen($this->currentDate) === 4) {
+                $this->currentDate = $this->currentDate . '-' . now()->format('m-d');
+            } elseif (strlen($this->currentDate) === 7) {
+                $this->currentDate = $this->currentDate . '-' . now()->format('d');
+            }
         } else {
             $this->dateMode = 'month';
             if (strlen($this->currentDate) === 4) {
                 $this->currentDate = $this->currentDate . '-' . now()->format('m');
+            } elseif (strlen($this->currentDate) === 10) {
+                $this->currentDate = substr($this->currentDate, 0, 7);
             }
         }
+    }
+	
+	public function updatedGranularity()
+    {
+        $this->hasUserChangedGranularity = true;
+        $this->updateDateMode();
+        $this->dispatch('refreshChart', $this->getChartData());
+    }
+
+    /**
+     * 目前分頁允許的時間粒度
+     * - 類別：year|month|day（流量報表，期間越短越接近單筆歸類）
+     * - 賬戶占比：year|month（存量報表，日粒度無新洞察且有空圖陷阱）
+     * - 其他分頁：回傳空陣列（不使用 granularity）
+     */
+    public function allowedGranularities(): array
+    {
+        if ($this->tab1 === 'category') {
+            return ['year', 'month', 'day'];
+        }
+        if ($this->tab1 === 'account' && $this->tab2 === 'composition') {
+            return ['year', 'month'];
+        }
+        return [];
+    }
+
+    /**
+     * 目前是否使用 granularity（類別 / 賬戶占比）
+     */
+    public function usesGranularity(): bool
+    {
+        return !empty($this->allowedGranularities());
     }
 
     // ============================================================
@@ -140,8 +208,8 @@ class ReportStats extends Component
             'categoryId' => $categoryId,
             'type' => $this->tab2,
             'title' => $categoryName . ' - 交易明細',
-            'dateMode' => $this->tab3 === 'year' ? 'year' : 'month',
-            'baseDate' => $this->selectedYear . '-' . sprintf('%02d', $this->selectedMonth) . '-01',
+            'dateMode' => $this->dateMode,   // year | month | day
+            'baseDate' => $this->currentDate,
             'currency' => $currencyParam,
         ]);
     }
@@ -153,17 +221,28 @@ class ReportStats extends Component
     #[Computed]
     public function selectedYear(): int
     {
-        if ($this->dateMode === 'year') {
-            return (int) $this->currentDate;
+        if (strlen($this->currentDate) >= 4) {
+            return (int) substr($this->currentDate, 0, 4);
         }
-        return (int) Carbon::parse($this->currentDate)->year;
+        return (int) now()->format('Y');
     }
 
     #[Computed]
     public function selectedMonth(): int
     {
-        if ($this->dateMode === 'year') return 1;
-        return (int) Carbon::parse($this->currentDate)->month;
+        if (strlen($this->currentDate) >= 7) {
+            return (int) substr($this->currentDate, 5, 2);
+        }
+        return (int) now()->format('m');
+    }
+
+    #[Computed]
+    public function selectedDay(): int
+    {
+        if (strlen($this->currentDate) >= 10) {
+            return (int) substr($this->currentDate, 8, 2);
+        }
+        return (int) now()->format('d');
     }
 
     #[Computed]
@@ -243,6 +322,10 @@ class ReportStats extends Component
 
 		if ($this->dateMode === 'year') {
 			$query->whereYear('recorded_at', $this->selectedYear);
+		} elseif ($this->dateMode === 'day') {
+			$query->whereDate('recorded_at', Carbon::create(
+				$this->selectedYear, $this->selectedMonth, $this->selectedDay
+			));
 		} else {
 			$query->whereYear('recorded_at', $this->selectedYear)
 				  ->whereMonth('recorded_at', $this->selectedMonth);
@@ -931,11 +1014,13 @@ class ReportStats extends Component
     public function render()
     {
         $parsedDate = $this->parseCurrentDate();
-        $isYearMode = ($this->dateMode === 'year');
 
-        if ($isYearMode) {
+        if ($this->dateMode === 'year') {
             $displayDate = $this->selectedYear . ' 年';
             $isCurrent = ($this->selectedYear === (int) now()->format('Y'));
+        } elseif ($this->dateMode === 'day') {
+            $displayDate = $parsedDate->format('Y 年 m 月 d 日');
+            $isCurrent = $parsedDate->isToday();
         } else {
             $displayDate = $parsedDate->format('Y 年 m 月');
             $isCurrent = $parsedDate->isCurrentMonth();
