@@ -3,6 +3,7 @@
 
 namespace App\Livewire\Finance;
 
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
@@ -167,6 +168,134 @@ class AccountIndex extends Component
 			'base_code' => $baseCurrency->code,
 			'breakdown' => $breakdown,
 			'has_assets' => bccomp($total, '0.0000', 4) > 0,
+		];
+	}
+
+	/**
+	 * 去年年終（12/31 23:59:59）總資產，基準幣別口徑。
+	 *
+	 * 回傳 null 代表「無可比資料」，Blade 端整列比較列不渲染。
+	 *
+	 * 判斷「無可比資料」的規則（層次一）：
+	 *   去年 12/31 之前，該 shop 完全沒有任何交易紀錄 → 視為新用戶 → null。
+	 *
+	 * 口徑：
+	 *   - 各帳戶以 FinancialAccount::getBalanceAtDate(去年年底) 取得該時點餘額，
+	 *     完全重用既有正負號規則，不在此重寫。
+	 *   - 匯率採「現行 rate」換算（與 totalAssets 同口徑），
+	 *     不混入歷史匯率，避免口徑不一致。
+	 *   - 全程 MoneyCalculator。
+	 */
+	#[Computed]
+	public function lastYearEndTotalAssets(): ?array
+	{
+		$currencyService = app(CurrencyService::class);
+		$baseCurrency = $currencyService->getBaseCurrency();
+
+		if (! $baseCurrency) {
+			return null;
+		}
+
+		$lastYearEnd = Carbon::now()->subYear()->endOfYear(); // 去年 12/31 23:59:59
+
+		// 層次一：去年年底前該 shop 有無任何交易？沒有 → 新用戶，無可比資料
+		$hasAnyTransaction = Transaction::where('shop_id', $this->currentShopId)
+			->where('user_id', auth()->id())
+			->where('recorded_at', '<=', $lastYearEnd)
+			->exists();
+
+		if (! $hasAnyTransaction) {
+			return null;
+		}
+
+		// 去年年底前已存在之帳戶（不過濾 is_active，避免漏算已停用帳戶；
+		// 以 created_at 判斷該帳戶當時是否存在，精準排除「今年才建」的帳戶）
+		$accounts = FinancialAccount::where('shop_id', $this->currentShopId)
+			->where('user_id', auth()->id())
+			->where('created_at', '<=', $lastYearEnd)
+			->get();
+
+		if ($accounts->isEmpty()) {
+			return null;
+		}
+
+		$total = '0.0000';
+
+		foreach ($accounts as $account) {
+			$currency = $currencyService->findByCode($account->currency);
+			if (! $currency) {
+				continue;
+			}
+
+			// 重用既有方法，取得該時點餘額（string，4 位小數）
+			$balanceAtLastYearEnd = $account->getBalanceAtDate($lastYearEnd);
+
+			$converted = $currency->is_base
+				? $balanceAtLastYearEnd
+				: $currencyService->convertToBase($balanceAtLastYearEnd, $currency->code);
+
+			$total = MoneyCalculator::add($total, $converted, 4);
+		}
+
+		return [
+			'total'       => $total,                    // string
+			'base_symbol' => $baseCurrency->symbol,
+			'base_code'   => $baseCurrency->code,
+		];
+	}
+
+	/**
+	 * 較去年比結果。null → Blade 整列隱藏。
+	 * 差值、百分比、方向皆在後端算好，Blade 不重算。
+	 */
+	#[Computed]
+	public function totalAssetsComparison(): ?array
+	{
+		$lastYear = $this->lastYearEndTotalAssets;
+
+		if ($lastYear === null) {
+			return null;
+		}
+
+		$currencyService = app(CurrencyService::class);
+		$baseCurrency    = $currencyService->getBaseCurrency();
+
+		if (! $baseCurrency) {
+			return null;
+		}
+
+		// totalAssets['total'] 目前是 float；先轉字串再進 MoneyCalculator。
+		// 精度折返問題見文末「冗餘建議」第 1 點。
+		$current  = (string) $this->totalAssets['total'];
+		$previous = $lastYear['total'];
+
+		$diff = MoneyCalculator::sub($current, $previous, 4);
+		$cmp  = MoneyCalculator::compare($diff, '0.0000', 4);
+
+		$isFlat = $cmp === 0;
+		$isUp   = $cmp > 0;
+
+		// 百分比：去年年終 > 0 才計算，否則 null（只顯示絕對值）
+		$pct = null;
+		if (MoneyCalculator::compare($previous, '0.0000', 4) > 0) {
+			$ratio = MoneyCalculator::div($diff, $previous, 6); // 差值 / 去年
+			$pct   = MoneyCalculator::mul($ratio, '100', 2);    // 轉 %
+		}
+
+		// 顯示用絕對值差（保留正負由箭頭與文字表達）
+		$absDiff = MoneyCalculator::compare($diff, '0.0000', 4) < 0
+			? MoneyCalculator::sub('0', $diff, 4)
+			: $diff;
+
+		return [
+			'is_up'       => $isUp,
+			'is_flat'     => $isFlat,
+			'diff'        => $diff,                                         // string
+			'abs_diff'    => $absDiff,                                      // string
+			'display_diff'=> $currencyService->format($absDiff, $baseCurrency),
+			'pct'         => $pct !== null ? (float) $pct : null,           // float 僅供顯示
+			'base_symbol' => $baseCurrency->symbol,
+			'base_code'   => $baseCurrency->code,
 		];
 	}
     

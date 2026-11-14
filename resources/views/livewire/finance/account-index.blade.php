@@ -1,6 +1,5 @@
-<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
-
 {{-- filepath: resources/views/livewire/finance/account-index.blade.php --}}
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
    
     {{-- ============================================================ --}}
     {{-- 1. 頂部收支統計卡片 --}}
@@ -143,7 +142,7 @@
 							<rect x="9.5" y="9.5" width="5" height="5" rx="0.5"/>
 						</svg>
 						<span>總資產（{{ $this->totalAssets['base_code'] }}）</span>
-						<span class="hidden sm:inline text-xs opacity-50 font-normal ml-1">所有幣別換算後加總</span>
+						<span class="hidden sm:inline text-xs opacity-50 font-normal ml-1">所有幣別換算本幣後加總</span>
 					</div>
 					
 					{{-- 自動刷新控制 --}}
@@ -189,6 +188,24 @@
 					@endif
 				</div>
 				
+				{{-- 較去年比：無可比資料（新用戶）時整列不渲染 --}}
+				@if ($comparison = $this->totalAssetsComparison)
+					<div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+						@if ($comparison['is_flat'])
+							<span class="text-base-content/60">— 持平</span>
+						@else
+							<span class="inline-flex items-center gap-1 font-medium {{ $comparison['is_up'] ? 'text-success' : 'text-error' }}">
+								<span aria-hidden="true">{{ $comparison['is_up'] ? '▲' : '▼' }}</span>
+								<span>{{ $comparison['is_up'] ? '+' : '−' }}{{ $comparison['display_diff'] }}</span>
+								@if (! is_null($comparison['pct']))
+									<span class="opacity-80">({{ $comparison['is_up'] ? '+' : '' }}{{ $comparison['pct'] }}%)</span>
+								@endif
+							</span>
+						@endif
+						<span class="text-base-content/60" title="與去年年終總資產比較（以現行匯率換算）">較去年</span>
+					</div>
+				@endif
+
 				{{-- 幣別明細 --}}
 				@if(count($this->totalAssets['breakdown']) > 0)
 					<div class="mt-6 pt-5 border-t border-base-content/15">
