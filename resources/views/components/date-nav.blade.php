@@ -13,7 +13,7 @@
         {{-- 上一頁 --}}
         <button 
             type="button" 
-            wire:click="previousDate" 
+            wire:click="prevDate" 
             class="btn btn-ghost btn-sm btn-square rounded-xl hover:bg-base-200/70 text-base-content/70 hover:text-base-content transition-all flex-shrink-0 song-interactive"
             title="上一頁"
         >

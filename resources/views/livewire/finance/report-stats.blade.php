@@ -3,7 +3,7 @@
      x-data="{ filterDrawer: false }">
     
     {{-- ============================================================ --}}
-    {{-- 手機端頂部佈局：左側 2/3 (4個分頁 2x2 排列) + 右側 1/3 (篩選按鈕)，下方日期導覽獨占一列 w-full --}}
+    {{-- 手機端頂部佈局 --}}
     {{-- ============================================================ --}}
     @php
         $primaryTabs = [
@@ -42,59 +42,74 @@
                 </button>
             </div>
         </div>
-		{{-- 手機端狀態條：顯示當前篩選維度 --}}
-		<div class="flex items-center gap-2 px-1 text-xs">
-			{{-- 收支方向（類別/收支分頁才顯示） --}}
-			@if($tab1 === 'category' || ($tab1 === 'trend' && !$showAssetTrend))
-				<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md
-					{{ $tab2 === 'expense' ? 'bg-error/10 text-error' :
-					   ($tab2 === 'income' ? 'bg-success/10 text-success' : 'bg-base-200 text-base-content/70') }}">
-					<span class="w-1.5 h-1.5 rounded-full
-						{{ $tab2 === 'expense' ? 'bg-error' :
-						   ($tab2 === 'income' ? 'bg-success' : 'bg-base-content/50') }}"></span>
-					{{ ['expense' => '支出', 'income' => '收入', 'balance' => '結餘'][$tab2] ?? $tab2 }}
+		
+		{{-- 手機端狀態條：由 filterGroups 的 active 選項推導 --}}
+		<div class="flex items-center gap-2 px-1 text-xs flex-wrap">
+			
+			{{-- 總資產分頁：currency 群組不存在，獨立顯示本位幣 --}}
+			@if($showAssetTrend)
+				<span class="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono text-[11px]">
+					{{ $baseCurrency->code ?? 'TWD' }} 本位幣
 				</span>
 			@endif
 			
-			{{-- 時間粒度（類別 / 賬戶占比） --}}
-			@if($this->usesGranularity())
-				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
-					按{{ ['year' => '年', 'month' => '月', 'day' => '日'][$granularity] }}
-				</span>
-			@endif
+			@foreach($this->visibleFilterGroups as $group)
+				@php $active = $group['active_option'] ?? null; @endphp
+				@continue(!$active)
 
-			{{-- 賬戶模式 --}}
-			@if($tab1 === 'account')
-				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
-					{{ $tab2 === 'composition' ? '佔比' : '趨勢' }}
-				</span>
-			@endif
+				@switch($group['key'])
+					{{-- 支出 / 收入 / 結餘 --}}
+					@case('direction')
+						<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md
+							{{ $active['value'] === 'expense' ? 'bg-error/10 text-error' :
+							   ($active['value'] === 'income' ? 'bg-success/10 text-success' : 'bg-base-200 text-base-content/70') }}">
+							<span class="w-1.5 h-1.5 rounded-full
+								{{ $active['value'] === 'expense' ? 'bg-error' :
+								   ($active['value'] === 'income' ? 'bg-success' : 'bg-base-content/50') }}"></span>
+							{{ $active['label'] }}
+						</span>
+						@break
 
-			{{-- 總資產模式 --}}
-			{{-- 幣別狀態：合併 / 單幣別 / 總資產本位幣 --}}
-			@php
-				$isConsolidated = $currencyFilter === 'all';
-				$baseCode = $baseCurrency->code ?? 'TWD';
-			@endphp
+					{{-- 時間粒度 --}}
+					@case('granularity')
+						<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
+							按{{ $active['label'] }}
+						</span>
+						@break
 
-			@if($showAssetTrend)
-				{{-- 總資產：固定本位幣換算 --}}
-				<span class="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono text-[11px]">
-					{{ $baseCode }} 本位幣
-				</span>
-			@elseif($isConsolidated)
-				{{-- 合併模式 --}}
-				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/60 font-mono text-[11px]">
-					🌐 全部合併
-				</span>
-			@else
-				{{-- 單一幣別原幣 --}}
-				<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70 font-mono text-[11px]">
-					{{ $currencyFilter }}
-				</span>
-			@endif
+					{{-- 賬戶模式 --}}
+					@case('accountView')
+						<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
+							{{ $active['label'] }}
+						</span>
+						@break
 
-			{{-- 右側：點擊開啟抽屜的提示 --}}
+					{{-- 幣別 --}}
+					@case('currency')
+						@if($showAssetTrend)
+							<span class="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono text-[11px]">
+								{{ $baseCurrency->code ?? 'TWD' }} 本位幣
+							</span>
+						@elseif($currencyFilter === 'all')
+							<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/60 font-mono text-[11px]">
+								🌐 全部合併
+							</span>
+						@else
+							<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70 font-mono text-[11px]">
+								{{ $currencyFilter }}
+							</span>
+						@endif
+						@break
+
+					{{-- 總資產月/日 --}}
+					@case('assetTab')
+						<span class="px-2 py-1 rounded-md bg-base-200 text-base-content/70">
+							{{ $active['label'] }}
+						</span>
+						@break
+				@endswitch
+			@endforeach
+
 			<button @click="filterDrawer = true"
 					class="ml-auto text-base-content/40 hover:text-base-content/70">
 				<x-heroicon-m-chevron-down class="w-3.5 h-3.5" />
@@ -114,7 +129,7 @@
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 電腦端頂部佈局（維持現狀） --}}
+    {{-- 電腦端頂部佈局 --}}
     {{-- ============================================================ --}}
     <div class="hidden md:flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-base-300/60 pb-5">
         <div class="flex p-1.5 rounded-xl bg-base-200/80 border border-base-300/70 backdrop-blur-md shadow-sm overflow-x-auto">
@@ -146,154 +161,109 @@
     </div>
 
     {{-- ============================================================ --}}
-    {{-- 電腦端專屬過濾工具列（加深外框） --}}
-    {{-- ============================================================ --}}
-    <div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border-2 border-base-300 shadow-sm backdrop-blur-sm">
-        @if($this->usesGranularity())
-            <div class="h-4 w-[1px] bg-base-300 mx-1"></div>
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">時間：</span>
-                <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
-                    @foreach($this->allowedGranularities() as $g)
-                        <button class="btn btn-xs join-item song-interactive
-                                       {{ $granularity === $g ? 'btn-neutral' : 'btn-ghost' }}"
-                                wire:click="$set('granularity', '{{ $g }}')">
-                            {{ ['year' => '年', 'month' => '月', 'day' => '日'][$g] }}
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+	{{-- 電腦端專屬過濾工具列 --}}
+	{{-- ============================================================ --}}
+	<div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border-2 border-base-300 shadow-sm backdrop-blur-sm">
+		@foreach($this->filterGroups as $group)
+			@if($group['visible'])
+				<div class="flex items-center gap-2">
+					<span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">
+						{{ $group['label'] }}：
+					</span>
+					<div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
+						@foreach($group['options'] as $opt)
+							<x-filter-option
+								:opt="$opt"
+								:wire-set="$group['wireSet']"
+								context="desktop" />
+						@endforeach
+					</div>
+				</div>
+			@endif
+		@endforeach
+	</div>
 
-        <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-base-content/70 tracking-wider mr-1">檢視：</span>
-            @if(!$showAssetTrend)
-                @if($tab1 === 'account')
-                    <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
-                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'composition' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'composition')">佔比</button>
-                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'trend' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'trend')">趨勢</button>
-                    </div>
-                @else
-                    <div class="join border border-base-300 rounded-lg overflow-hidden shadow-sm">
-                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'expense' ? 'btn-error' : 'btn-ghost' }}" wire:click="$set('tab2', 'expense')">支出</button>
-                        <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'income' ? 'btn-success' : 'btn-ghost' }}" wire:click="$set('tab2', 'income')">收入</button>
-                        @if($tab1 === 'trend')
-                            <button class="btn btn-xs join-item song-interactive {{ $tab2 === 'balance' ? 'btn-neutral' : 'btn-ghost' }}" wire:click="$set('tab2', 'balance')">結餘</button>
-                        @endif
-                    </div>
-                @endif
-            @else
-                <span class="text-xs font-bold text-primary">總資產本位幣：{{ $baseCurrency->code ?? 'TWD' }}</span>
-            @endif
-        </div>
-    </div>
-
-    {{-- ============================================================ --}}
-    {{-- 手機專屬抽屜 --}}
-    {{-- ============================================================ --}}
-	<div x-show="filterDrawer" 
+	{{-- ============================================================ --}}
+	{{-- 手機專屬抽屜（獨立 fixed 層，不與主內容嵌套） --}}
+	{{-- ============================================================ --}}
+	<div x-show="filterDrawer"
 		 style="display: none;"
 		 class="fixed inset-0 z-50 lg:hidden"
 		 role="dialog" aria-modal="true">
 
-		{{-- 遮罩：鋪滿全螢幕（含 header 下方），點擊關閉 --}}
+		{{-- 遮罩 --}}
 		<div x-show="filterDrawer"
 			 x-transition.opacity.duration.200ms
 			 @click="filterDrawer = false"
 			 class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
-		{{-- 面板容器：left 留白，right 貼齊 --}}
-		<div class="absolute inset-y-0 right-0 max-w-full flex pl-10 pointer-events-none">
-			<div x-show="filterDrawer"
-				 x-transition:enter="transform transition ease-in-out duration-300"
-				 x-transition:enter-start="translate-x-full"
-				 x-transition:enter-end="translate-x-0"
-				 x-transition:leave="transform transition ease-in-out duration-300"
-				 x-transition:leave-start="translate-x-0"
-				 x-transition:leave-end="translate-x-full"
-				 {{-- 🔥 關鍵：top 往下推，避開 sticky header（header 高度約 64~72px） --}}
-				 class="fixed top-20 bottom-0 right-0 w-3/4 max-w-sm pointer-events-auto
-						bg-base-100 border-l border-base-300 shadow-2xl
-						flex flex-col rounded-tl-2xl">
-				
-				{{-- 抽屜標題列：現在不會被 header 蓋住 --}}
-				<div class="flex items-center justify-between p-4 border-b border-base-300 flex-shrink-0">
-					<h3 class="font-serif font-bold text-base text-base-content">報表檢視與篩選設定</h3>
-					<button @click="filterDrawer = false" class="btn btn-sm btn-ghost btn-square song-interactive">✕</button>
+		{{-- 面板：固定右側，top 避開 header --}}
+		<div x-show="filterDrawer"
+			 x-transition:enter="transform transition ease-in-out duration-300"
+			 x-transition:enter-start="translate-x-full"
+			 x-transition:enter-end="translate-x-0"
+			 x-transition:leave="transform transition ease-in-out duration-300"
+			 x-transition:leave-start="translate-x-0"
+			 x-transition:leave-end="translate-x-full"
+			 class="fixed top-20 bottom-0 right-0 w-3/4 max-w-sm
+					bg-base-100 border-l border-base-300 shadow-2xl
+					flex flex-col rounded-tl-2xl">
+
+			{{-- 標題列 --}}
+			<div class="flex items-center justify-between p-4 border-b border-base-300 flex-shrink-0">
+				<h3 class="font-serif font-bold text-base text-base-content">報表檢視與篩選設定</h3>
+				<button @click="filterDrawer = false" class="btn btn-sm btn-ghost btn-square song-interactive">✕</button>
+			</div>
+
+			{{-- 內容 --}}
+			<div class="flex-1 overflow-y-auto p-4">
+				@foreach($this->filterGroups as $group)
+					@if($group['visible'])
+						<div class="space-y-2 mb-4">
+							<label class="text-xs font-bold text-base-content/60 tracking-wider">
+								{{ $group['label'] }}
+							</label>
+
+							@php
+								$cols = match($group['layout']) {
+									'grid-2' => 'grid-cols-2',
+									'grid-3' => 'grid-cols-3',
+									default  => 'grid-cols-2',
+								};
+							@endphp
+
+							<div class="grid {{ $cols }} gap-2">
+								@foreach($group['options'] as $opt)
+									@php
+										$toneClass = $opt['active']
+											? match($opt['tone'] ?? null) {
+												'error'   => 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30',
+												'success' => 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
+												default   => 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900',
+											  }
+											: 'bg-base-100 border-base-300 text-base-content';
+									@endphp
+									<button
+										class="p-2.5 rounded-xl text-xs font-bold border text-center transition-all song-interactive {{ $toneClass }}"
+										wire:click="$set('{{ $group['wireSet'] }}', '{{ $opt['value'] }}')">
+										{{ $opt['label'] }}
+									</button>
+								@endforeach
+							</div>
+						</div>
+						<div class="border-t border-base-300/60 mb-4"></div>
+					@endif
+				@endforeach
+
+				<div class="modal-action border-base-300 p-4">
+					<button @click="filterDrawer = false"
+							class="w-full btn btn-dark py-2.5 rounded-xl font-bold song-interactive">
+						確認並套用
+					</button>
 				</div>
-
-                <div class="flex-1 overflow-y-auto space-y-6 p-4">
-                    @if(!$showAssetTrend)
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-base-content/60 tracking-wider">幣別</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="p-2.5 rounded-xl text-xs font-bold border transition-all text-center song-interactive {{ $currencyFilter === 'all' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300 text-base-content' }}"
-                                        wire:click="$set('currencyFilter', 'all')">
-                                    🌐 全部（合併）
-                                </button>
-                                @foreach($this->availableCurrencies as $currency)
-                                    <button class="p-2.5 rounded-xl text-xs font-bold border transition-all text-center song-interactive {{ $currencyFilter === $currency->code ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300 text-base-content' }}"
-                                            wire:click="$set('currencyFilter', '{{ $currency->code }}')">
-                                        {{ $currency->code }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-                        <div class="border-t border-base-300/60"></div>
-                    @endif
-
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-base-content/60 tracking-wider">檢視</label>
-                        <div class="flex flex-col gap-2">
-                            @if(!$showAssetTrend)
-                                @if($tab1 === 'account')
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'composition' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'composition')">佔比分佈</button>
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'trend' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'trend')">賬戶趨勢</button>
-                                    </div>
-                                @else
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'expense' ? 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'expense')">支出</button>
-                                        <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $tab2 === 'income' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' : 'bg-base-100 border-base-300' }}" wire:click="$set('tab2', 'income')">收入</button>
-                                    </div>
-                                @endif
-                            @else
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $assetTab === 'month' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('assetTab', 'month')">月度總資產</button>
-                                    <button class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive {{ $assetTab === 'day' ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900' : 'bg-base-100 border-base-300' }}" wire:click="$set('assetTab', 'day')">每日總資產</button>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-					
-					@if($this->usesGranularity())
-                        <div class="border-t border-base-300/60"></div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-base-content/60 tracking-wider">時間範圍</label>
-                            <div class="grid grid-cols-{{ count($this->allowedGranularities()) }} gap-2">
-                                @foreach($this->allowedGranularities() as $g)
-                                    <button wire:click="$set('granularity', '{{ $g }}')"
-                                            class="p-2.5 rounded-xl text-xs font-bold border text-center song-interactive
-                                                   {{ $granularity === $g
-                                                        ? 'bg-stone-800 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900'
-                                                        : 'bg-base-100 border-base-300' }}">
-                                        {{ ['year' => '年', 'month' => '月', 'day' => '日'][$g] }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-					
-					{{-- 底部按鈕 --}}
-					<div class="modal-action border-base-300 p-4">
-						<button @click="filterDrawer = false" class="w-full btn btn-dark py-2.5 rounded-xl font-bold song-interactive">
-							確認並套用
-						</button>
-					</div>
-                </div>                
-            </div>
-        </div>
-    </div>
+			</div>
+		</div>
+	</div>
 
     {{-- ============================================================ --}}
     {{-- 主內容區 --}}
@@ -332,8 +302,8 @@
                      class="w-full grid grid-cols-1 gap-3 relative z-10"
                      style="max-height: 520px; overflow-y: auto;"></div>
             @else
-                <div class="w-full max-w-[320px] relative z-10" style="min-height: 300px;">
-                    <canvas id="financeChart" style="width: 100%; height: 100%; min-height: 300px;"></canvas>
+                <div class="w-full max-w-[320px] relative z-10 aspect-square">
+					<canvas id="financeChart" style="width: 100%;"></canvas>
                     @if($tab1 === 'category' && !$showAssetTrend)
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
                             <span class="text-xs text-base-content/50 font-bold tracking-widest">總額</span>
@@ -724,11 +694,47 @@ document.addEventListener('livewire:init', function () {
     const emitRenderingEnd   = () => window.dispatchEvent(new CustomEvent('chart-rendering-end'));
 
     // ===== 共用工具 =====
-    function formatAxisTick(value) {
-        if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-        if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + 'K';
-        return value;
-    }
+    function formatAxisTick(value, opts = {}) {
+		const abs = Math.abs(value);
+
+		// 存量圖表：以 M（百萬）為單位，保留 2 位小數以顯示波動
+		// 例：6,450,000 → 6.45M；645,000 → 0.65M；< 1 萬則顯示完整數字
+		if (opts.unit === 'wan') {   // 參數名沿用 'wan' 以減少呼叫端改動
+			if (abs >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+			if (abs >= 1e4) return (value / 1e4).toFixed(1) + 'K';
+			return value.toLocaleString();
+		}
+
+		// 流量圖表：維持 M/K
+		if (abs >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+		if (abs >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+		return value;
+	}
+
+	function buildScales(palette, opts = {}) {
+		const isStock = opts.isStock === true; // 總資產 / 賬戶趨勢
+		const y = {
+			beginAtZero: false,
+			grid: { color: palette.grid },
+			ticks: {
+				color: palette.text + '90',
+				font: { size: 10, family: 'mono' },
+				maxTicksLimit: isStock ? 8 : 6,
+				callback: (v) => formatAxisTick(v, { unit: isStock ? 'stock' : null }),
+			},
+		};
+		if (opts.suggestedMin !== undefined) y.suggestedMin = opts.suggestedMin;
+		if (opts.suggestedMax !== undefined) y.suggestedMax = opts.suggestedMax;
+		if (isStock) y.grace = '5%';
+
+		return {
+			y,
+			x: {
+				grid: { display: false },
+				ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 },
+			},
+		};
+	}
 
     function buildTooltipConfig(data, isPie) {
         return {
@@ -823,9 +829,15 @@ document.addEventListener('livewire:init', function () {
                 chartInstance.options.cutout = '75%';
                 delete chartInstance.options.scales;
             } else {
-                chartInstance.options.scales = buildScales(palette);
+                chartInstance.options.scales = buildScales(palette, {
+                    isStock: data.isAssetTrend === true,
+                    suggestedMin: data.suggestedMin,
+                    suggestedMax: data.suggestedMax,
+                });
             }
-            chartInstance.update('none'); // 關動畫，更新極快
+            chartInstance.update('none');
+            // 重新量測容器與圖例，修正 maintainAspectRatio 下的高度失真
+            requestAnimationFrame(() => chartInstance.resize());
             return;
         }
 
@@ -839,7 +851,7 @@ document.addEventListener('livewire:init', function () {
                 responsive: true,
                 maintainAspectRatio: true,
                 aspectRatio: isPie ? 1 : 1.5,
-                animation: { duration: 200 }, // 主圖保留輕量動畫
+                animation: { duration: 200 },
                 plugins: {
                     legend: {
                         display: isPie,
@@ -853,23 +865,39 @@ document.addEventListener('livewire:init', function () {
         };
 
         if (!isPie) {
-            config.options.scales = buildScales(palette);
+            config.options.scales = buildScales(palette, {
+                isStock: data.isAssetTrend === true,
+                suggestedMin: data.suggestedMin,
+                suggestedMax: data.suggestedMax,
+            });
         }
 
         chartInstance = new Chart(ctx, config);
-    }
+    }   // ← renderChart 結束
 
-    function buildScales(palette) {
-        return {
-            y: {
-                beginAtZero: false,
-                grid: { color: palette.grid },
-                ticks: { color: palette.text + '90', font: { size: 10, family: 'mono' }, callback: formatAxisTick }
+    // ★ 只保留這一個 buildScales（帶 opts 的新版）
+    function buildScales(palette, opts = {}) {
+        const isStock = opts.isStock === true;
+        const y = {
+            beginAtZero: false,
+            grid: { color: palette.grid },
+            ticks: {
+                color: palette.text + '90',
+                font: { size: 10, family: 'mono' },
+                maxTicksLimit: isStock ? 8 : 6,
+                callback: (v) => formatAxisTick(v, { unit: isStock ? 'wan' : null }),
             },
+        };
+        if (opts.suggestedMin !== undefined && opts.suggestedMin !== null) y.suggestedMin = opts.suggestedMin;
+        if (opts.suggestedMax !== undefined && opts.suggestedMax !== null) y.suggestedMax = opts.suggestedMax;
+        if (isStock) y.grace = '5%';
+
+        return {
+            y,
             x: {
                 grid: { display: false },
-                ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 }
-            }
+                ticks: { color: palette.text + '90', font: { size: 10 }, maxTicksLimit: 15 },
+            },
         };
     }
 
@@ -988,7 +1016,7 @@ document.addEventListener('livewire:init', function () {
                                     color: palette.text + '60',
                                     font: { size: 9, family: 'mono' },
                                     maxTicksLimit: 4,
-                                    callback: formatAxisTick
+                                    callback:  (v) => formatAxisTick(v, { unit: 'stock' }), 
                                 }
                             },
                             x: {
@@ -1046,6 +1074,12 @@ document.addEventListener('livewire:init', function () {
 
         Livewire.on('refreshChart', (data) => {
             if (data && data[0]) renderByData(data[0]);
+			
+			// 圖例列數可能改變，補一次 resize
+			requestAnimationFrame(() => {
+				if (chartInstance) chartInstance.resize();
+				smallMultiplesMap.forEach(c => c.resize());
+			});
         });
 
         // 主題切換：重建（顏色需重算），但保留結構

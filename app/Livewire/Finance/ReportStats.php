@@ -38,11 +38,23 @@ class ReportStats extends Component
     public string $granularity = 'month';
 	public bool $hasUserChangedGranularity = false;
 
+    // ── 請求內快取（取代 static，避免跨請求殘留）──
+    /** @var array<int, \App\Models\FinancialAccount|null> */
+    private array $accountCache = [];
+
+    /** @var array<string, string> key = "{shopId}|{accountId}|{timestamp}" */
+    private array $balanceCache = [];
+	
     public function mount()
     {
         $this->shopId = (int) session('current_shop_id', 1);
         $this->currentDate = now()->format('Y-m');
         $this->dateMode = 'month';
+
+        // R1：確保快取為空（元件重建時屬性已是初始值，此處明示意圖）
+        $this->accountCache = [];
+        $this->balanceCache = [];
+		
         $this->updateDateMode();
     }
 
@@ -131,16 +143,31 @@ class ReportStats extends Component
         $this->dispatch('refreshChart', $this->getChartData());
     }
 
+    /**
+     * 決定目前分頁的「時間模式」來源 property。
+     *
+     * 三個時間狀態各有語意，**不可合併**：
+     *  - assetTab    ：總資產（存量）的月度/每日快照頻率
+     *  - granularity ：類別（流量）/ 賬戶佔比（存量）的年/月/日粒度
+     *  - tab3        ：收支（流量）的月/日統計期間
+     * 合併會導致切換分頁時互相污染，故保留三者，僅集中「分流規則」於此。
+     *
+     * @return string 'year'|'month'|'day'
+     */
+    private function resolveTimeModeSource(): string
+    {
+        if ($this->showAssetTrend) {
+            return $this->assetTab;          // month | day
+        }
+        if ($this->usesGranularity()) {
+            return $this->granularity;       // year | month | day
+        }
+        return $this->tab3;                  // month | day（收支）
+    }
+	
     private function updateDateMode()
     {
-        // 決定目前分頁的「時間模式」來源
-        if ($this->showAssetTrend) {
-            $activeMode = $this->assetTab;                      // month | day
-        } elseif ($this->usesGranularity()) {
-            $activeMode = $this->granularity;                   // year | month | day
-        } else {
-            $activeMode = $this->tab3;                          // month | day（收支）
-        }
+        $activeMode = $this->resolveTimeModeSource();
 
         if ($activeMode === 'year') {
             $this->dateMode = 'year';
@@ -213,6 +240,143 @@ class ReportStats extends Component
             'currency' => $currencyParam,
         ]);
     }
+	
+	/**
+	 * 集中定義報表篩選群組：電腦端與手機端共用同一份「顯示條件 + 選項」，
+	 * 避免兩端 @if 各寫一份造成選項不一致（例：電腦缺幣別、手機缺結餘）。
+	 *
+	 * 每組結構：
+	 *  - key      : 唯一識別
+	 *  - label    : 群組標題
+	 *  - visible  : 是否顯示（集中判斷）
+	 *  - options  : [{value,label,active,tone?}]
+	 *  - wireSet  : 點擊時 $set 的 property 名稱
+	 *  - layout   : 手機端欄數提示（'grid-2' 或 'grid-N'）
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	#[Computed]
+	public function filterGroups(): array
+	{
+		$groups = [];
+
+		// ── 1. 幣別（總資產以外的所有分頁）──
+		if (!$this->showAssetTrend) {
+			$options = [[
+				'value'  => 'all',
+				'label'  => '🌐 全部（合併）',
+				'active' => $this->currencyFilter === 'all',
+			]];
+			foreach ($this->availableCurrencies as $currency) {
+				$options[] = [
+					'value'  => $currency->code,
+					'label'  => $currency->code,
+					'active' => $this->currencyFilter === $currency->code,
+				];
+			}
+
+			$groups[] = [
+				'key'     => 'currency',
+				'label'   => '幣別',
+				'visible' => true,
+				'options' => $options,
+				'wireSet' => 'currencyFilter',
+				'layout'  => 'grid-2',
+			];
+		}
+
+		// ── 2. 檢視 ──
+		if ($this->showAssetTrend) {
+			// 總資產：月度 / 每日（原本只在手機端有）
+			$groups[] = [
+				'key'     => 'assetTab',
+				'label'   => '檢視',
+				'visible' => true,
+				'options' => [
+					['value' => 'month', 'label' => '月度總資產', 'active' => $this->assetTab === 'month'],
+					['value' => 'day',   'label' => '每日總資產', 'active' => $this->assetTab === 'day'],
+				],
+				'wireSet' => 'assetTab',
+				'layout'  => 'grid-2',
+			];
+		} elseif ($this->tab1 === 'account') {
+			// 賬戶：佔比 / 趨勢
+			$groups[] = [
+				'key'     => 'accountView',
+				'label'   => '檢視',
+				'visible' => true,
+				'options' => [
+					['value' => 'composition', 'label' => '佔比', 'active' => $this->tab2 === 'composition'],
+					['value' => 'trend',       'label' => '趨勢', 'active' => $this->tab2 === 'trend'],
+				],
+				'wireSet' => 'tab2',
+				'layout'  => 'grid-2',
+			];
+		} else {
+			// 類別 / 收支：支出 / 收入（收支再加結餘）
+			$options = [
+				['value' => 'expense', 'label' => '支出', 'active' => $this->tab2 === 'expense', 'tone' => 'error'],
+				['value' => 'income',  'label' => '收入', 'active' => $this->tab2 === 'income',  'tone' => 'success'],
+			];
+			// 結餘只給「收支」分頁（原本只在電腦端，集中後手機端也會有）
+			if ($this->tab1 === 'trend') {
+				$options[] = ['value' => 'balance', 'label' => '結餘', 'active' => $this->tab2 === 'balance'];
+			}
+
+			$groups[] = [
+				'key'     => 'direction',
+				'label'   => '檢視',
+				'visible' => true,
+				'options' => $options,
+				'wireSet' => 'tab2',
+				'layout'  => 'grid-2',
+			];
+		}
+
+		// ── 3. 時間粒度（沿用既有 usesGranularity / allowedGranularities）──
+		if ($this->usesGranularity()) {
+			$labels  = ['year' => '年', 'month' => '月', 'day' => '日'];
+			$options = [];
+			foreach ($this->allowedGranularities() as $g) {
+				$options[] = [
+					'value'  => $g,
+					'label'  => $labels[$g] ?? $g,
+					'active' => $this->granularity === $g,
+				];
+			}
+
+			$groups[] = [
+				'key'     => 'granularity',
+				'label'   => '時間範圍',
+				'visible' => true,
+				'options' => $options,
+				'wireSet' => 'granularity',
+				// 固定列舉，避免 Tailwind purge；目前最多 3 個（年/月/日）
+				'layout'  => count($options) >= 3 ? 'grid-3' : 'grid-2',
+			];
+		}
+
+		return $groups;
+	}
+	
+	/**
+	 * 供手機狀態條使用：只回傳 visible 的群組，並標記 active 選項。
+	 * 不在這裡做文案轉換（狀態條文案另有特殊規則），只做「資料整理」。
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	#[Computed]
+	public function visibleFilterGroups(): array
+	{
+		return collect($this->filterGroups)
+			->where('visible', true)
+			->map(function ($g) {
+				$g['active_option'] = collect($g['options'])->firstWhere('active', true);
+				return $g;
+			})
+			->values()
+			->all();
+	}
 
     // ============================================================
     // 計算屬性
@@ -304,6 +468,28 @@ class ReportStats extends Component
 			?? $tx->toAccount?->currency
 			?? $baseCode;
 	}
+	
+	/**
+	 * 將單筆交易金額換算為本位幣（僅合併模式且非本位幣時換算）。
+	 *
+	 * 這是三處（categoryData / calculateTrendAmount / assetEffectBreakdown）
+	 * 原本重複的邏輯，統一封裝以避免不一致。
+	 *
+	 * @param  object  $tx        交易模型（需有 amount、currency、fromAccount、toAccount）
+	 * @param  string  $baseCode  本位幣代碼
+	 * @return string             換算後金額字串（4 位小數精度，未換算則原值）
+	 */
+	private function toBaseAmount($tx, string $baseCode): string
+	{
+		$txAmount = (string) $tx->amount;
+		$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
+
+		if ($this->isConsolidated() && $txCurrency !== $baseCode) {
+			return app(CurrencyService::class)->convertToBase($txAmount, $txCurrency);
+		}
+
+		return $txAmount;
+	}
 
 	#[Computed]
 	public function categoryData()
@@ -339,12 +525,7 @@ class ReportStats extends Component
 		foreach ($transactions as $tx) {
 			if (!$tx->category_id) continue;
 
-			$txAmount = (string) $tx->amount;
-			$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
-
-			if ($this->isConsolidated() && $txCurrency !== $baseCode) {
-				$txAmount = $service->convertToBase($txAmount, $txCurrency);
-			}
+			$txAmount = $this->toBaseAmount($tx, $baseCode);
 
 			$mainCategory = $tx->category->parent_id ? $tx->category->parent : $tx->category;
 			$catId = $mainCategory->id;
@@ -450,12 +631,7 @@ class ReportStats extends Component
 		string $baseCode,
 		CurrencyService $service
 	): string {
-		$txAmount = (string) $tx->amount;
-		$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
-
-		if ($this->isConsolidated() && $txCurrency !== $baseCode) {
-			$txAmount = $service->convertToBase($txAmount, $txCurrency);
-		}
+		$txAmount = $this->toBaseAmount($tx, $baseCode);
 
 		if ($this->tab2 === 'balance') {
 			if ($tx->type === 'income') return MoneyCalculator::add($currentAmount, $txAmount, 4);
@@ -482,17 +658,9 @@ class ReportStats extends Component
         $baseCode = $baseCurrency->code;
         $baseSymbol = $baseCurrency->symbol;
 
-        $timePoints = [];
-        if ($this->assetTab === 'month' || $this->dateMode === 'year') {
-            for ($m = 1; $m <= 12; $m++) {
-                $timePoints[] = Carbon::create($this->selectedYear, $m)->endOfMonth();
-            }
-        } else {
-            $daysInMonth = Carbon::create($this->selectedYear, $this->selectedMonth)->daysInMonth;
-            for ($d = 1; $d <= $daysInMonth; $d++) {
-                $timePoints[] = Carbon::create($this->selectedYear, $this->selectedMonth, $d)->endOfDay();
-            }
-        }
+        [$labels, $timePoints] = ($this->assetTab === 'month' || $this->dateMode === 'year')
+			? $this->buildMonthlyTimePoints($this->selectedYear, false)
+			: $this->buildDailyTimePoints($this->selectedYear, $this->selectedMonth, true);
 
         // ---------- 分幣別多線模式 ----------
         if (!$this->isConsolidated()) {
@@ -500,14 +668,7 @@ class ReportStats extends Component
                 ->where('is_active', true)
                 ->where('currency', $this->currencyFilter)
                 ->get();
-
-            $labels = [];
-            foreach ($timePoints as $tp) {
-                $labels[] = $this->assetTab === 'day'
-                    ? $tp->format('j') . '日'
-                    : $tp->format('n') . '月';
-            }
-
+				
             $series = [];
             foreach ($accounts as $account) {
                 $values = [];
@@ -633,12 +794,7 @@ class ReportStats extends Component
             ->get();
 
         foreach ($txs as $tx) {
-			$txAmount = (string) $tx->amount;
-			$txCurrency = $this->resolveTransactionCurrency($tx, $baseCode);
-
-			if ($txCurrency !== $baseCode) {
-				$txAmount = $service->convertToBase($txAmount, $txCurrency);
-			}
+			$txAmount = $this->toBaseAmount($tx, $baseCode);
 
 			if ($tx->type === 'income') $transactionEffect = MoneyCalculator::add($transactionEffect, $txAmount, 4);
 			if ($tx->type === 'expense') $transactionEffect = MoneyCalculator::sub($transactionEffect, $txAmount, 4);
@@ -859,157 +1015,228 @@ class ReportStats extends Component
             'symbol' => $activeCurrency->symbol ?? 'NT$',
         ];
     }
+	
+	/**
+	 * 產生「整年 12 個月」的 labels 與時間點。
+	 *
+	 * @param  int  $year
+	 * @param  bool $endOfDay  月底是否取當日 23:59:59（assetTrendData 傳 false，accountTrendData 傳 true）
+	 * @return array{0: string[], 1: \Carbon\Carbon[]}  [labels, timePoints]
+	 */
+	private function buildMonthlyTimePoints(int $year, bool $endOfDay = true): array
+	{
+		$labels = [];
+		$timePoints = [];
+
+		for ($m = 1; $m <= 12; $m++) {
+			$labels[] = $m . '月';
+			$tp = Carbon::create($year, $m)->endOfMonth();
+			$timePoints[] = $endOfDay ? $tp->endOfDay() : $tp;
+		}
+
+		return [$labels, $timePoints];
+	}
+
+	/**
+	 * 產生「指定月份逐日」的 labels 與時間點。
+	 *
+	 * @param  int  $year
+	 * @param  int  $month
+	 * @param  bool $endOfDay  每日是否取當日 23:59:59
+	 * @return array{0: string[], 1: \Carbon\Carbon[]}  [labels, timePoints]
+	 */
+	private function buildDailyTimePoints(int $year, int $month, bool $endOfDay = true): array
+	{
+		$labels = [];
+		$timePoints = [];
+
+		$daysInMonth = Carbon::create($year, $month)->daysInMonth;
+		for ($d = 1; $d <= $daysInMonth; $d++) {
+			$labels[] = $d . '日';
+			$tp = Carbon::create($year, $month, $d);
+			$timePoints[] = $endOfDay ? $tp->endOfDay() : $tp;
+		}
+
+		return [$labels, $timePoints];
+	}
 
     // ============================================================
     // 圖表資料出口
     // ============================================================
 
     public function getChartData()
-    {
-        // 總資產趨勢
-        if ($this->showAssetTrend) {
-            $data = $this->assetTrendData;
+	{
+		return match (true) {
+			$this->showAssetTrend          => $this->chartDataForAssetTrend(),
+			$this->tab1 === 'category'     => $this->chartDataForCategory(),
+			$this->tab1 === 'account'      => $this->chartDataForAccount(),
+			default                        => $this->chartDataForTrend(),
+		};
+	}
+	
+	/**
+	 * 總資產趨勢圖表資料（合併單線 / 分幣別多線）。
+	 */
+	private function chartDataForAssetTrend(): array
+	{
+		$data = $this->assetTrendData;
 
-            // 分幣別多線模式
-            if (is_array($data) && isset($data['mode']) && $data['mode'] === 'multi') {
-                return [
-                    'type' => 'multiLine',
-                    'labels' => $data['labels'] ?? [],
-                    'series' => $data['series'] ?? [],
-                    'symbol' => $data['symbol'] ?? 'NT$',
-                    'color' => null,
-                    'centerText' => null,
-                    'isAssetTrend' => true,
-                    'isSmallMultiples' => false,
-                    'isMultiLine' => true,
-                ];
-            }
+		// 分幣別多線模式
+		if (is_array($data) && isset($data['mode']) && $data['mode'] === 'multi') {
+			return [
+				'type' => 'multiLine',
+				'labels' => $data['labels'] ?? [],
+				'series' => $data['series'] ?? [],
+				'symbol' => $data['symbol'] ?? 'NT$',
+				'color' => null,
+				'centerText' => null,
+				'isAssetTrend' => true,
+				'isSmallMultiples' => false,
+				'isMultiLine' => true,
+			];
+		}
 
-            // 合併模式（單線）
-            $values = collect($data)->map(fn($item) => (float) $item['amount'])->all();
-            $minValue = !empty($values) ? min($values) : 0;
-            $suggestedMin = $minValue < 0 ? $minValue * 1.1 : $minValue * 0.9;
+		// 合併模式（單線）
+		$values = collect($data)->map(fn($item) => (float) $item['amount'])->all();
+		$minValue = !empty($values) ? min($values) : 0;
+		$maxValue = !empty($values) ? max($values) : 0;
+		$range = $maxValue - $minValue;
+		$pad = $range > 0 ? $range * 0.1 : max(abs($maxValue) * 0.02, 1);
 
-            return [
-                'type' => 'line',
-                'labels' => array_values(collect($data)->pluck('label')->all()),
-                'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
-                'color' => '#818cf8',
-                'centerText' => null,
-                'unit' => reset($data)['symbol'] ?? 'NT$',
-                'isAssetTrend' => true,
-                'isSmallMultiples' => false,
-                'isMultiLine' => false,
-            ];
-        }
+		return [
+			'type' => 'line',
+			'labels' => array_values(collect($data)->pluck('label')->all()),
+			'values' => array_values(collect($data)->map(fn($item) => (float) round((float)$item['amount'], 2))->all()),
+			'suggestedMin' => $minValue - $pad,
+			'suggestedMax' => $maxValue + $pad,
+			'color' => '#818cf8',
+			'centerText' => null,
+			'unit' => reset($data)['symbol'] ?? 'NT$',
+			'isAssetTrend' => true,
+			'isSmallMultiples' => false,
+			'isMultiLine' => false,
+		];
+	}
+	
+	/**
+	 * 類別分佈圖表資料（環形圖）。
+	 */
+	private function chartDataForCategory(): array
+	{
+		$data = $this->categoryData;
+		return [
+			'type' => 'pie',
+			'labels' => array_values(collect($data['list'])->pluck('name')->all()),
+			'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
+			'centerText' => $data['total'] ?? '0.00',
+			'color' => null,
+			'isAssetTrend' => false,
+			'isSmallMultiples' => false,
+			'isMultiLine' => false,
+		];
+	}
+	
+	/**
+	 * 賬戶圖表資料（佔比環形圖 / 趨勢 small multiples）。
+	 */
+	private function chartDataForAccount(): array
+	{
+		if ($this->tab2 === 'composition') {
+			$data = $this->accountCompositionData;
+			return [
+				'type' => 'pie',
+				'labels' => array_values(collect($data['list'])->pluck('name')->all()),
+				'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
+				'centerText' => $data['total'] ?? '0.00',
+				'color' => null,
+				'isAssetTrend' => false,
+				'isSmallMultiples' => false,
+				'isMultiLine' => false,
+			];
+		}
 
-        // 分類報表
-        if ($this->tab1 === 'category') {
-            $data = $this->categoryData;
-            return [
-                'type' => 'pie',
-                'labels' => array_values(collect($data['list'])->pluck('name')->all()),
-                'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
-                'centerText' => $data['total'] ?? '0.00',
-                'color' => null,
-                'isAssetTrend' => false,
-                'isSmallMultiples' => false,
-                'isMultiLine' => false,
-            ];
-        }
-
-        // 賬戶報表
-        if ($this->tab1 === 'account') {
-            if ($this->tab2 === 'composition') {
-                $data = $this->accountCompositionData;
-                return [
-                    'type' => 'pie',
-                    'labels' => array_values(collect($data['list'])->pluck('name')->all()),
-                    'values' => array_values(collect($data['list'])->map(fn($item) => (float)$item['amount'])->all()),
-                    'centerText' => $data['total'] ?? '0.00',
-                    'color' => null,
-                    'isAssetTrend' => false,
-                    'isSmallMultiples' => false,
-                    'isMultiLine' => false,
-                ];
-            }
-
-            $data = $this->accountTrendData;
-            return [
-                'type' => 'smallMultiples',
-                'labels' => $data['labels'] ?? [],
-                'series' => $data['series'] ?? [],
-                'color' => null,
-                'centerText' => null,
-                'isAssetTrend' => false,
-                'isSmallMultiples' => true,
-                'isMultiLine' => false,
-                'symbol' => $data['symbol'] ?? 'NT$',
-            ];
-        }
-
-        // 收支趨勢
-        $data = $this->trendData;
-        return [
-            'type' => 'bar',
-            'labels' => array_values(collect($data)->pluck('label')->all()),
-            'values' => array_values(collect($data)->map(fn($item) => (float)$item['amount'])->all()),
-            'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
-            'centerText' => null,
-            'isAssetTrend' => false,
-            'isSmallMultiples' => false,
-            'isMultiLine' => false,
-        ];
-    }
+		$data = $this->accountTrendData;
+		return [
+			'type' => 'smallMultiples',
+			'labels' => $data['labels'] ?? [],
+			'series' => $data['series'] ?? [],
+			'color' => null,
+			'centerText' => null,
+			'isAssetTrend' => false,
+			'isSmallMultiples' => true,
+			'isMultiLine' => false,
+			'symbol' => $data['symbol'] ?? 'NT$',
+		];
+	}
+	
+	/**
+	 * 收支趨勢圖表資料（長條圖）。
+	 */
+	private function chartDataForTrend(): array
+	{
+		$data = $this->trendData;
+		return [
+			'type' => 'bar',
+			'labels' => array_values(collect($data)->pluck('label')->all()),
+			'values' => array_values(collect($data)->map(fn($item) => (float)$item['amount'])->all()),
+			'color' => $this->tab2 === 'expense' ? '#f87171' : ($this->tab2 === 'income' ? '#34d399' : '#60a5fa'),
+			'centerText' => null,
+			'isAssetTrend' => false,
+			'isSmallMultiples' => false,
+			'isMultiLine' => false,
+		];
+	}
 
     // ============================================================
     // 渲染
     // ============================================================
     /**
-	 * 取得某帳戶在指定時間點的餘額（優化版）
-	 *
-	 * 保留原語意：初始 balance + 期間內 from 為支出、to 為收入的淨額。
-	 * 注意：此方法被多次呼叫（時序圖），呼叫端應避免在迴圈內反覆 find()。
-	 */
-	private function getAccountBalanceAt(int $accountId, Carbon $until): string
-	{
-		static $accountCache = [];
-		static $balanceCache = [];
+     * 取得某帳戶在指定時間點的餘額（優化版）
+     *
+     * 保留原語意：初始 balance + 期間內 from 為支出、to 為收入的淨額。
+     *
+     * R1：快取由 static 改為元件屬性，生命週期 = 單次 Livewire 請求，
+     *     避免 Octane / 多 tenant 同 process 下的跨請求殘留。
+     *     cacheKey 加入 shopId 做防禦性隔離。
+     */
+    private function getAccountBalanceAt(int $accountId, Carbon $until): string
+    {
+        // 帳戶基本資料快取
+        if (!array_key_exists($accountId, $this->accountCache)) {
+            $this->accountCache[$accountId] = FinancialAccount::where('shop_id', $this->shopId)
+                ->select(['id', 'balance'])
+                ->find($accountId);
+        }
+        $account = $this->accountCache[$accountId];
+        if (!$account) return '0.0000';
 
-		if (!isset($accountCache[$accountId])) {
-			$accountCache[$accountId] = FinancialAccount::where('shop_id', $this->shopId)
-				->select(['id', 'balance'])
-				->find($accountId);
-		}
-		$account = $accountCache[$accountId];
-		if (!$account) return '0.0000';
+        // 餘額快取（含 shopId，防禦性隔離）
+        $cacheKey = $this->shopId . '|' . $accountId . '|' . $until->timestamp;
+        if (array_key_exists($cacheKey, $this->balanceCache)) {
+            return $this->balanceCache[$cacheKey];
+        }
 
-		$cacheKey = $accountId . '|' . $until->timestamp;
-		if (isset($balanceCache[$cacheKey])) {
-			return $balanceCache[$cacheKey];
-		}
+        $initialBalance = (string) ($account->balance ?? '0.0000');
 
-		$initialBalance = (string) ($account->balance ?? '0.0000');
+        $netChange = '0.0000';
+        $transactions = Transaction::where('shop_id', $this->shopId)
+            ->where(function ($q) use ($accountId) {
+                $q->where('from_account_id', $accountId)
+                  ->orWhere('to_account_id', $accountId);
+            })
+            ->where('recorded_at', '<=', $until)
+            ->get(['from_account_id', 'to_account_id', 'amount']);
 
-		$netChange = '0.0000';
-		$transactions = Transaction::where('shop_id', $this->shopId)
-			->where(function ($q) use ($accountId) {
-				$q->where('from_account_id', $accountId)
-				  ->orWhere('to_account_id', $accountId);
-			})
-			->where('recorded_at', '<=', $until)
-			->get(['from_account_id', 'to_account_id', 'amount']);
+        foreach ($transactions as $tx) {
+            $txAmount = (string) $tx->amount;
+            if ($tx->from_account_id == $accountId) $netChange = MoneyCalculator::sub($netChange, $txAmount, 4);
+            if ($tx->to_account_id == $accountId)   $netChange = MoneyCalculator::add($netChange, $txAmount, 4);
+        }
 
-		foreach ($transactions as $tx) {
-			$txAmount = (string) $tx->amount;
-			if ($tx->from_account_id == $accountId) $netChange = MoneyCalculator::sub($netChange, $txAmount, 4);
-			if ($tx->to_account_id == $accountId)   $netChange = MoneyCalculator::add($netChange, $txAmount, 4);
-		}
-
-		$result = MoneyCalculator::add($initialBalance, $netChange, 4);
-		$balanceCache[$cacheKey] = $result;
-		return $result;
-	}
+        $result = MoneyCalculator::add($initialBalance, $netChange, 4);
+        $this->balanceCache[$cacheKey] = $result;
+        return $result;
+    }
 	
     public function render()
     {
