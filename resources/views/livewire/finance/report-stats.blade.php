@@ -163,7 +163,7 @@
     {{-- ============================================================ --}}
 	{{-- 電腦端專屬過濾工具列 --}}
 	{{-- ============================================================ --}}
-	<div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border-2 border-base-300 shadow-sm backdrop-blur-sm">
+	<div class="hidden md:flex flex-wrap items-center gap-3 bg-base-200/50 p-3.5 rounded-2xl border border-base-300 shadow-sm backdrop-blur-sm">
 		@foreach($this->filterGroups as $group)
 			@if($group['visible'])
 				<div class="flex items-center gap-2">
@@ -274,7 +274,7 @@
         <div x-data="{ chartRendering: false }"
              x-on:chart-rendering-start.window="chartRendering = true"
              x-on:chart-rendering-end.window="chartRendering = false"
-             class="lg:col-span-5 bg-base-100 border border-base-300/70 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
+             class="lg:col-span-5 bg-base-100 border border-base-300/80 p-5 rounded-2xl backdrop-blur-md shadow-sm flex flex-col justify-center items-center relative min-h-[350px] transition-all duration-300">
 
             {{-- 後端重算期間：wire:loading 遮罩 --}}
             <div wire:loading.flex
@@ -311,10 +311,21 @@
                         </div>
                     @endif
                     @if($showAssetTrend)
-                        <div class="absolute top-2 right-2 text-[10px] text-base-content/40 font-mono">
-                            {{ $currencyFilter === 'all' ? ($baseCurrency->code ?? 'TWD') : $currencyFilter }}
-                        </div>
-                    @endif
+						<div class="absolute top-2 right-2 text-[10px] text-base-content/40 font-mono">
+							{{ $currencyFilter === 'all' ? ($baseCurrency->code ?? 'TWD') : $currencyFilter }}
+						</div>
+						{{-- 總資產中心文字（無資料時顯示 0.00） --}}
+						@php
+							$assetChartEmpty = empty($this->assetTrendData)
+								|| (is_array($this->assetTrendData) && isset($this->assetTrendData['mode']) && empty($this->assetTrendData['series']));
+						@endphp
+						<div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+							<span class="text-xs text-base-content/50 font-bold tracking-widest">總資產</span>
+							<span class="text-lg font-black text-base-content font-mono">
+								{{ $assetChartEmpty ? '0.00' : '' }}
+							</span>
+						</div>
+					@endif
                     @if($tab1 === 'account' && $tab2 === 'composition')
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
                             <span class="text-xs text-base-content/50 font-bold tracking-widest">總資產</span>

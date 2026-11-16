@@ -167,7 +167,11 @@ class ReportStats extends Component
 	
     private function updateDateMode()
     {
-        $activeMode = $this->resolveTimeModeSource();
+        if ($this->showAssetTrend) {
+			$activeMode = $this->assetTab === 'day' ? 'month' : 'year';
+		} else {
+			$activeMode = $this->resolveTimeModeSource();
+		}
 
         if ($activeMode === 'year') {
             $this->dateMode = 'year';
@@ -657,10 +661,24 @@ class ReportStats extends Component
 
         $baseCode = $baseCurrency->code;
         $baseSymbol = $baseCurrency->symbol;
+		
+		// ★ 新增：當期無交易 → 視為無數據（比照賬戶佔比 / 類別）
+		$hasTransactions = Transaction::where('shop_id', $this->shopId)
+			->when($this->dateMode === 'year', fn($q) => $q->whereYear('recorded_at', $this->selectedYear))
+			->when($this->dateMode === 'month', fn($q) => $q
+				->whereYear('recorded_at', $this->selectedYear)
+				->whereMonth('recorded_at', $this->selectedMonth))
+			->exists();
 
-        [$labels, $timePoints] = ($this->assetTab === 'month' || $this->dateMode === 'year')
-			? $this->buildMonthlyTimePoints($this->selectedYear, false)
-			: $this->buildDailyTimePoints($this->selectedYear, $this->selectedMonth, true);
+		if (!$hasTransactions) {
+			return $this->isConsolidated()
+				? []  // 合併模式：空陣列
+				: ['mode' => 'multi', 'labels' => [], 'series' => [], 'symbol' => $baseSymbol, 'table' => []];
+		}
+
+			[$labels, $timePoints] = $this->assetTab === 'month'
+				? $this->buildMonthlyTimePoints($this->selectedYear, false)
+				: $this->buildDailyTimePoints($this->selectedYear, $this->selectedMonth, true);
 
         // ---------- 分幣別多線模式 ----------
         if (!$this->isConsolidated()) {
@@ -722,8 +740,8 @@ class ReportStats extends Component
         $result = [];
         foreach ($timePoints as $tp) {
             $label = $this->assetTab === 'day'
-                ? $tp->format('j') . '日'
-                : $tp->format('n') . '月';
+				? $tp->format('j') . '日'
+				: $tp->format('n') . '月';
 
             $total = '0.0000';
             foreach ($accounts as $account) {
@@ -850,15 +868,32 @@ class ReportStats extends Component
         }
 
         $baseCode = $baseCurrency->code;
-        $until = $this->getSnapshotDate();
+		$until = $this->getSnapshotDate();
+		$activeCurrency = $this->activeCurrency;
 
-        $query = FinancialAccount::where('shop_id', $this->shopId)->where('is_active', true);
-        if (!$this->isConsolidated()) {
-            $query->where('currency', $this->currencyFilter);
-        }
-        $accounts = $query->get();
+		$hasTransactions = Transaction::where('shop_id', $this->shopId)
+			->when($this->dateMode === 'year', fn($q) => $q->whereYear('recorded_at', $this->selectedYear))
+			->when($this->dateMode === 'month', fn($q) => $q
+				->whereYear('recorded_at', $this->selectedYear)
+				->whereMonth('recorded_at', $this->selectedMonth))
+			->exists();
 
-        $activeCurrency = $this->activeCurrency;
+		if (!$hasTransactions) {
+			return [
+				'total' => '0.00',
+				'list' => [],
+				'others' => [],
+				'symbol' => $activeCurrency->symbol ?? 'NT$',
+				'snapshot_date' => $until->format('Y-m-d'),
+				'is_consolidated' => $this->isConsolidated(),
+			];
+		}
+
+		$query = FinancialAccount::where('shop_id', $this->shopId)->where('is_active', true);
+		if (!$this->isConsolidated()) {
+			$query->where('currency', $this->currencyFilter);
+		}
+$accounts = $query->get();
 
         if ($accounts->isEmpty()) {
             return [
@@ -1102,6 +1137,7 @@ class ReportStats extends Component
 		$maxValue = !empty($values) ? max($values) : 0;
 		$range = $maxValue - $minValue;
 		$pad = $range > 0 ? $range * 0.1 : max(abs($maxValue) * 0.02, 1);
+		$centerText = empty($data) ? '0.00' : null;
 
 		return [
 			'type' => 'line',
@@ -1110,7 +1146,7 @@ class ReportStats extends Component
 			'suggestedMin' => $minValue - $pad,
 			'suggestedMax' => $maxValue + $pad,
 			'color' => '#818cf8',
-			'centerText' => null,
+			'centerText' => $centerText,
 			'unit' => reset($data)['symbol'] ?? 'NT$',
 			'isAssetTrend' => true,
 			'isSmallMultiples' => false,
