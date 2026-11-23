@@ -89,8 +89,11 @@ class AccountIndex extends Component
 			->get();
 
 		foreach ($currencies as $currency) {
+			// 帳本隔離：只依 shop_id（帳本）過濾，不再用 user_id。
+			// 同帳本下其他成員建立的帳戶也會出現（符合「帳本隔離」語意）。
+			// 顯式 where('shop_id', ...) 與 FinancialAccount 的 HasShop global scope
+			// 單帳本下等價；多帳本啟用時可移除以避免條件疊加。
 			$accounts = FinancialAccount::where('shop_id', $this->currentShopId)
-				->where('user_id', auth()->id())
 				->where('currency', $currency->code)
 				->where('is_active', true)
                 ->get()
@@ -182,7 +185,7 @@ class AccountIndex extends Component
 	 * 回傳 null 代表「無可比資料」，Blade 端整列比較列不渲染。
 	 *
 	 * 判斷「無可比資料」的規則（層次一）：
-	 *   去年 12/31 之前，該 shop 完全沒有任何交易紀錄 → 視為新用戶 → null。
+	 *   去年 12/31 之前，該帳本完全沒有任何交易紀錄 → 視為新用戶 → null。
 	 *
 	 * 口徑：
 	 *   - 各帳戶以 FinancialAccount::getBalanceAtDate(去年年底) 取得該時點餘額，
@@ -190,6 +193,7 @@ class AccountIndex extends Component
 	 *   - 匯率採「現行 rate」換算（與 totalAssets 同口徑），
 	 *     不混入歷史匯率，避免口徑不一致。
 	 *   - 全程 MoneyCalculator。
+	 *   - 帳本隔離：只依 shop_id 過濾，不再用 user_id（同帳本下其他成員的帳戶與交易也會納入）。
 	 */
 	#[Computed]
 	public function lastYearEndTotalAssets(): ?array
@@ -203,9 +207,9 @@ class AccountIndex extends Component
 
 		$lastYearEnd = Carbon::now()->subYear()->endOfYear(); // 去年 12/31 23:59:59
 
-		// 層次一：去年年底前該 shop 有無任何交易？沒有 → 新用戶，無可比資料
+		// 層次一：去年年底前該帳本有無任何交易？沒有 → 新用戶，無可比資料
+		// 帳本隔離：只依 shop_id 過濾，不再用 user_id。
 		$hasAnyTransaction = Transaction::where('shop_id', $this->currentShopId)
-			->where('user_id', auth()->id())
 			->where('recorded_at', '<=', $lastYearEnd)
 			->exists();
 
@@ -215,8 +219,8 @@ class AccountIndex extends Component
 
 		// 去年年底前已存在之帳戶（不過濾 is_active，避免漏算已停用帳戶；
 		// 以 created_at 判斷該帳戶當時是否存在，精準排除「今年才建」的帳戶）
+		// 帳本隔離：只依 shop_id 過濾，不再用 user_id。
 		$accounts = FinancialAccount::where('shop_id', $this->currentShopId)
-			->where('user_id', auth()->id())
 			->where('created_at', '<=', $lastYearEnd)
 			->get();
 
@@ -341,8 +345,11 @@ class AccountIndex extends Component
 			default => $now->copy()->startOfDay(),
 		};
 
+		// 帳本隔離：只依 shop_id（帳本）過濾，不再用 user_id。
+		// 同帳本下所有成員的交易都會納入（符合「帳本隔離」語意）。
+		// 顯式 where('shop_id', ...) 與 Transaction 的 HasShop global scope
+		// 單帳本下等價；多帳本啟用時可移除以避免條件疊加。
 		$transactions = Transaction::where('shop_id', $this->currentShopId)
-			->where('user_id', auth()->id())
 			->where('recorded_at', '>=', $startDate)
 			->where('recorded_at', '<=', $now)
 			->with(['fromAccount:id,currency', 'toAccount:id,currency'])
@@ -529,7 +536,7 @@ class AccountIndex extends Component
                 'balance' => $this->accountBalance,
                 'memo' => $this->accountMemo,
                 'shop_id' => $this->currentShopId,
-                'user_id' => auth()->id(),
+                'user_id' => auth()->id(),   // 建立者記錄，不用於查詢隔離
                 'is_active' => true,
             ]);
             $message = '帳戶已新增！';

@@ -3,17 +3,22 @@
 
 namespace App\Models;
 
+use App\Traits\HasShop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
 class TransactionTemplate extends Model
 {
-    use HasFactory;
+    use HasFactory, HasShop;
 
+    /**
+     * 註：user_id 語意為「建立者記錄」（重構後為 created_by），
+     *     不用於查詢隔離。查詢隔離以 shop_id（帳本）為邊界，由 HasShop 提供。
+     */
     protected $fillable = [
         'shop_id',
-        'user_id',
+        'user_id', // 建立者記錄，不用於查詢隔離
         'name',
         'type',
         'category_id',

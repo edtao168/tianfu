@@ -1,5 +1,6 @@
 <?php
 // app/Models/Shop.php
+// 帳本（shop_id=ledger_id）是隔離邊界，user_id 只是「這筆資料是誰建的」的記錄，不是查詢隔離條件。
 
 namespace App\Models;
 

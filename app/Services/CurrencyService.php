@@ -14,6 +14,11 @@ class CurrencyService
     protected $shopId;
     protected $cacheDuration = 3600; // 1小時
 
+    /**
+     * 單帳本過渡期：shopId 恆為 1（UI 尚無多帳本切換入口）。
+     * 多帳本啟用時需確認此服務的生命週期（若為 singleton，switchShop 後
+     * 已解析的實例仍持舊 shopId，需改為 request-scoped 或每次取 session）。
+     */
     public function __construct()
     {
         $this->shopId = session('current_shop_id') ?? 1;
@@ -21,6 +26,10 @@ class CurrencyService
 
     /**
      * 獲取所有幣別（含快取）
+     *
+     * 註：此處顯式 where('shop_id', ...) 與 Currency 的 HasShop global scope
+     *     在單帳本下等價（皆為 shop_id = 1）。多帳本啟用時，HasShop 改動態後，
+     *     此處可保留（重複但正確）或移除以避免條件疊加。
      */
     public function getAllCurrencies(): Collection
     {
@@ -61,6 +70,8 @@ class CurrencyService
 
     /**
      * 獲取基準貨幣
+     *
+     * 註：同 getAllCurrencies 的註解，顯式 shop_id 條件與 HasShop global scope 單帳本下等價。
      */
     public function getBaseCurrency(): ?Currency
     {
@@ -188,6 +199,9 @@ class CurrencyService
 
     /**
      * 切換帳本
+     *
+     * 目前 UI 無多帳本切換入口，此方法暫無呼叫端。
+     * 多帳本啟用時，需同步調整 HasShop 為動態 scope，並確認此服務是否為 singleton。
      */
     public function setShopId(int $shopId): void
     {

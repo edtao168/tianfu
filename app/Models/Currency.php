@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasShop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class Currency extends Model
 {
-    use HasFactory;
+    use HasFactory, HasShop;
 
     /**
      * The attributes that are mass assignable.
@@ -44,7 +45,7 @@ class Currency extends Model
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * The attributes that are hidden for serialization.
      *
      * @var array<int, string>
      */
@@ -76,6 +77,9 @@ class Currency extends Model
 
     /**
      * 取得使用此幣別的財務帳戶
+     *
+     * 註：關聯查詢會套用 FinancialAccount 的 HasShop global scope（shop_id = 1），
+     *     單帳本下等價；多帳本啟用時，需確認當前帳本一致。
      */
     public function financialAccounts(): HasMany
     {
@@ -104,6 +108,10 @@ class Currency extends Model
 
     /**
      * 篩選指定帳本的幣別
+     *
+     * 註：此 scope 的 where('shop_id', $shopId) 與 HasShop 的 global scope
+     *     （shop_id = 1）在單帳本下等價；多帳本啟用時，HasShop 改動態後，
+     *     此 scope 可保留（重複但正確）或移除以避免條件疊加。
      */
     public function scopeForShop($query, $shopId)
     {
@@ -222,6 +230,14 @@ class Currency extends Model
 
     /**
      * The "booted" method of the model.
+     *
+     * 註：HasShop 的 global scope 為 where('shop_id', 1)。
+     *     static::where('shop_id', $currency->shop_id) 會與 global scope 疊加：
+     *     - 單帳本（$currency->shop_id = 1）：等價，無害。
+     *     - 多帳本（$currency->shop_id ≠ 1）：where('shop_id', 1) AND where('shop_id', ?) 空集合，
+     *       導致設定基準幣時不會取消其他幣別的 is_base，可能出現多個 is_base。
+     *     多帳本啟用時，此處需改用 withoutGlobalScope('shop_isolation')
+     *     或改為動態查詢。單帳本過渡期暫不處理。
      */
     protected static function booted(): void
     {

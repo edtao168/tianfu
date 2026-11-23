@@ -4,7 +4,6 @@
 namespace App\Models;
 
 use App\Traits\HasShop;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,9 +14,14 @@ class Category extends Model
 {
     use HasFactory, HasShop;
 
+    /**
+     * 註：user_id 語意為「建立者記錄」（重構後為 created_by），
+     *     不用於查詢隔離。查詢隔離以 shop_id（帳本）為邊界，由 HasShop 提供。
+     *     is_default 分類為帳本內預設，不可修改、刪除（由 UI / 控制器層阻擋）。
+     */
     protected $fillable = [
         'shop_id',
-        'user_id',
+        'user_id', // 建立者記錄，不用於查詢隔離
         'parent_id',
         'name',
         'type',
@@ -37,25 +41,18 @@ class Category extends Model
     ];
 
     /**
-     * Category 專屬的全域租戶 Scope
-     * 確保使用者能看到「系統預設」以及「自己建立」的分類
+     * Category 的建立事件
+     *
+     * 註：已移除原本的 tenant_categories global scope（where is_default OR user_id = Auth::id()），
+     *     因 user_id 不再作為查詢隔離條件。查詢隔離完全由 HasShop 的 shop_id global scope 提供。
+     *     is_default 分類的可見性：當前帳本下所有分類（含 is_default 與其他成員建立的分類）皆可見。
      */
     protected static function bootCategory(): void
     {
-        // 寫入自訂分類時，自動綁定當前使用者
+        // 寫入自訂分類時，自動記錄建立者（僅 audit，不用於隔離）
         static::creating(function ($model) {
             if (Auth::check() && !$model->user_id && !$model->is_default) {
                 $model->user_id = Auth::id();
-            }
-        });
-
-        // 核心隔離邏輯：WHERE is_default = 1 OR user_id = 當前用戶
-        static::addGlobalScope('tenant_categories', function (Builder $builder) {
-            if (Auth::check()) {
-                $builder->where(function (Builder $query) {
-                    $query->where('is_default', true)
-                          ->orWhere('user_id', Auth::id());
-                });
             }
         });
     }
@@ -73,6 +70,10 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order', 'asc');
     }
 
+    /**
+     * 關聯查詢會套用 Transaction 的 HasShop global scope（shop_id = 1），
+     * 單帳本下等價；多帳本啟用時，需確認當前帳本一致。
+     */
     public function records(): HasMany
     {
         return $this->hasMany(Transaction::class, 'category_id');

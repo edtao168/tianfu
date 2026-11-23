@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Services\MoneyCalculator;
-use App\Traits\BelongsToTenant;
 use App\Traits\HasShop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,14 +10,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FinancialAccount extends Model
 {
-    use HasFactory, HasShop, BelongsToTenant;
+    use HasFactory, HasShop;
 
     /**
      * 允許批量寫入的欄位白名單
+     *
+     * 註：user_id 語意為「建立者記錄」（重構後為 created_by），
+     *     不用於查詢隔離。查詢隔離以 shop_id（帳本）為邊界，由 HasShop 提供。
      */
     protected $fillable = [
         'shop_id', // =ledger_id；帳本
-		'user_id', // =tenant_id；租戶
+        'user_id', // 建立者記錄，不用於查詢隔離
         'name',
         'type',
         'balance',
@@ -41,6 +43,10 @@ class FinancialAccount extends Model
 	
 	/**
      * 取得帳戶動態計算後的實際餘額 (Decimal 16,4 嚴謹計算)
+     *
+     * 註：此處 Transaction::where('shop_id', $this->shop_id) 的顯式條件，
+     *     與 Transaction 的 HasShop global scope（shop_id = 1）在單帳本下等價；
+     *     多帳本啟用時，HasShop 改動態後，此處可保留（重複但正確）或移除。
      */
     public function getCalculatedBalanceAttribute(): string
     {
@@ -67,6 +73,8 @@ class FinancialAccount extends Model
 
 	/**
 	 * 計算截至指定時間（$endDate）的歷史實際餘額（計算每月期末金額）
+	 *
+	 * 註：同上，Transaction 的顯式 shop_id 條件與 HasShop global scope 單帳本下等價。
 	 */
 	public function getBalanceAtDate(?\Carbon\Carbon $endDate = null): string
 	{
@@ -97,6 +105,9 @@ class FinancialAccount extends Model
 	
 	/**
      * 一個帳戶擁有多筆交易明細
+     *
+     * 註：關聯查詢會套用 Transaction 的 HasShop global scope（shop_id = 1），
+     *     單帳本下等價；多帳本啟用時，需確認 $account->shop_id 與當前帳本一致。
      */
     public function transactions(): HasMany
     {

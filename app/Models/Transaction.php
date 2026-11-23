@@ -1,22 +1,27 @@
 <?php // app/Models/Transaction.php
-// user_id = 租戶 (Tenant)
+// user_id = 建立者記錄（重構後為 created_by），不用於查詢隔離
 // shop_id = 帳本 (Ledger/Shop)
 // 一個使用者可以擁有多個帳本，多個使用者可以共用一個帳本
-// 所有財務資料 都透過 shop_id 隔離
+// 所有財務資料 都透過 shop_id 隔離（由 HasShop global scope 提供）
 
 namespace App\Models;
 
+use App\Traits\HasShop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasShop;
 
+    /**
+     * 註：user_id 語意為「建立者記錄」（重構後為 created_by），
+     *     不用於查詢隔離。查詢隔離以 shop_id（帳本）為邊界，由 HasShop 提供。
+     */
     protected $fillable = [
         'shop_id',
-        'user_id',
+        'user_id', // 建立者記錄，不用於查詢隔離
         'type',
         'category_id',
         'from_account_id',
@@ -97,6 +102,9 @@ class Transaction extends Model
 
 	/**
      * 收支分類關聯
+     *
+     * 註：關聯查詢會套用 Category 的 HasShop global scope（shop_id = 1），
+     *     單帳本下等價；多帳本啟用時，需確認當前帳本一致。
      */
     public function category(): BelongsTo
     {
@@ -105,6 +113,8 @@ class Transaction extends Model
 
     /**
      * 來源帳戶關聯
+     *
+     * 註：關聯查詢會套用 FinancialAccount 的 HasShop global scope（shop_id = 1）。
      */
     public function fromAccount(): BelongsTo
     {
@@ -113,6 +123,8 @@ class Transaction extends Model
 
     /**
      * 目標帳戶關聯
+     *
+     * 註：關聯查詢會套用 FinancialAccount 的 HasShop global scope（shop_id = 1）。
      */
     public function toAccount(): BelongsTo
     {

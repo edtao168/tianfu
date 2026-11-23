@@ -1,0 +1,8 @@
+﻿#FreeCommander file cart
+C:\laragon\www\tianfu\app\Console\Commands\ProcessRecurringTransactions.php
+C:\laragon\www\tianfu\app\Livewire\Finance\AccountIndex.php
+C:\laragon\www\tianfu\app\Livewire\Finance\RecurringIndex.php
+C:\laragon\www\tianfu\app\Livewire\Finance\ReportStats.php
+C:\laragon\www\tianfu\app\Livewire\Finance\TransactionIndex.php
+C:\laragon\www\tianfu\app\Livewire\Finance\TransactionListModal.php
+C:\laragon\www\tianfu\app\Livewire\Finance\TransactionModal.php
