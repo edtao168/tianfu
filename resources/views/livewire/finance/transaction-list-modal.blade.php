@@ -90,8 +90,7 @@
 			</div>
 
 			{{-- 【可捲動的交易列表內容區】參考 recurring-index 的 max-h 與 overflow-y-auto 設計 --}}
-			<div class="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 bg-base-100">
-				
+			<div class="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 max-h-[50vh] md:max-h-[55vh] bg-base-100">
 				{{-- 日期導航 --}}
 				<div class="w-full max-w-full flex-shrink-0">
 					<x-date-nav 

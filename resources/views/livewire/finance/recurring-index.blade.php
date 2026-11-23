@@ -1,4 +1,4 @@
-<!-- resources/views/livewire/recuring-index.blade.php -->
+{{-- resources/views/livewire/recuring-index.blade.php --}}
 <div class="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
     {{-- 頂部標題與新增按鈕 --}}
     <div class="flex items-center justify-between">
@@ -113,7 +113,7 @@
 			<x-form wire:submit="save" class="flex flex-col h-full overflow-hidden">
 				
 				{{-- 【可捲動的表單內容區】限制電腦端與手機端各自的最大高度，超出時自動出現捲動條 --}}
-				<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-4 max-h-[55vh] md:max-h-[65vh]">
+				<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-4 max-h-[55vh] md:max-h-[55vh]">
 					{{-- 類型切換 --}}
 					@php
 						$recurringTypeClasses = [
