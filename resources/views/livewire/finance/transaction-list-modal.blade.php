@@ -7,7 +7,7 @@
 		box-class="w-full max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-100 text-base-content"
 	>
 		{{-- 表單結構：外層設定 --}}
-	    <div class="flex flex-col max-h-[85vh]">
+	    <div class="flex flex-col max-h-[82dvh] md:max-h-[85dvh]">
 
 			{{-- 頂部標題與統計資訊區 (固定不捲動) --}}
 			<div class="p-4 md:p-5 bg-base-200/50 border-b border-base-200 flex-shrink-0">
@@ -90,7 +90,7 @@
 			</div>
 
 			{{-- 【可捲動的交易列表內容區】參考 recurring-index 的 max-h 與 overflow-y-auto 設計 --}}
-			<div class="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 max-h-[50vh] md:max-h-[55vh] bg-base-100">
+			<div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 md:px-6 py-4 space-y-4 bg-base-100">
 				{{-- 日期導航 --}}
 				<div class="w-full max-w-full flex-shrink-0">
 					<x-date-nav 
@@ -242,7 +242,7 @@
 			</div>
 
 			{{-- 底部按鈕 --}}
-			<div class="modal-action flex-shrink-0 flex flex-wrap items-center justify-between gap-2 p-3 m-0 border-t border-[var(--song-border)] bg-base-100">
+			<div class="modal-action flex-shrink-0 flex flex-wrap items-center justify-between gap-2 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] m-0 border-t border-[var(--song-border)] bg-base-100">
 				<div class="flex items-center gap-2 flex-wrap">
 					@if($accountId)
 						<x-button label="帳戶修改" icon="o-pencil" class="btn-orange btn-sm song-interactive" 
