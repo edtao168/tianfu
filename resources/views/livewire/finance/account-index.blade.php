@@ -278,7 +278,20 @@
             {{-- 分幣別標題列 --}}
 			<div class="flex items-center gap-2">
 				<span class="flex items-center gap-2 min-w-0">
-					<span class="w-1.5 h-4 rounded-full bg-{{ $dotColor }}-500 flex-shrink-0"></span>
+					@php
+    // Tailwind 生產構建需掃到完整類名字面量，故以靜態映射表查表。
+    // key 對應 currency_tailwind_color_map 的值（sky/rose/emerald/violet/orange）。
+    $dotColorClassMap = [
+        'sky'     => 'bg-sky-500',
+        'rose'    => 'bg-rose-500',
+        'emerald' => 'bg-emerald-500',
+        'violet'  => 'bg-violet-500',
+        'orange'  => 'bg-orange-500',
+    ];
+    $dotClass = $dotColorClassMap[$dotColor] ?? 'bg-gray-500';
+@endphp
+
+<span class="w-1.5 h-4 rounded-full {{ $dotClass }} flex-shrink-0"></span>
 					<span class="text-sm font-bold text-base-content truncate">
 						{{ $group['currency_name'] }}帳戶資產
 					</span>
