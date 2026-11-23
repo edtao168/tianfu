@@ -7,7 +7,7 @@
 		box-class="w-full max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-100 text-base-content"
 	>
 		{{-- 表單結構：外層設定 --}}
-	    <div class="flex flex-col max-h-[78dvh] md:max-h-[85dvh]">
+	    <div class="flex flex-col max-h-[75dvh] md:max-h-[85dvh]">
 
 			{{-- 頂部標題與統計資訊區 (固定不捲動) --}}
 			<div class="p-4 md:p-5 bg-base-200/50 border-b border-base-200 flex-shrink-0">

@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/recuring-index.blade.php --}}
-<div class="max-w-5xl mx-auto px-4 pt-20 pb-28 sm:p-6 space-y-6">
+<div class="max-w-5xl mx-auto px-4 pt-15 pb-28 sm:p-6 space-y-6">
     {{-- 頂部標題與新增按鈕 --}}
     <div class="flex items-center justify-between">
         <div>
