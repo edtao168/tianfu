@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/livewire/finance/account-index.blade.php --}}
+{{-- resources/views/livewire/finance/account-index.blade.php --}}
 <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 text-base-content animate-fadeIn">
    
     {{-- ============================================================ --}}
@@ -7,26 +7,24 @@
     <div class="space-y-3">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             @php
-                $periodThemeMap = [
+                // P3-12：主題映射改讀 config/business.php，統一設計配置來源。
+                $periodThemeMap = config('business.period_theme_map', [
                     'today' => 'blue',
                     'month' => 'green',
-                    'year' => 'purple',
-                ];
+                    'year'  => 'purple',
+                ]);
             @endphp
             @foreach(['today' => '本日收支摘要', 'month' => '本月收支累計', 'year' => '本年年度統計'] as $period => $title)
                 @php
-                    $stats = $this->periodStats[$period] ?? ['income' => 0, 'expense' => 0, 'base_symbol' => 'NT$'];
-                    $baseSymbol = $stats['base_symbol'] ?? 'NT$';
+                    $stats = $this->periodStats[$period] ?? [];
+                    // P3-16：fallback 改由後端 baseCurrencySymbol 提供，消除 'NT$' 硬編碼。
+                    $baseSymbol = $stats['base_symbol'] ?? $baseCurrencySymbol;
                     $currencyCount = count($stats['details'] ?? []);
-                    $income = (string) ($stats['income'] ?? '0');
-                    $expense = (string) ($stats['expense'] ?? '0');
-                    
-                    $incomeClean = str_replace(',', '', $income);
-                    $expenseClean = str_replace(',', '', $expense);
-                    $profitValue = bcsub($incomeClean, $expenseClean, 2);
-                    $isProfitNegative = bccomp($profitValue, '0', 2) < 0;
-                    $profitFormatted = number_format((float)$profitValue, 2);
-                    
+                    $income = $stats['income'] ?? '0.00';
+                    $expense = $stats['expense'] ?? '0.00';
+                    $profitDisplay = $stats['profit_display'] ?? '0.00';
+                    $isProfitNegative = $stats['is_negative'] ?? false;
+
                     $theme = $periodThemeMap[$period] ?? 'blue';
                 @endphp
             
@@ -86,8 +84,9 @@
 							</div>
 							<div class="flex justify-between items-center pt-2.5 border-t border-base-200/60">
 								<span class="text-sm font-bold opacity-80">差額</span>
+								{{-- P0-2：差額由後端計算，Blade 僅顯示；不在此使用 bc* 函式 --}}
 								<span class="text-base font-black font-mono {{ $isProfitNegative ? 'text-tx-expense' : 'text-base-content' }}">
-									{{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitFormatted }}
+									{{ $isProfitNegative ? '' : '+' }}{{ $baseSymbol }} {{ $profitDisplay }}
 								</span>
 							</div>
 						</div>
@@ -101,8 +100,8 @@
 	{{-- 2. 總資產卡片 --}}
 	{{-- ============================================================ --}}
 	<div class="relative" wire:key="total-assets-card">
-		{{-- Loading 狀態 --}}
-		<div wire:loading wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop" 
+		{{-- Loading 狀態（P0-1：target 由 refreshTotalAssets 改為 refreshData） --}}
+		<div wire:loading wire:target="refreshData, saveAccount, deleteAccount, switchShop" 
 			 class="absolute inset-0 z-10 assets-card rounded-2xl flex items-center justify-center border border-base-content/10 backdrop-blur-sm">
 			<div class="flex flex-col items-center gap-3 text-base-content">
 				<div class="loading loading-spinner loading-lg opacity-80"></div>
@@ -111,7 +110,7 @@
 		</div>
 		
 		{{-- 總資產卡片本體 --}}
-		<div wire:loading.remove wire:target="refreshTotalAssets, saveAccount, deleteAccount, switchShop"
+		<div wire:loading.remove wire:target="refreshData, saveAccount, deleteAccount, switchShop"
 			 class="relative overflow-hidden assets-card song-interactive border border-base-content/10 rounded-2xl p-6 md:p-8 text-base-content shadow-xl">
 			
 			{{-- 背景裝飾：極淡暖光暈 --}}
@@ -152,8 +151,8 @@
 							{{ $autoRefresh ? '自動更新中' : '已暫停' }}
 						</span>
 						
-						{{-- 重新整理 --}}
-						<button wire:click="refreshTotalAssets" 
+						{{-- 重新整理（P0-1：改為 refreshData） --}}
+						<button wire:click="refreshData" 
 								class="opacity-60 hover:opacity-100 transition-colors p-1 rounded hover:bg-base-content/10 active:scale-95"
 								title="立即重新整理">
 							<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -237,7 +236,8 @@
 				@endif
 				
 				@if($autoRefresh)
-					<div wire:poll.visible.30s="refreshTotalAssets" class="hidden"></div>
+					{{-- P0-1：輪詢方法由 refreshTotalAssets 改為 refreshData --}}
+					<div wire:poll.visible.30s="refreshData" class="hidden"></div>
 				@endif
 			</div>
 		</div>
@@ -263,13 +263,14 @@
     @foreach($this->currencyGroups as $group)
         @php
             $currencyTheme = $group['theme'] ?? 'blue';
-            $currencyColorMap = [
+            // P3-12：幣別主題色映射改讀 config/business.php。
+            $currencyColorMap = config('business.currency_tailwind_color_map', [
                 'blue'   => 'sky',
                 'red'    => 'rose',
                 'green'  => 'emerald',
                 'purple' => 'violet',
                 'orange' => 'orange',
-            ];
+            ]);
             $dotColor = $currencyColorMap[$currencyTheme] ?? 'sky';
         @endphp
 
@@ -348,8 +349,9 @@
         persistent 
         size="2xl"
         box-class="border border-base-300 bg-base-100 shadow-2xl rounded-2xl text-base-content"
-        x-on:click.stop
     >
+        {{-- P3-13：移除 x-on:click.stop。Mary UI 2.8.3 的 persistent 已處理「點外面不關」，
+             根元素加 x-on:click.stop 可能阻擋內部元件（如 select 下拉）的事件冒泡。 --}}
         {{-- 右上角關閉按鈕 --}}
         <button 
             type="button" 

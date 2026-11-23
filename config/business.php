@@ -47,6 +47,24 @@ return [
             'theme' => 'purple',
         ],
     ],
+	
+	// 收支統計卡片的主題映射（原寫死於 Blade）
+    'period_theme_map' => [
+        'today' => 'blue',
+        'month' => 'green',
+        'year'  => 'purple',
+    ],
+
+    // 幣別主題色 → Tailwind 色票名稱映射（原寫死於 Blade）
+    // 註：key 為 currency_theme_map 的值（blue/red/green/purple/orange），
+    //     value 為 Tailwind 色票（sky/rose/emerald/violet/orange）。
+    'currency_tailwind_color_map' => [
+        'blue'   => 'sky',
+        'red'    => 'rose',
+        'green'  => 'emerald',
+        'purple' => 'violet',
+        'orange' => 'orange',
+    ],
 
     /*
     |--------------------------------------------------------------------------

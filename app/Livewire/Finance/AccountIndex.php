@@ -1,5 +1,4 @@
-<?php
-// app/Livewire/Finance/AccountIndex.php
+<?php // app/Livewire/Finance/AccountIndex.php
 
 namespace App\Livewire\Finance;
 
@@ -7,6 +6,7 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
+use Illuminate\Validation\Rule;
 use App\Models\Currency;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
@@ -51,10 +51,13 @@ class AccountIndex extends Component
     {
         $cacheKey = 'pending_recurring_notice_' . $this->currentShopId;
         
-        if (cache()->has($cacheKey)) {
-            $titles = cache()->pull($cacheKey); // 讀取後立刻清除
+        // P1-9：單次 pull 取代 has + pull，避免競態下取得 null 導致 implode(null) TypeError。
+        // pull 會「讀取後立刻清除」，語意與原本一致；!empty 同時擋 null 與空陣列。
+        $titles = cache()->pull($cacheKey);
+
+        if (!empty($titles)) {
             $listText = implode('<br>', $titles);
-            
+
             // 呼叫 WithAlert 中的強制確認視窗 (allowOutsideClick => false)
             $this->showWarningAlert(
                 '系統已自動生成以下定期收支',
@@ -120,6 +123,7 @@ class AccountIndex extends Component
 		if (!$baseCurrency) {
 			return [
 				'total' => 0,
+				'total_raw' => '0.0000',   // P1-1：原始 string，供 comparison 使用
 				'base_symbol' => '$',
 				'base_code' => 'N/A',
 				'breakdown' => [],
@@ -163,7 +167,8 @@ class AccountIndex extends Component
 		usort($breakdown, fn($a, $b) => $b['balance'] <=> $a['balance']);
 
 		return [
-			'total' => (float) $total,
+			'total' => (float) $total,   // 對外契約維持 float（Blade 顯示用）
+			'total_raw' => $total,       // P1-1：原始 string（4 位小數），供 comparison 精確運算
 			'base_symbol' => $baseCurrency->symbol,
 			'base_code' => $baseCurrency->code,
 			'breakdown' => $breakdown,
@@ -264,9 +269,9 @@ class AccountIndex extends Component
 			return null;
 		}
 
-		// totalAssets['total'] 目前是 float；先轉字串再進 MoneyCalculator。
-		// 精度折返問題見文末「冗餘建議」第 1 點。
-		$current  = (string) $this->totalAssets['total'];
+		// P1-1：改取 total_raw（原始 string），避免 float → string 精度折返。
+		// total_raw 由 totalAssets 以 MoneyCalculator 累加得出，與 lastYear['total'] 同為 4 位小數字串。
+		$current  = $this->totalAssets['total_raw'];
 		$previous = $lastYear['total'];
 
 		$diff = MoneyCalculator::sub($current, $previous, 4);
@@ -323,6 +328,11 @@ class AccountIndex extends Component
 		$currencyService = app(CurrencyService::class);
 		$baseCode = $baseCurrency->code;
 
+		// P3-3（可選微優化）：迴圈外先取一次幣別集合（cache 命中時純記憶體），
+		// 迴圈內改用 map 查找，省下每筆交易一次 cache 檢查。
+		// 注意：getAllCurrencies 回傳 keyBy('code') 的 Collection，可直接以 code 索引。
+		$currencyMap = $currencyService->getAllCurrencies();
+
 		$now = now();
 		$startDate = match ($period) {
 			'today' => $now->copy()->startOfDay(),
@@ -348,7 +358,8 @@ class AccountIndex extends Component
 				?? $transaction->toAccount?->currency
 				?? $baseCode;
 
-			$currency = $currencyService->getCurrency($currencyCode);
+			// P3-3：改用預取的 map，不再每筆呼叫 getCurrency（避免重複 cache 檢查）。
+			$currency = $currencyMap[$currencyCode] ?? null;
 
 			if (!$currency) {
 				continue;
@@ -386,12 +397,25 @@ class AccountIndex extends Component
 			}
 		}
 
+		// --------------------------------------------------------
+		// P0-2：差額由後端以 MoneyCalculator 計算，Blade 僅顯示。
+		// 注意：此處 $income / $expense 仍是未格式化的原始 string（4 位小數），
+		//       必須在 number_format 之前計算，避免格式化字串反解析折返。
+		// --------------------------------------------------------
+		$profit     = MoneyCalculator::sub($income, $expense, 4);
+		$isNegative = MoneyCalculator::compare($profit, '0.0000', 4) < 0;
+
 		return [
-			'income'      => number_format((float) $income, 2),
-			'expense'     => number_format((float) $expense, 2),
-			'base_symbol' => $baseCurrency->symbol,
-			'base_code'   => $baseCode,
-			'details'     => $details,
+			'income'         => number_format((float) $income, 2),
+			'expense'        => number_format((float) $expense, 2),
+			'profit'         => $profit,                              // string，4 位小數
+			'profit_display' => number_format((float) $profit, 2),    // 顯示用格式化字串
+			'is_negative'    => $isNegative,                          // bool
+			'base_symbol'    => $baseCurrency->symbol,
+			'base_code'      => $baseCode,
+			// P3-15：details 保留供未來「收支明細彈窗」使用；目前 Blade 僅用 count()。
+			//         若確定長期不用，可改為只回傳 'currency_count' => count($details)。
+			'details'        => $details,
 		];
 	}
     
@@ -423,8 +447,13 @@ class AccountIndex extends Component
 	#[On('refresh-data')]
     public function refreshData()
     {
-        unset($this->totalAssets);
+        // P2-4：顯式失效四個 Computed，避免依賴隱式鏈式失效。
+        // totalAssetsComparison 依賴 totalAssets 與 lastYearEndTotalAssets；
+        // lastYearEndTotalAssets 依賴 DB 狀態。四者一併失效，意圖明確。
         unset($this->currencyGroups);
+        unset($this->totalAssets);
+        unset($this->lastYearEndTotalAssets);
+        unset($this->totalAssetsComparison);
         $this->loadPeriodStats();
     }
     
@@ -457,10 +486,16 @@ class AccountIndex extends Component
     
     public function saveAccount()
     {
+        // P2-7：以 Rule::exists 帶 shop_id 限制，合併驗證與查詢，錯誤訊息更精準。
+        // 註：shop_id 實為 ledger_id（帳本）。
         $this->validate([
             'accountName' => 'required|string|max:255',
             'accountType' => 'required|string|in:cash,bank,e-wallet,securities',
-            'accountCurrency' => 'required|string|exists:currencies,code',
+            'accountCurrency' => [
+                'required',
+                'string',
+                Rule::exists('currencies', 'code')->where('shop_id', $this->currentShopId),
+            ],
             'accountBalance' => 'required|numeric|min:0',
             'accountMemo' => 'nullable|string|max:500',
         ]);
@@ -477,6 +512,12 @@ class AccountIndex extends Component
                 'currency' => $currency->code,
                 'balance' => $this->accountBalance,
                 'memo' => $this->accountMemo,
+                // ----------------------------------------------------
+                // P1-5：shop_id 實為 ledger_id（帳本）。
+                // 目前保留「編輯時同步至當前帳本」之行為。
+                // 若你的設計是「編輯帳戶不應搬移帳本」，請移除下一行。
+                // 若刻意同步（例如帳本切換後編輯即歸屬新帳本），則保留。
+                // ----------------------------------------------------
                 'shop_id' => $this->currentShopId,
             ]);
             $message = '帳戶已更新！';
@@ -504,8 +545,14 @@ class AccountIndex extends Component
     {
         $account = FinancialAccount::findOrFail($id);
         
-        $hasTransactions = Transaction::where('from_account_id', $id)
-            ->orWhere('to_account_id', $id)
+        // P2-6：以 closure 包住兩個 orWhere 條件，避免 global scope（shop_isolation）
+        // 的 where('shop_id', 1) 因 OR 優先序而只約束其中一支。
+        // 原寫法實際 SQL 為：(shop_id = 1 AND from_account_id = ?) OR to_account_id = ?
+        // → to_account_id 分支不受 shop 限制，多帳本下會誤判。
+        $hasTransactions = Transaction::where(function ($q) use ($id) {
+                $q->where('from_account_id', $id)
+                  ->orWhere('to_account_id', $id);
+            })
             ->exists();
         
         if ($hasTransactions) {
@@ -554,6 +601,28 @@ class AccountIndex extends Component
     // 渲染
     // ============================================================
     
+    /**
+     * P3-8：availableCurrencies 改為 Computed，避免每次 render 都查 DB。
+     * 依賴 currentShopId；switchShop 時由 refreshData() 一併失效（見下方 unset）。
+     */
+    #[Computed]
+    public function availableCurrencies(): array
+    {
+        return Currency::where('shop_id', $this->currentShopId)
+            ->where('is_active', true)
+            ->pluck('name', 'code')
+            ->toArray();
+    }
+
+    /**
+     * P3-16：提供基準幣別符號給 Blade，消除 Blade 內硬編碼 'NT$'。
+     */
+    #[Computed]
+    public function baseCurrencySymbol(): string
+    {
+        return app(CurrencyService::class)->getBaseCurrencySymbol();
+    }
+
     public function render()
 	{
 		$accountTypeOptions = collect(config('business.account_types', []))
@@ -563,10 +632,8 @@ class AccountIndex extends Component
 
 		return view('livewire.finance.account-index', [
 			'accountTypeOptions'  => $accountTypeOptions,
-			'availableCurrencies' => Currency::where('shop_id', $this->currentShopId)
-				->where('is_active', true)
-				->pluck('name', 'code')
-				->toArray(),
+			'availableCurrencies' => $this->availableCurrencies,
+			'baseCurrencySymbol'  => $this->baseCurrencySymbol,
 		])->layout('layouts.app');
 	}
 }
