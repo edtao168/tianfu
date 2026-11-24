@@ -4,7 +4,7 @@
 	<x-modal 
 		wire:model="showModal" 
 		backdrop-blur-md 
-		box-class="w-[96%] max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-200 text-base-content"
+		box-class="w-[96%] max-w-4xl p-0 border border-base-200 shadow-2xl rounded-t-3xl md:rounded-2xl overflow-hidden bg-base-100 text-base-content"
 	>
 		{{-- 表單結構：外層設定 --}}
 	    <div class="flex flex-col max-h-[75dvh] md:max-h-[85dvh]">

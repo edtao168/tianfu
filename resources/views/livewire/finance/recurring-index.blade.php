@@ -112,8 +112,8 @@
 			{{-- 表單改由內部容器控制捲動 --}}
 			<x-form wire:submit="save" class="flex flex-col h-full overflow-hidden">
 				
-				{{-- 【可捲動的表單內容區】（手機端改用 43dvh，電腦端維持 60dvh） --}}
-				<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-4 max-h-[43dvh] md:max-h-[60dvh] overscroll-contain">
+				{{-- 【可捲動的表單內容區】（手機端改用 43dvh，電腦端維持 58dvh） --}}
+				<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-4 max-h-[43dvh] md:max-h-[58dvh] overscroll-contain">
 					{{-- 類型切換 --}}
 					@php
 						$recurringTypeClasses = [
