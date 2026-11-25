@@ -669,11 +669,8 @@
                     </div>
                 </div>
             @endif
-
         </div>
     </div>
-
-    <livewire:finance.transaction-list-modal />
 </div>
 
 {{-- ============================================================ --}}
