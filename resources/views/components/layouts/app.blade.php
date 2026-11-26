@@ -212,8 +212,8 @@
         </div>
     </nav>
 
-    <livewire:finance.transaction-modal />
-	<livewire:finance.transaction-list-modal />
+    <livewire:finance.transaction-list-modal />
+	<livewire:finance.transaction-modal />	
 	<livewire:finance.settings-drawer />
 	<livewire:finance.category-drawer />
 

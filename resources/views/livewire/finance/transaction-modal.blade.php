@@ -1,16 +1,7 @@
-<!-- resources/views/livewire/transaction-modal.blade.php -->
+{{-- resources/views/livewire/transaction-modal.blade.php --}}
 <div>
     {{-- ==================== 主要記帳 Modal ==================== --}}
-    <x-modal wire:model="showTransactionModal" title="{{ $transactionId ? '修改記錄' : '新增記錄' }}" separator persistent size="lg" x-on:click.stop>
-        <button 
-            type="button" 
-            wire:click="$set('showTransactionModal', false)" 
-            class="btn btn-light btn-sm btn-square absolute right-4 top-4 text-base-content/60 hover:text-base-content song-interactive"
-        >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
+    <x-modal wire:model="showTransactionModal" title="{{ $transactionId ? '修改記錄' : '新增記錄' }}" separator size="lg" x-on:click.stop>
 		
 		{{-- ================ 核心切換邏輯 ================ --}}
 		@if($showCategoryPicker && $categoryPickerReturnTo === 'transaction')
