@@ -362,7 +362,7 @@
         size="2xl"
         box-class="border border-base-300 bg-base-100 shadow-2xl rounded-2xl text-base-content"
     >
-	{{-- 若想「點外面不關」，上面須加 persistent ，下面 右上角關閉按鈕 打開 --}}
+		{{-- 若想「點外面不關」，上面須加 persistent ，下面 右上角關閉按鈕 打開 --}}
         {{-- 右上角關閉按鈕
         <button 
             type="button" 
@@ -375,76 +375,74 @@
         </button> --}}
 
         {{-- Modal Body --}}
-        <div class="py-4">
-            <x-form wire:submit="saveAccount" class="flex flex-col h-full overflow-hidden space-y-5">
-                {{-- 【可捲動的表單內容區】：手機端 43dvh、桌機端 58dvh --}}
-                <div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-5 max-h-[43dvh] md:max-h-[58dvh] overscroll-contain">
+		<x-form wire:submit="saveAccount" class="flex flex-col h-full overflow-hidden space-y-5 py-4">
+			{{-- 【可捲動的表單內容區】：手機端 43dvh、桌機端 58dvh，與 recurring-index 一致 --}}
+			<div class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-5 max-h-[43dvh] md:max-h-[58dvh] overscroll-contain">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
-                        <x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
-                    </div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<x-input label="帳戶名稱" wire:model="accountName" placeholder="例如：中信證券、國泰世華..." icon="o-pencil" required />
+					<x-select label="帳戶類型" wire:model="accountType" :options="$accountTypeOptions" icon="o-tag" required />
+				</div>
 
-                    <div class="space-y-2">
-                        <label class="label p-0 flex items-center gap-1">
-                            <span class="label-text font-bold text-xs opacity-80">使用幣別 (Currency)</span>
-                        </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            @foreach($availableCurrencies as $code => $name)
-                                @php 
-                                    $isSelected = ($accountCurrency === $code);
-                                @endphp
-                                <button type="button" 
-                                    class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border song-interactive {{ $isSelected ? 'bg-stone-800 text-stone-50 border-stone-700 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'bg-base-200/70 border-base-300 text-base-content hover:bg-base-200' }}" 
-                                    wire:click="$set('accountCurrency', '{{ $code }}')">
-                                    <span class="text-xs font-black">{{ $name }}</span>
-                                    <span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }}</span>
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
+				<div class="space-y-2">
+					<label class="label p-0 flex items-center gap-1">
+						<span class="label-text font-bold text-xs opacity-80">使用幣別 (Currency)</span>
+					</label>
+					<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+						@foreach($availableCurrencies as $code => $name)
+							@php 
+								$isSelected = ($accountCurrency === $code);
+							@endphp
+							<button type="button" 
+								class="flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border song-interactive {{ $isSelected ? 'bg-stone-800 text-stone-50 border-stone-700 shadow-sm dark:bg-stone-200 dark:text-stone-900' : 'bg-base-200/70 border-base-300 text-base-content hover:bg-base-200' }}" 
+								wire:click="$set('accountCurrency', '{{ $code }}')">
+								<span class="text-xs font-black">{{ $name }}</span>
+								<span class="text-[10px] opacity-70 font-mono mt-0.5">{{ $code }}</span>
+							</button>
+						@endforeach
+					</div>
+				</div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-300/80">
-                        <div class="md:col-span-2">
-                            <x-input 
-                                label="初始資產 (以選定幣別計價)" 
-                                wire:model="accountBalance" 
-                                prefix="{{ $availableCurrencies[$accountCurrency] ?? '$' }}" 
-                                type="text" 
-                                inputmode="decimal"
-                                class="font-mono text-lg text-right font-bold" 
-                                required 
-                                x-data
-                                x-on:input="
-                                    $event.target.value = $event.target.value.replace(/[^0-9.]/g, '');
-                                    $wire.set('accountBalance', $event.target.value)
-                                "
-                            />
-                        </div>
-                        <div class="text-xs opacity-70 leading-relaxed md:pb-2">
-                            💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
-                        </div>
-                    </div>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-300/80">
+					<div class="md:col-span-2">
+						<x-input 
+							label="初始資產 (以選定幣別計價)" 
+							wire:model="accountBalance" 
+							prefix="{{ $availableCurrencies[$accountCurrency] ?? '$' }}" 
+							type="text" 
+							inputmode="decimal"
+							class="font-mono text-lg text-right font-bold" 
+							required 
+							x-data
+							x-on:input="
+								$event.target.value = $event.target.value.replace(/[^0-9.]/g, '');
+								$wire.set('accountBalance', $event.target.value)
+							"
+						/>
+					</div>
+					<div class="text-xs opacity-70 leading-relaxed md:pb-2">
+						💡 初始資產，後續庫存採購與銷售折抵將會連動此餘額進行異動。
+					</div>
+				</div>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <x-textarea 
-                            label="備忘 (Memo)" 
-                            wire:model="accountMemo" 
-                            placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
-                            rows="2"
-                            hint="僅供內部參考，不會顯示於任何單據上" />
-                    </div>
-                </div>
+				<div class="grid grid-cols-1 gap-4">
+					<x-textarea 
+						label="備忘 (Memo)" 
+						wire:model="accountMemo" 
+						placeholder="例如：此帳戶為中信銀行信義分行，主要用於官網收款..."
+						rows="2"
+						hint="僅供內部參考，不會顯示於任何單據上" />
+				</div>
+			</div>
 
-                {{-- 操作按鈕：固定於 Modal 底部，不被捲動 --}}
-                <x-slot:actions>
-                    <div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300/60">
-                        <x-button label="取消" type="button" wire:click="$set('showAccountModal', false)" class="btn-light btn-sm opacity-80 song-interactive" />
-                        <x-button label="確認儲存" type="submit" class="btn-dark btn-sm song-interactive text-white" spinner="saveAccount" />
-                    </div>
-                </x-slot:actions>
-            </x-form>
-        </div>
+			{{-- 操作按鈕：固定於 Modal 底部，不被捲動 --}}
+			<x-slot:actions>
+				<div class="grid grid-cols-2 gap-2 w-full pt-3 border-t border-base-300/60">
+					<x-button label="取消" type="button" wire:click="$set('showAccountModal', false)" class="btn-light btn-sm opacity-80 song-interactive" />
+					<x-button label="確認儲存" type="submit" class="btn-dark btn-sm song-interactive text-white" spinner="saveAccount" />
+				</div>
+			</x-slot:actions>
+		</x-form>
     </x-modal>
 
     {{-- ============================================================ --}}
