@@ -1,4 +1,4 @@
-<?php
+<?php //app\Livewire\Finance\RecurringIndex.php
 
 namespace App\Livewire\Finance;
 
